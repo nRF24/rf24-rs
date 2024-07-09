@@ -134,11 +134,8 @@ where
         buf: &[u8],
     ) -> Result<(), Nrf24Error<SPI::Error, DO::Error>> {
         self._buf[0] = command;
-        // buffers in rust are stored in Big Endian memory.
-        // the nRF24L01 expects multi-byte SPI transactions to be Little Endian.
-        // So, reverse the byteOrder when loading the user's `buf`` into the lib's `_buf``
         let buf_len = buf.len();
-        for i in buf_len..0 {
+        for i in 0..buf_len {
             self._buf[i + 1 - buf_len] = buf[i];
         }
         self.spi_transfer(buf_len as u8 + 1)
@@ -387,16 +384,15 @@ where
             }
         };
         // to avoid resizing the given buf, we'll have to use self._buf directly
-        // TODO: reversed byte order may need attention here
         self._buf[0] = commands::W_TX_PAYLOAD | ((ask_no_ack as u8) << 4);
-        for i in buf_len..0 {
-            self._buf[i + 1 - buf_len] = buf[i];
+        for i in 0..buf_len {
+            self._buf[i + 1] = buf[i];
         }
         // ensure payload_length setting is respected
         if !self._dynamic_payloads_enabled && buf_len < self._payload_length as usize {
             // pad buf with zeros
-            for i in self._payload_length as usize..buf_len {
-                self._buf[i + 1 - self._payload_length as usize] = 0;
+            for i in buf_len..self._payload_length as usize {
+                self._buf[i + 1] = 0;
             }
             buf_len = self._payload_length as usize;
         }
