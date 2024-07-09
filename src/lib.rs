@@ -4,6 +4,7 @@
 #![doc(
     html_favicon_url = "https://github.com/nRF24/RF24/raw/master/docs/sphinx/_static/new_favicon.ico"
 )]
+#![no_std]
 
 mod enums;
 pub use enums::{CrcLength, DataRate, FifoState, PaLevel};
