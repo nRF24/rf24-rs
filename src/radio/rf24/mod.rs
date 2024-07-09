@@ -82,7 +82,7 @@ where
     /// The radio's CSN pin (aka Chip Select pin) shall be defined
     /// when instantiating the [`SpiDevice`] object (passed to the
     /// `spi` parameter).
-    pub fn new(ce_pin: DO, spi: SPI, delay_fn: DELAY) -> RF24<SPI, DO, DELAY> {
+    pub fn new(ce_pin: DO, spi: SPI, delay_impl: DELAY) -> RF24<SPI, DO, DELAY> {
         RF24 {
             _status: 0,
             _ce_pin: ce_pin,
@@ -92,7 +92,7 @@ where
             _ack_payloads_enabled: false,
             _dynamic_payloads_enabled: false,
             _config_reg: 0,
-            _wait: delay_fn,
+            _wait: delay_impl,
             _pipe0_rx_addr: None,
             _addr_length: 5,
             _tx_delay: 250,
@@ -113,11 +113,7 @@ where
     /// self.spi_read(0, commands::NOP)?;
     /// // STATUS register is now stored in self._status
     /// ```
-    fn spi_read(
-        &mut self,
-        len: u8,
-        command: u8,
-    ) -> Result<(), Nrf24Error<SPI::Error, DO::Error>> {
+    fn spi_read(&mut self, len: u8, command: u8) -> Result<(), Nrf24Error<SPI::Error, DO::Error>> {
         self._buf[0] = command;
         self.spi_transfer(len + 1)
     }
@@ -238,7 +234,7 @@ where
         // WARNING: Delay is based on P-variant whereby non-P *may* require different timing.
         self._wait.delay_ms(5);
 
-        // Set 1500uS (minimum for 32B payload in ESB@250KBPS) timeouts, to make testing a little easier
+        // Set 1500uS (minimum for 32 Byte payload in 250Kbps) timeouts, to make testing a little easier
         // WARNING: If this is ever lowered, either 250KBS mode with AutoAck is broken or maximum packet
         // sizes must never be used. See datasheet for a more complete explanation.
         self.set_auto_retries(5, 15)?;
@@ -342,6 +338,8 @@ where
         self.spi_write_byte(registers::EN_RXADDR, out)
     }
 
+    /// See [`EsbRadio::send()`] for implementation-agnostic detail.
+    ///
     /// This function calls [`RF24::flush_tx()`] upon entry, but it does not
     /// deactivate the radio's CE pin upon exit.
     fn send(&mut self, buf: &[u8], ask_no_ack: bool) -> Result<bool, Self::RadioErrorType> {
@@ -359,6 +357,9 @@ where
         Ok(self._status & mnemonics::MASK_TX_DS == mnemonics::MASK_TX_DS)
     }
 
+    /// See [`EsbRadio::write()`] for implementation-agnostic detail.
+    /// Remember, the nRF24L01's active TX mode is activated by the nRF24L01's CE pin.
+    ///
     /// <div class="warning">
     ///
     /// To transmit a payload the radio's CE pin must be active for at least 10 microseconds.
@@ -366,13 +367,6 @@ where
     /// microseconds when using this function, thus non-blocking behavior.
     ///
     /// </div>
-    ///
-    /// This function's `start_tx` parameter determines if the radio's CE pin should be
-    /// made active. This function does not deactivate the radio's CE pin.
-    ///
-    /// If the radio's CE pin remains active after successfully transmitting a payload,
-    /// then any subsequent payloads in the TX FIFO will automatically be processed.
-    /// Set the `start_tx` parameter `false` to skip activating the radio's CE pin.
     fn write(
         &mut self,
         buf: &[u8],
@@ -413,6 +407,8 @@ where
         Ok(true)
     }
 
+    /// See [`EsbRadio::read()`] for implementation-agnostic detail.
+    ///
     /// Remember that each call to [`RF24::read()`] fetches data from the
     /// RX FIFO beginning with the first byte from the first available
     /// payload. A payload is not removed from the RX FIFO until it's
@@ -468,11 +464,6 @@ where
         self._ce_pin.set_high().map_err(Nrf24Error::Gpo)
     }
 
-    /// Get the Auto-Retry Count (ARC) about the previous transmission.
-    ///
-    /// This data is reset for every payload attempted to transmit.
-    /// It cannot exceed 15 per the `count` parameter in [`RF24::set_auto_retries()`].
-    /// If auto-ack feature is disabled, then this function provides no useful data.
     fn get_last_arc(&mut self) -> Result<u8, Self::RadioErrorType> {
         self.spi_read(1, registers::OBSERVE_TX)?;
         Ok(self._buf[1] & 0xF)

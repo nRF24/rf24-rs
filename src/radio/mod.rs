@@ -421,6 +421,11 @@ pub trait EsbRadio:
 
     fn rewrite(&mut self) -> Result<(), Self::RadioErrorType>;
 
+    /// Get the Auto-Retry Count (ARC) about the previous transmission.
+    ///
+    /// This data is reset for every payload attempted to transmit.
+    /// It cannot exceed 15 per the `count` parameter in [`EsbAutoAck::set_auto_retries()`].
+    /// If auto-ack feature is disabled, then this function provides no useful data.
     fn get_last_arc(&mut self) -> Result<u8, Self::RadioErrorType>;
 
     /// Read data from the radio's RX FIFO into the specified `buf`.
