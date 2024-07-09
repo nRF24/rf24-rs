@@ -1,0 +1,24 @@
+name: build and test CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+      - run: cargo build
+      - run: cargo check
+      - run: cargo fmt
+      - run: cargo doc --no-deps
+      - name: save docs as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: rf24-rs docs
+          path: target/doc
