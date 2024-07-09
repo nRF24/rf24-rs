@@ -378,7 +378,7 @@ where
         buf: &[u8],
         ask_no_ack: bool,
         start_tx: bool,
-    ) -> Result<bool, Nrf24Error<<SPI>::Error, <DO>::Error>> {
+    ) -> Result<bool, Self::RadioErrorType> {
         self.clear_status_flags(true, true, true)?;
         if self._status & 1 == 1 {
             // TX FIFO is full already
@@ -451,7 +451,7 @@ where
         Ok(())
     }
 
-    fn resend(&mut self) -> Result<bool, Nrf24Error<<SPI>::Error, <DO>::Error>> {
+    fn resend(&mut self) -> Result<bool, Self::RadioErrorType> {
         self.rewrite()?;
         self._wait.delay_us(10);
         // now block until a tx_ds or tx_df event occurs
@@ -461,7 +461,7 @@ where
         Ok(self._status & mnemonics::MASK_TX_DS == mnemonics::MASK_TX_DS)
     }
 
-    fn rewrite(&mut self) -> Result<(), Nrf24Error<<SPI>::Error, <DO>::Error>> {
+    fn rewrite(&mut self) -> Result<(), Self::RadioErrorType> {
         self._ce_pin.set_low().map_err(Nrf24Error::Gpo)?;
         self.clear_status_flags(false, true, true)?;
         self.spi_read(0, commands::REUSE_TX_PL)?;
@@ -473,7 +473,7 @@ where
     /// This data is reset for every payload attempted to transmit.
     /// It cannot exceed 15 per the `count` parameter in [`RF24::set_auto_retries()`].
     /// If auto-ack feature is disabled, then this function provides no useful data.
-    fn get_last_arc(&mut self) -> Result<u8, Nrf24Error<<SPI>::Error, <DO>::Error>> {
+    fn get_last_arc(&mut self) -> Result<u8, Self::RadioErrorType> {
         self.spi_read(1, registers::OBSERVE_TX)?;
         Ok(self._buf[1] & 0xF)
     }
