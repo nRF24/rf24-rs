@@ -45,7 +45,7 @@ where
         Ok(())
     }
 
-    fn get_dynamic_payload_length(&mut self) -> Result<usize, Self::PayloadLengthErrorType> {
+    fn get_dynamic_payload_length(&mut self) -> Result<u8, Self::PayloadLengthErrorType> {
         if !self._dynamic_payloads_enabled {
             return Ok(0);
         }
@@ -53,6 +53,6 @@ where
         if self._buf[1] > 32 {
             return Err(Nrf24Error::BinaryCorruption);
         }
-        Ok(self._buf[1] as usize)
+        Ok(self._buf[1])
     }
 }

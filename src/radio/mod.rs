@@ -169,7 +169,7 @@ pub trait EsbPayloadLength {
     /// if radio.available().unwrap() {
     ///     let length = radio.get_dynamic_payload_length().unwrap();
     ///     let mut payload = [0; 32];
-    ///     radio.read(&mut payload, length).unwrap();
+    ///     radio.read(&mut payload, length as u8).unwrap();
     /// }
     /// ```
     fn set_dynamic_payloads(&mut self, enable: bool) -> Result<(), Self::PayloadLengthErrorType>;
@@ -177,11 +177,7 @@ pub trait EsbPayloadLength {
     /// Get the dynamic length of the next available payload in the RX FIFO.
     ///
     /// This returns `0` when dynamic payloads are disabled.
-    ///
-    /// I specifically chose a [`usize`] return type for convenience when working with
-    /// slices. Due to the nRF24L01's maximum 32 byte payload restriction, this will
-    /// never return a value greater than 32.
-    fn get_dynamic_payload_length(&mut self) -> Result<usize, Self::PayloadLengthErrorType>;
+    fn get_dynamic_payload_length(&mut self) -> Result<u8, Self::PayloadLengthErrorType>;
 }
 
 pub trait EsbAutoAck: EsbPayloadLength {
@@ -435,5 +431,5 @@ pub trait EsbRadio:
     /// The `len` parameter determines how much data is stored to `buf`. Ultimately,
     /// the value of `len` is restricted by the radio's maximum 32 byte limit and the
     /// length of the given `buf`.
-    fn read(&mut self, buf: &mut [u8], len: usize) -> Result<(), Self::RadioErrorType>;
+    fn read(&mut self, buf: &mut [u8], len: u8) -> Result<(), Self::RadioErrorType>;
 }

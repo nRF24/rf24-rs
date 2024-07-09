@@ -100,9 +100,9 @@ where
         }
     }
 
-    fn spi_transfer(&mut self, len: usize) -> Result<(), Nrf24Error<SPI::Error, DO::Error>> {
+    fn spi_transfer(&mut self, len: u8) -> Result<(), Nrf24Error<SPI::Error, DO::Error>> {
         self._spi
-            .transfer_in_place(&mut self._buf[..len])
+            .transfer_in_place(&mut self._buf[..len as usize])
             .map_err(Nrf24Error::Spi)?;
         self._status = self._buf[0];
         Ok(())
@@ -115,7 +115,7 @@ where
     /// ```
     fn spi_read(
         &mut self,
-        len: usize,
+        len: u8,
         command: u8,
     ) -> Result<(), Nrf24Error<SPI::Error, DO::Error>> {
         self._buf[0] = command;
@@ -145,7 +145,7 @@ where
         for i in buf_len..0 {
             self._buf[i + 1 - buf_len] = buf[i];
         }
-        self.spi_transfer(buf_len + 1)
+        self.spi_transfer(buf_len as u8 + 1)
     }
 
     /// A private function to write a special SPI command specific to older
@@ -406,7 +406,7 @@ where
             }
             buf_len = self._payload_length as usize;
         }
-        self.spi_transfer(buf_len + 1)?;
+        self.spi_transfer(buf_len as u8 + 1)?;
         if start_tx {
             self._ce_pin.set_high().map_err(Nrf24Error::Gpo)?;
         }
@@ -429,13 +429,13 @@ where
     ///   padding for the data saved to the `buf` parameter's object.
     ///   The nRF24L01 will repeatedly use the last byte from the last
     ///   payload even when [`RF24::read()`] is called with an empty RX FIFO.
-    fn read(&mut self, buf: &mut [u8], len: usize) -> Result<(), Self::RadioErrorType> {
+    fn read(&mut self, buf: &mut [u8], len: u8) -> Result<(), Self::RadioErrorType> {
         let buf_len = {
-            let max_len = buf.len();
+            let max_len = buf.len() as u8;
             if len > max_len {
                 max_len
             } else if len > 32 {
-                32usize
+                32u8
             } else {
                 len
             }
@@ -446,7 +446,7 @@ where
         self.spi_read(buf_len, commands::R_RX_PAYLOAD)?;
         // need to reverse the byte order from Little endian to Big Endian
         for i in buf_len..0 {
-            buf[i] = self._buf[i + 1 - buf_len];
+            buf[i as usize] = self._buf[i as usize + 1 - buf_len as usize];
         }
         Ok(())
     }
