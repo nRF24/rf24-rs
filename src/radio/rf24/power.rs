@@ -1,6 +1,6 @@
 use embedded_hal::{delay::DelayNs, digital::OutputPin, spi::SpiDevice};
 
-use crate::{radio::EsbPower, Nrf24Error, RF24};
+use crate::radio::{prelude::EsbPower, Nrf24Error, RF24};
 
 use super::registers;
 
@@ -12,7 +12,7 @@ where
 {
     type PowerErrorType = Nrf24Error<SPI::Error, DO::Error>;
 
-    /// After calling [`ESBRadio::start_listening()`](fn@crate::radio::EsbRadio::start_listening),
+    /// After calling [`ESBRadio::start_listening()`](fn@crate::radio::prelude::EsbRadio::start_listening),
     /// a non-PA/LNA radio will consume about
     /// 13.5mA at [`PaLevel::MAX`](type@crate::enums::PaLevel::MAX).
     /// During active transmission (including RX role when transmitting an auto-ACK
@@ -40,7 +40,7 @@ where
         // There must be a delay of Tpd2stby (see Table 16.) after the nRF24L01+ leaves power down mode before
         // the CEis set high. - Tpd2stby can be up to 5ms per the 1.0 datasheet
         if delay.is_some_and(|val| val > 0) || delay.is_none() {
-            self._wait.delay_us(delay.unwrap_or_else(|| 5000));
+            self._delay_impl.delay_us(delay.unwrap_or_else(|| 5000));
         }
         Ok(())
     }

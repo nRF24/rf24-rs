@@ -1,7 +1,7 @@
 use embedded_hal::{delay::DelayNs, digital::OutputPin, spi::SpiDevice};
 
-use crate::{radio::EsbDataRate, DataRate, Nrf24Error, RF24};
-
+use crate::radio::{prelude::EsbDataRate, Nrf24Error, RF24};
+use crate::DataRate;
 use super::registers;
 
 impl<SPI, DO, DELAY> EsbDataRate for RF24<SPI, DO, DELAY>

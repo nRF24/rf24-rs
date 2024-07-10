@@ -1,7 +1,7 @@
 use embedded_hal::{delay::DelayNs, digital::OutputPin, spi::SpiDevice};
 
-use crate::{radio::EsbCrcLength, CrcLength, Nrf24Error, RF24};
-
+use crate::radio::{prelude::EsbCrcLength, Nrf24Error, RF24};
+use crate::CrcLength;
 use super::registers;
 
 impl<SPI, DO, DELAY> EsbCrcLength for RF24<SPI, DO, DELAY>

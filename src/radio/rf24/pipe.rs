@@ -1,6 +1,6 @@
 use embedded_hal::{delay::DelayNs, digital::OutputPin, spi::SpiDevice};
 
-use crate::{radio::EsbPipe, Nrf24Error, RF24};
+use crate::radio::{prelude::EsbPipe, Nrf24Error, RF24};
 
 use super::registers;
 

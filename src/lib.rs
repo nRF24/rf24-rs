@@ -8,10 +8,4 @@
 
 mod enums;
 pub use enums::{CrcLength, DataRate, FifoState, PaLevel};
-pub use radio::{
-    EsbAutoAck, EsbChannel, EsbCrcLength, EsbDataRate, EsbFifo, EsbPaLevel, EsbPayloadLength,
-    EsbPipe, EsbPower, EsbRadio, EsbStatus,
-};
-mod radio;
-#[doc(inline)]
-pub use radio::{Nrf24Error, RF24};
+pub mod radio;

@@ -1,4 +1,4 @@
-use crate::{radio::EsbPayloadLength, Nrf24Error, RF24};
+use crate::radio::{prelude::EsbPayloadLength, Nrf24Error, RF24};
 use embedded_hal::{delay::DelayNs, digital::OutputPin, spi::SpiDevice};
 
 use super::{commands, mnemonics, registers};

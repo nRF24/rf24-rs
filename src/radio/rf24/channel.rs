@@ -1,6 +1,6 @@
-use crate::radio::{rf24::registers, EsbChannel};
-use crate::{Nrf24Error, RF24};
 use embedded_hal::{delay::DelayNs, digital::OutputPin, spi::SpiDevice};
+use crate::radio::{prelude::EsbChannel, Nrf24Error, RF24};
+use super::registers;
 
 impl<SPI, DO, DELAY> EsbChannel for RF24<SPI, DO, DELAY>
 where

@@ -1,7 +1,7 @@
 use embedded_hal::{delay::DelayNs, digital::OutputPin, spi::SpiDevice};
 
-use crate::{
-    radio::{EsbAutoAck, EsbPayloadLength},
+use crate::radio::{
+    prelude::{EsbAutoAck, EsbPayloadLength},
     Nrf24Error, RF24,
 };
 
