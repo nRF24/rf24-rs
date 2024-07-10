@@ -76,7 +76,7 @@ where
             _ => 3,
         };
         self.spi_write_byte(registers::SETUP_AW, width)?;
-        self._addr_length = width;
+        self._addr_length = width + 2;
         Ok(())
     }
 
@@ -84,5 +84,164 @@ where
         self.spi_read(1, registers::SETUP_AW)?;
         self._addr_length = self._buf[1] + 2;
         Ok(self._addr_length)
+    }
+}
+
+/////////////////////////////////////////////////////////////////////////////////
+/// unit tests
+#[cfg(test)]
+mod test {
+    extern crate std;
+    use crate::radio::prelude::EsbPipe;
+    use crate::radio::rf24::commands;
+
+    use super::{registers, RF24};
+    use embedded_hal_mock::eh1::delay::NoopDelay;
+    use embedded_hal_mock::eh1::digital::Mock as PinMock;
+    use embedded_hal_mock::eh1::spi::{Mock as SpiMock, Transaction as SpiTransaction};
+    use std::vec;
+
+    #[test]
+    pub fn open_rx_pipe5() {
+        // Create pin
+        let pin_expectations = [];
+        let mut pin_mock = PinMock::new(&pin_expectations);
+
+        // create delay fn
+        let delay_mock = NoopDelay::new();
+
+        let spi_expectations = [
+            // open_rx_pipe(5)
+            SpiTransaction::transaction_start(),
+            SpiTransaction::transfer_in_place(
+                vec![registers::RX_ADDR_P0 + 5 | commands::W_REGISTER, 0x55u8],
+                vec![0xEu8, 0u8],
+            ),
+            SpiTransaction::transaction_end(),
+            // set EN_RXADDR
+            SpiTransaction::transaction_start(),
+            SpiTransaction::transfer_in_place(vec![registers::EN_RXADDR, 0u8], vec![0xEu8, 1u8]),
+            SpiTransaction::transaction_end(),
+            SpiTransaction::transaction_start(),
+            SpiTransaction::transfer_in_place(
+                vec![registers::EN_RXADDR | commands::W_REGISTER, 0x21u8],
+                vec![0xEu8, 0u8],
+            ),
+            SpiTransaction::transaction_end(),
+        ];
+        let mut spi_mock = SpiMock::new(&spi_expectations);
+        let mut radio = RF24::new(pin_mock.clone(), spi_mock.clone(), delay_mock);
+        let address = [0x55u8; 5];
+        radio.open_rx_pipe(9, &address).unwrap();
+        radio.open_rx_pipe(5, &address).unwrap();
+        spi_mock.done();
+        pin_mock.done();
+    }
+
+    #[test]
+    pub fn open_tx_pipe() {
+        // Create pin
+        let pin_expectations = [];
+        let mut pin_mock = PinMock::new(&pin_expectations);
+
+        // create delay fn
+        let delay_mock = NoopDelay::new();
+
+        let mut expected_buf = [0x55u8; 6];
+        expected_buf[0] = registers::TX_ADDR | commands::W_REGISTER;
+        let mut p0_buf = [0x55u8; 6];
+        p0_buf[0] = registers::RX_ADDR_P0 | commands::W_REGISTER;
+        let mut response = [0u8; 6];
+        response[0] = 0xEu8;
+
+        let spi_expectations = [
+            // open_rx_pipe(5)
+            SpiTransaction::transaction_start(),
+            SpiTransaction::transfer_in_place(expected_buf.to_vec(), response.clone().to_vec()),
+            SpiTransaction::transaction_end(),
+            SpiTransaction::transaction_start(),
+            SpiTransaction::transfer_in_place(p0_buf.to_vec(), response.to_vec()),
+            SpiTransaction::transaction_end(),
+        ];
+        let mut spi_mock = SpiMock::new(&spi_expectations);
+        let mut radio = RF24::new(pin_mock.clone(), spi_mock.clone(), delay_mock);
+        let address = [0x55u8; 5];
+        radio.open_tx_pipe(&address).unwrap();
+        radio.close_rx_pipe(9).unwrap();
+        spi_mock.done();
+        pin_mock.done();
+    }
+
+    #[test]
+    pub fn set_address_length() {
+        // Create pin
+        let pin_expectations = [];
+        let mut pin_mock = PinMock::new(&pin_expectations);
+
+        // create delay fn
+        let delay_mock = NoopDelay::new();
+
+        let spi_expectations = [
+            // for 2 byte addresses
+            // write the SETUP_AW register value
+            SpiTransaction::transaction_start(),
+            SpiTransaction::transfer_in_place(
+                vec![registers::SETUP_AW | commands::W_REGISTER, 0u8],
+                vec![0xEu8, 0u8],
+            ),
+            SpiTransaction::transaction_end(),
+            // read the SETUP_AW register value
+            SpiTransaction::transaction_start(),
+            SpiTransaction::transfer_in_place(vec![registers::SETUP_AW, 0u8], vec![0xEu8, 0u8]),
+            SpiTransaction::transaction_end(),
+            // for 3 byte addresses
+            // write the SETUP_AW register value
+            SpiTransaction::transaction_start(),
+            SpiTransaction::transfer_in_place(
+                vec![registers::SETUP_AW | commands::W_REGISTER, 1u8],
+                vec![0xEu8, 0u8],
+            ),
+            SpiTransaction::transaction_end(),
+            // read the SETUP_AW register value
+            SpiTransaction::transaction_start(),
+            SpiTransaction::transfer_in_place(vec![registers::SETUP_AW, 0u8], vec![0xEu8, 1u8]),
+            SpiTransaction::transaction_end(),
+            // for 4 byte addresses
+            // write the SETUP_AW register value
+            SpiTransaction::transaction_start(),
+            SpiTransaction::transfer_in_place(
+                vec![registers::SETUP_AW | commands::W_REGISTER, 2u8],
+                vec![0xEu8, 0u8],
+            ),
+            SpiTransaction::transaction_end(),
+            // read the SETUP_AW register value
+            SpiTransaction::transaction_start(),
+            SpiTransaction::transfer_in_place(vec![registers::SETUP_AW, 0u8], vec![0xEu8, 2u8]),
+            SpiTransaction::transaction_end(),
+            // for 5 byte addresses
+            // write the SETUP_AW register value
+            SpiTransaction::transaction_start(),
+            SpiTransaction::transfer_in_place(
+                vec![registers::SETUP_AW | commands::W_REGISTER, 3u8],
+                vec![0xEu8, 0u8],
+            ),
+            SpiTransaction::transaction_end(),
+            // read the SETUP_AW register value
+            SpiTransaction::transaction_start(),
+            SpiTransaction::transfer_in_place(vec![registers::SETUP_AW, 0u8], vec![0xEu8, 3u8]),
+            SpiTransaction::transaction_end(),
+        ];
+        let mut spi_mock = SpiMock::new(&spi_expectations);
+        let mut radio = RF24::new(pin_mock.clone(), spi_mock.clone(), delay_mock);
+        radio.set_address_length(2).unwrap();
+        assert_eq!(radio.get_address_length().unwrap(), 2u8);
+        radio.set_address_length(3).unwrap();
+        assert_eq!(radio.get_address_length().unwrap(), 3u8);
+        radio.set_address_length(4).unwrap();
+        assert_eq!(radio.get_address_length().unwrap(), 4u8);
+        radio.set_address_length(5).unwrap();
+        assert_eq!(radio.get_address_length().unwrap(), 5u8);
+        spi_mock.done();
+        pin_mock.done();
     }
 }

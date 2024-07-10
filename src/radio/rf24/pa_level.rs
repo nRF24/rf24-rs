@@ -21,7 +21,7 @@ where
             1 => Ok(PaLevel::LOW),
             2 => Ok(PaLevel::HIGH),
             3 => Ok(PaLevel::MAX),
-            _ => Err(Nrf24Error::BinaryCorruption),
+            _ => unreachable!(),
         }
     }
 
@@ -36,7 +36,115 @@ where
                 }
             } << 1);
         self.spi_read(1, registers::RF_SETUP)?;
-        let out = self._buf[1] & (3 << 1) | pa_bin;
+        let out = self._buf[1] & !(3 << 1) | pa_bin;
         self.spi_write_byte(registers::RF_SETUP, out)
+    }
+}
+
+/////////////////////////////////////////////////////////////////////////////////
+/// unit tests
+#[cfg(test)]
+mod test {
+    extern crate std;
+    use crate::radio::prelude::EsbPaLevel;
+    use crate::radio::rf24::commands;
+    use crate::PaLevel;
+
+    use super::{registers, RF24};
+    use embedded_hal_mock::eh1::delay::NoopDelay;
+    use embedded_hal_mock::eh1::digital::Mock as PinMock;
+    use embedded_hal_mock::eh1::spi::{Mock as SpiMock, Transaction as SpiTransaction};
+    use std::vec;
+
+    #[test]
+    pub fn get_pa_level() {
+        // Create pin
+        let pin_expectations = [];
+        let mut pin_mock = PinMock::new(&pin_expectations);
+
+        // create delay fn
+        let delay_mock = NoopDelay::new();
+
+        let spi_expectations = [
+            // get the RF_SETUP register value for each possible result
+            SpiTransaction::transaction_start(),
+            SpiTransaction::transfer_in_place(vec![registers::RF_SETUP, 0u8], vec![0xEu8, 0u8]),
+            SpiTransaction::transaction_end(),
+            SpiTransaction::transaction_start(),
+            SpiTransaction::transfer_in_place(vec![registers::RF_SETUP, 0u8], vec![0xEu8, 2u8]),
+            SpiTransaction::transaction_end(),
+            SpiTransaction::transaction_start(),
+            SpiTransaction::transfer_in_place(vec![registers::RF_SETUP, 2u8], vec![0xEu8, 4u8]),
+            SpiTransaction::transaction_end(),
+            SpiTransaction::transaction_start(),
+            SpiTransaction::transfer_in_place(vec![registers::RF_SETUP, 4u8], vec![0xEu8, 6u8]),
+            SpiTransaction::transaction_end(),
+        ];
+        let mut spi_mock = SpiMock::new(&spi_expectations);
+        let mut radio = RF24::new(pin_mock.clone(), spi_mock.clone(), delay_mock);
+        assert_eq!(radio.get_pa_level(), Ok(PaLevel::MIN));
+        assert_eq!(radio.get_pa_level(), Ok(PaLevel::LOW));
+        assert_eq!(radio.get_pa_level(), Ok(PaLevel::HIGH));
+        assert_eq!(radio.get_pa_level(), Ok(PaLevel::MAX));
+        spi_mock.done();
+        pin_mock.done();
+    }
+
+    #[test]
+    pub fn set_pa_level() {
+        // Create pin
+        let pin_expectations = [];
+        let mut pin_mock = PinMock::new(&pin_expectations);
+
+        // create delay fn
+        let delay_mock = NoopDelay::new();
+
+        let spi_expectations = [
+            // set the RF_SETUP register value for each possible enumeration of CrcLength
+            SpiTransaction::transaction_start(),
+            SpiTransaction::transfer_in_place(vec![registers::RF_SETUP, 0u8], vec![0xEu8, 7u8]),
+            SpiTransaction::transaction_end(),
+            SpiTransaction::transaction_start(),
+            SpiTransaction::transfer_in_place(
+                vec![registers::RF_SETUP | commands::W_REGISTER, 1u8],
+                vec![0xEu8, 0u8],
+            ),
+            SpiTransaction::transaction_end(),
+            SpiTransaction::transaction_start(),
+            SpiTransaction::transfer_in_place(vec![registers::RF_SETUP, 0u8], vec![0xEu8, 7u8]),
+            SpiTransaction::transaction_end(),
+            SpiTransaction::transaction_start(),
+            SpiTransaction::transfer_in_place(
+                vec![registers::RF_SETUP | commands::W_REGISTER, 3u8],
+                vec![0xEu8, 0u8],
+            ),
+            SpiTransaction::transaction_end(),
+            SpiTransaction::transaction_start(),
+            SpiTransaction::transfer_in_place(vec![registers::RF_SETUP, 0u8], vec![0xEu8, 7u8]),
+            SpiTransaction::transaction_end(),
+            SpiTransaction::transaction_start(),
+            SpiTransaction::transfer_in_place(
+                vec![registers::RF_SETUP | commands::W_REGISTER, 5u8],
+                vec![0xEu8, 0u8],
+            ),
+            SpiTransaction::transaction_end(),
+            SpiTransaction::transaction_start(),
+            SpiTransaction::transfer_in_place(vec![registers::RF_SETUP, 0u8], vec![0xEu8, 0u8]),
+            SpiTransaction::transaction_end(),
+            SpiTransaction::transaction_start(),
+            SpiTransaction::transfer_in_place(
+                vec![registers::RF_SETUP | commands::W_REGISTER, 7u8],
+                vec![0xEu8, 0u8],
+            ),
+            SpiTransaction::transaction_end(),
+        ];
+        let mut spi_mock = SpiMock::new(&spi_expectations);
+        let mut radio = RF24::new(pin_mock.clone(), spi_mock.clone(), delay_mock);
+        radio.set_pa_level(PaLevel::MIN).unwrap();
+        radio.set_pa_level(PaLevel::LOW).unwrap();
+        radio.set_pa_level(PaLevel::HIGH).unwrap();
+        radio.set_pa_level(PaLevel::MAX).unwrap();
+        spi_mock.done();
+        pin_mock.done();
     }
 }

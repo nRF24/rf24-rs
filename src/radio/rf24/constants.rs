@@ -18,7 +18,6 @@ pub mod registers {
     pub const FEATURE: u8 = 0x1D;
 }
 
-
 /// A private module encapsulating SPI commands for the nRF24L01.
 pub mod commands {
     pub const W_REGISTER: u8 = 0x20;
@@ -41,4 +40,3 @@ pub mod mnemonics {
     pub const EN_DPL: u8 = 1 << 2;
     pub const EN_ACK_PAY: u8 = 1 << 1;
 }
-

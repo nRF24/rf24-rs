@@ -1,6 +1,7 @@
 use embedded_hal::{delay::DelayNs, digital::OutputPin, spi::SpiDevice};
 mod auto_ack;
 mod channel;
+mod constants;
 mod crc_length;
 mod data_rate;
 mod fifo;
@@ -9,16 +10,15 @@ mod payload_length;
 mod pipe;
 mod power;
 mod radio;
-mod constants;
-pub use constants::{registers, commands, mnemonics};
+pub use constants::{commands, mnemonics, registers};
 mod status;
 use super::prelude::{
-    EsbAutoAck, EsbChannel, EsbCrcLength, EsbFifo, EsbPaLevel, EsbPower,EsbRadio
+    EsbAutoAck, EsbChannel, EsbCrcLength, EsbFifo, EsbPaLevel, EsbPower, EsbRadio,
 };
 use crate::enums::{CrcLength, PaLevel};
 
 /// An collection of error types to describe hardware malfunctions.
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy, Debug, PartialEq)]
 pub enum Nrf24Error<SPI, DO> {
     /// Represents a SPI transaction error.
     Spi(SPI),
@@ -108,10 +108,10 @@ where
         command: u8,
         buf: &[u8],
     ) -> Result<(), Nrf24Error<SPI::Error, DO::Error>> {
-        self._buf[0] = command;
+        self._buf[0] = command | commands::W_REGISTER;
         let buf_len = buf.len();
         for i in 0..buf_len {
-            self._buf[i + 1 - buf_len] = buf[i];
+            self._buf[i + 1] = buf[i];
         }
         self.spi_transfer(buf_len as u8 + 1)
     }
@@ -143,7 +143,7 @@ where
     ) -> Result<(), Nrf24Error<SPI::Error, DO::Error>> {
         self.stop_listening()?;
         self.spi_read(1, registers::RF_SETUP)?;
-        self.spi_write_byte(registers::RF_SETUP, self._buf[1] | 0x84)?;
+        self.spi_write_byte(registers::RF_SETUP, self._buf[1] | 0x90)?;
         if self._is_plus_variant {
             self.set_auto_ack(false)?;
             self.set_auto_retries(0, 0)?;
@@ -165,7 +165,6 @@ where
         self._ce_pin.set_high().map_err(Nrf24Error::Gpo)?;
         if self._is_plus_variant {
             self._delay_impl.delay_ms(1); // datasheet says 1 ms is ok in this instance
-            self._ce_pin.set_low().map_err(Nrf24Error::Gpo)?;
             self.rewrite()?;
         }
         Ok(())
@@ -180,48 +179,250 @@ where
          */
         self.power_down()?; // per datasheet recommendation (just to be safe)
         self.spi_read(1, registers::RF_SETUP)?;
-        self.spi_write_byte(registers::RF_SETUP, self._buf[1] & !0x84)?;
+        self.spi_write_byte(registers::RF_SETUP, self._buf[1] & !0x90)?;
         self._ce_pin.set_low().map_err(Nrf24Error::Gpo)
     }
 
     /// Control the builtin LNA feature on nRF24L01 (older non-plus variants) and Si24R1
     /// (cheap chinese clones of the nRF24L01).
-    /// 
+    ///
     /// This is enabled by default (regardless of chip variant).
     /// See [`PaLevel`] for effective behavior.
-    /// 
+    ///
     /// This function has no effect on nRF24L01+ modules and PA/LNA variants because
     /// the LNA feature is always enabled.
     pub fn set_lna(&mut self, enable: bool) -> Result<(), Nrf24Error<SPI::Error, DO::Error>> {
         self.spi_read(1, registers::RF_SETUP)?;
         let out = self._buf[1] & !1 | enable as u8;
-        self.spi_write_byte(registers::RF_SETUP,  out)
+        self.spi_write_byte(registers::RF_SETUP, out)
     }
 }
 
+/////////////////////////////////////////////////////////////////////////////////
+/// unit tests
 #[cfg(test)]
 mod test {
-    use embedded_hal::delay::DelayNs;
-    use embedded_hal::digital::OutputPin;
+    extern crate std;
+    use super::{commands, registers, RF24};
+    use crate::radio::rf24::mnemonics;
     use embedded_hal_mock::eh1::delay::NoopDelay;
-    use embedded_hal_mock::eh1::digital::{Mock as PinMock, State as PinState, Transaction as PinTransaction};
-    // use super::RF24;
+    use embedded_hal_mock::eh1::digital::{
+        Mock as PinMock, State as PinState, Transaction as PinTransaction,
+    };
+    use embedded_hal_mock::eh1::spi::{Mock as SpiMock, Transaction as SpiTransaction};
+    use std::vec;
 
     #[test]
-    pub fn test_init() {
-        // Configure expectations
-        let expectations = [
+    pub fn test_rpd() {
+        // Create pin
+        let pin_expectations = [];
+        let mut pin_mock = PinMock::new(&pin_expectations);
+
+        // create delay fn
+        let delay_mock = NoopDelay::new();
+
+        let spi_expectations = [
+            // get the RPD register value
+            SpiTransaction::transaction_start(),
+            SpiTransaction::transfer_in_place(vec![registers::RPD, 0u8], vec![0xEu8, 0xFFu8]),
+            SpiTransaction::transaction_end(),
+        ];
+        let mut spi_mock = SpiMock::new(&spi_expectations);
+        let mut radio = RF24::new(pin_mock.clone(), spi_mock.clone(), delay_mock);
+        assert!(radio.test_rpd().unwrap());
+        spi_mock.done();
+        pin_mock.done();
+    }
+
+    #[test]
+    pub fn start_carrier_wave() {
+        // Create pin
+        let pin_expectations = [
+            PinTransaction::set(PinState::Low),
+            PinTransaction::set(PinState::High),
             PinTransaction::set(PinState::Low),
             PinTransaction::set(PinState::High),
         ];
+        let mut pin_mock = PinMock::new(&pin_expectations);
 
+        // create delay fn
+        let delay_mock = NoopDelay::new();
+
+        let mut buf = [0xFFu8; 33];
+        buf[0] = commands::W_TX_PAYLOAD;
+        let mut address = [0xFFu8; 6];
+        address[0] = registers::TX_ADDR | commands::W_REGISTER;
+
+        let spi_expectations = [
+            // stop_listening()
+            // clear PRIM_RX flag
+            SpiTransaction::transaction_start(),
+            SpiTransaction::transfer_in_place(
+                vec![registers::CONFIG | commands::W_REGISTER, 0u8],
+                vec![0xEu8, 0u8],
+            ),
+            SpiTransaction::transaction_end(),
+            // open pipe 0 for TX (regardless of auto-ack)
+            SpiTransaction::transaction_start(),
+            SpiTransaction::transfer_in_place(vec![registers::EN_RXADDR, 0u8], vec![0xEu8, 0u8]),
+            SpiTransaction::transaction_end(),
+            SpiTransaction::transaction_start(),
+            SpiTransaction::transfer_in_place(
+                vec![registers::EN_RXADDR | commands::W_REGISTER, 1u8],
+                vec![0xEu8, 0u8],
+            ),
+            SpiTransaction::transaction_end(),
+            // set special flags in RF_SETUP register value
+            SpiTransaction::transaction_start(),
+            SpiTransaction::transfer_in_place(vec![registers::RF_SETUP, 0u8], vec![0xEu8, 0u8]),
+            SpiTransaction::transaction_end(),
+            SpiTransaction::transaction_start(),
+            SpiTransaction::transfer_in_place(
+                vec![registers::RF_SETUP | commands::W_REGISTER, 0x90u8],
+                vec![0xEu8, 0u8],
+            ),
+            SpiTransaction::transaction_end(),
+            // disable auto-ack
+            SpiTransaction::transaction_start(),
+            SpiTransaction::transfer_in_place(
+                vec![registers::EN_AA | commands::W_REGISTER, 0u8],
+                vec![0xEu8, 0u8],
+            ),
+            SpiTransaction::transaction_end(),
+            // disable auto-retries
+            SpiTransaction::transaction_start(),
+            SpiTransaction::transfer_in_place(
+                vec![registers::SETUP_RETR | commands::W_REGISTER, 0u8],
+                vec![0xEu8, 0u8],
+            ),
+            SpiTransaction::transaction_end(),
+            // set TX address
+            SpiTransaction::transaction_start(),
+            SpiTransaction::transfer_in_place(address.to_vec(), vec![0u8; 6]),
+            SpiTransaction::transaction_end(),
+            // flush_tx()
+            SpiTransaction::transaction_start(),
+            SpiTransaction::transfer_in_place(vec![commands::FLUSH_TX], vec![0xEu8]),
+            SpiTransaction::transaction_end(),
+            // set TX payload
+            SpiTransaction::transaction_start(),
+            SpiTransaction::transfer_in_place(buf.to_vec(), vec![0u8; 33]),
+            SpiTransaction::transaction_end(),
+            // set_crc_length(disabled)
+            SpiTransaction::transaction_start(),
+            SpiTransaction::transfer_in_place(vec![registers::CONFIG, 0u8], vec![0xEu8, 0xCu8]),
+            SpiTransaction::transaction_end(),
+            SpiTransaction::transaction_start(),
+            SpiTransaction::transfer_in_place(
+                vec![registers::CONFIG | commands::W_REGISTER, 0u8],
+                vec![0xEu8, 0u8],
+            ),
+            SpiTransaction::transaction_end(),
+            // set_pa_level()
+            // set special flags in RF_SETUP register value
+            SpiTransaction::transaction_start(),
+            SpiTransaction::transfer_in_place(vec![registers::RF_SETUP, 0u8], vec![0xEu8, 0x91u8]),
+            SpiTransaction::transaction_end(),
+            SpiTransaction::transaction_start(),
+            SpiTransaction::transfer_in_place(
+                vec![registers::RF_SETUP | commands::W_REGISTER, 0x97u8],
+                vec![0xEu8, 0u8],
+            ),
+            SpiTransaction::transaction_end(),
+            // set_channel(125)
+            SpiTransaction::transaction_start(),
+            SpiTransaction::transfer_in_place(
+                vec![registers::RF_CH | commands::W_REGISTER, 125u8],
+                vec![0xEu8, 0u8],
+            ),
+            SpiTransaction::transaction_end(),
+            // clear the tx_df and tx_ds events
+            SpiTransaction::transaction_start(),
+            SpiTransaction::transfer_in_place(
+                vec![
+                    registers::STATUS | commands::W_REGISTER,
+                    mnemonics::MASK_MAX_RT | mnemonics::MASK_TX_DS,
+                ],
+                vec![0xEu8, 0u8],
+            ),
+            SpiTransaction::transaction_end(),
+            // assert the REUSE_TX_PL flag
+            SpiTransaction::transaction_start(),
+            SpiTransaction::transfer_in_place(vec![commands::REUSE_TX_PL], vec![0xEu8]),
+            SpiTransaction::transaction_end(),
+        ];
+        let mut spi_mock = SpiMock::new(&spi_expectations);
+        let mut radio = RF24::new(pin_mock.clone(), spi_mock.clone(), delay_mock);
+        radio.start_carrier_wave(crate::PaLevel::MAX, 0xFF).unwrap();
+        spi_mock.done();
+        pin_mock.done();
+    }
+
+    #[test]
+    pub fn stop_carrier_wave() {
         // Create pin
-        let mut pin = PinMock::new(&expectations);
-        pin.set_low().unwrap();
-        pin.set_high().unwrap();
-        pin.done();
+        let pin_expectations = [
+            PinTransaction::set(PinState::Low),
+            // CE is set LOW twice due to how it behaves during transmission of
+            // constant carrier wave. See comment in start_carrier_wave()
+            PinTransaction::set(PinState::Low),
+        ];
+        let mut pin_mock = PinMock::new(&pin_expectations);
 
-        let mut delay_mock = NoopDelay::new();
-        delay_mock.delay_ms(5);
+        // create delay fn
+        let delay_mock = NoopDelay::new();
+
+        let spi_expectations = [
+            // power_down()
+            SpiTransaction::transaction_start(),
+            SpiTransaction::transfer_in_place(
+                vec![registers::CONFIG | commands::W_REGISTER, 0u8],
+                vec![0xEu8, 0u8],
+            ),
+            SpiTransaction::transaction_end(),
+            // clear special flags in RF_SETUP register
+            SpiTransaction::transaction_start(),
+            SpiTransaction::transfer_in_place(vec![registers::RF_SETUP, 0u8], vec![0xEu8, 0x90u8]),
+            SpiTransaction::transaction_end(),
+            SpiTransaction::transaction_start(),
+            SpiTransaction::transfer_in_place(
+                vec![registers::RF_SETUP | commands::W_REGISTER, 0u8],
+                vec![0xEu8, 0u8],
+            ),
+            SpiTransaction::transaction_end(),
+        ];
+        let mut spi_mock = SpiMock::new(&spi_expectations);
+        let mut radio = RF24::new(pin_mock.clone(), spi_mock.clone(), delay_mock);
+        radio.stop_carrier_wave().unwrap();
+        spi_mock.done();
+        pin_mock.done();
+    }
+
+    #[test]
+    pub fn set_lna() {
+        // Create pin
+        let pin_expectations = [];
+        let mut pin_mock = PinMock::new(&pin_expectations);
+
+        // create delay fn
+        let delay_mock = NoopDelay::new();
+
+        let spi_expectations = [
+            // clear the LNA_CUR flag in RF-SETUP
+            SpiTransaction::transaction_start(),
+            SpiTransaction::transfer_in_place(vec![registers::RF_SETUP, 0u8], vec![0xEu8, 1u8]),
+            SpiTransaction::transaction_end(),
+            SpiTransaction::transaction_start(),
+            SpiTransaction::transfer_in_place(
+                vec![registers::RF_SETUP | commands::W_REGISTER, 0u8],
+                vec![0xEu8, 0u8],
+            ),
+            SpiTransaction::transaction_end(),
+        ];
+        let mut spi_mock = SpiMock::new(&spi_expectations);
+        let mut radio = RF24::new(pin_mock.clone(), spi_mock.clone(), delay_mock);
+        radio.set_lna(false).unwrap();
+        spi_mock.done();
+        pin_mock.done();
     }
 }

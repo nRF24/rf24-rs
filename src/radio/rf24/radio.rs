@@ -1,7 +1,7 @@
-use embedded_hal::{delay::DelayNs, digital::OutputPin, spi::SpiDevice};
-use crate::DataRate;
-use crate::radio::prelude::*;
 use super::{commands, mnemonics, registers, Nrf24Error, RF24};
+use crate::radio::prelude::*;
+use crate::DataRate;
+use embedded_hal::{delay::DelayNs, digital::OutputPin, spi::SpiDevice};
 
 impl<SPI, DO, DELAY> EsbRadio for RF24<SPI, DO, DELAY>
 where
@@ -40,7 +40,7 @@ where
         let after_toggle = self._buf[1];
         self._is_plus_variant = before_toggle == after_toggle;
         if after_toggle > 0 {
-            if self._is_plus_variant {
+            if !self._is_plus_variant {
                 // module did not experience power-on-reset, so now features are disabled
                 // toggle them back on
                 self.toggle_features()?;
@@ -90,7 +90,7 @@ where
 
         // if config is not set correctly then there was a bad response from module
         self.spi_read(1, registers::CONFIG)?;
-        return if self._buf[1] == 14 {
+        return if self._buf[1] == self._config_reg {
             Ok(())
         } else {
             Err(Nrf24Error::BinaryCorruption)
@@ -120,7 +120,7 @@ where
             self.flush_tx()?;
         }
 
-        self._config_reg &= 0xFE;
+        self._config_reg &= !1;
         self.spi_write_byte(registers::CONFIG, self._config_reg)?;
 
         self.spi_read(1, registers::EN_RXADDR)?;
@@ -229,10 +229,10 @@ where
             return Ok(());
         }
         self.spi_read(buf_len, commands::R_RX_PAYLOAD)?;
-        // need to reverse the byte order from Little endian to Big Endian
-        for i in buf_len..0 {
-            buf[i as usize] = self._buf[i as usize + 1 - buf_len as usize];
+        for i in 0..buf_len {
+            buf[i as usize] = self._buf[i as usize + 1];
         }
+        self.clear_status_flags(true, false, false)?;
         Ok(())
     }
 
@@ -256,5 +256,511 @@ where
     fn get_last_arc(&mut self) -> Result<u8, Self::RadioErrorType> {
         self.spi_read(1, registers::OBSERVE_TX)?;
         Ok(self._buf[1] & 0xF)
+    }
+}
+
+/////////////////////////////////////////////////////////////////////////////////
+/// unit tests
+#[cfg(test)]
+mod test {
+    extern crate std;
+    use super::{commands, registers, RF24};
+    use crate::radio::prelude::*;
+    use crate::radio::rf24::mnemonics;
+    use embedded_hal_mock::eh1::delay::NoopDelay;
+    use embedded_hal_mock::eh1::digital::{
+        Mock as PinMock, State as PinState, Transaction as PinTransaction,
+    };
+    use embedded_hal_mock::eh1::spi::{Mock as SpiMock, Transaction as SpiTransaction};
+    use std::vec;
+
+    #[test]
+    pub fn init() {
+        // Create pin
+        let pin_expectations = [PinTransaction::set(PinState::Low)];
+        let mut pin_mock = PinMock::new(&pin_expectations);
+
+        // create delay fn
+        let delay_mock = NoopDelay::new();
+
+        let spi_expectations = [
+            // set_auto_retries()
+            SpiTransaction::transaction_start(),
+            SpiTransaction::transfer_in_place(
+                vec![registers::SETUP_RETR | commands::W_REGISTER, 0x5Fu8],
+                vec![0xEu8, 0u8],
+            ),
+            SpiTransaction::transaction_end(),
+            // set_data_rate(Mbps1)
+            SpiTransaction::transaction_start(),
+            SpiTransaction::transfer_in_place(vec![registers::RF_SETUP, 0u8], vec![0xEu8, 7u8]),
+            SpiTransaction::transaction_end(),
+            SpiTransaction::transaction_start(),
+            SpiTransaction::transfer_in_place(
+                vec![registers::RF_SETUP | commands::W_REGISTER, 7u8],
+                vec![0xEu8, 0u8],
+            ),
+            SpiTransaction::transaction_end(),
+            // we're mocking a non-plus variant here for added coverage
+            // read FEATURE register
+            SpiTransaction::transaction_start(),
+            SpiTransaction::transfer_in_place(vec![registers::FEATURE, 0u8], vec![0xEu8, 0u8]),
+            SpiTransaction::transaction_end(),
+            // toggle_features()
+            SpiTransaction::transaction_start(),
+            SpiTransaction::transfer_in_place(vec![commands::ACTIVATE, 0x73u8], vec![0xEu8, 0u8]),
+            SpiTransaction::transaction_end(),
+            // read FEATURE register
+            SpiTransaction::transaction_start(),
+            SpiTransaction::transfer_in_place(vec![registers::FEATURE, 0u8], vec![0xEu8, 7u8]),
+            SpiTransaction::transaction_end(),
+            // toggle_features()
+            SpiTransaction::transaction_start(),
+            SpiTransaction::transfer_in_place(vec![commands::ACTIVATE, 0x73u8], vec![0xEu8, 0u8]),
+            SpiTransaction::transaction_end(),
+            // we're also mocking a non-plus radio that didn't reset on boot,
+            // so lib wil clear the FEATURE register
+            // write FEATURE register
+            SpiTransaction::transaction_start(),
+            SpiTransaction::transfer_in_place(
+                vec![registers::FEATURE | commands::W_REGISTER, 0u8],
+                vec![0xEu8, 0u8],
+            ),
+            SpiTransaction::transaction_end(),
+            // disable dynamic payloads
+            SpiTransaction::transaction_start(),
+            SpiTransaction::transfer_in_place(
+                vec![registers::DYNPD | commands::W_REGISTER, 0u8],
+                vec![0xEu8, 0u8],
+            ),
+            SpiTransaction::transaction_end(),
+            // enable auto-ack
+            SpiTransaction::transaction_start(),
+            SpiTransaction::transfer_in_place(
+                vec![registers::EN_AA | commands::W_REGISTER, 0x3Fu8],
+                vec![0xEu8, 0u8],
+            ),
+            SpiTransaction::transaction_end(),
+            // open pipes 0 & 1
+            SpiTransaction::transaction_start(),
+            SpiTransaction::transfer_in_place(
+                vec![registers::EN_RXADDR | commands::W_REGISTER, 3u8],
+                vec![0xEu8, 0u8],
+            ),
+            SpiTransaction::transaction_end(),
+            // set payload length to 32 bytes on all pipes
+            SpiTransaction::transaction_start(),
+            SpiTransaction::transfer_in_place(
+                vec![registers::RX_PW_P0 + 0 | commands::W_REGISTER, 32u8],
+                vec![0xEu8, 0u8],
+            ),
+            SpiTransaction::transaction_end(),
+            SpiTransaction::transaction_start(),
+            SpiTransaction::transfer_in_place(
+                vec![registers::RX_PW_P0 + 1 | commands::W_REGISTER, 32u8],
+                vec![0xEu8, 0u8],
+            ),
+            SpiTransaction::transaction_end(),
+            SpiTransaction::transaction_start(),
+            SpiTransaction::transfer_in_place(
+                vec![registers::RX_PW_P0 + 2 | commands::W_REGISTER, 32u8],
+                vec![0xEu8, 0u8],
+            ),
+            SpiTransaction::transaction_end(),
+            SpiTransaction::transaction_start(),
+            SpiTransaction::transfer_in_place(
+                vec![registers::RX_PW_P0 + 3 | commands::W_REGISTER, 32u8],
+                vec![0xEu8, 0u8],
+            ),
+            SpiTransaction::transaction_end(),
+            SpiTransaction::transaction_start(),
+            SpiTransaction::transfer_in_place(
+                vec![registers::RX_PW_P0 + 4 | commands::W_REGISTER, 32u8],
+                vec![0xEu8, 0u8],
+            ),
+            SpiTransaction::transaction_end(),
+            SpiTransaction::transaction_start(),
+            SpiTransaction::transfer_in_place(
+                vec![registers::RX_PW_P0 + 5 | commands::W_REGISTER, 32u8],
+                vec![0xEu8, 0u8],
+            ),
+            SpiTransaction::transaction_end(),
+            // set_address_length(5)
+            SpiTransaction::transaction_start(),
+            SpiTransaction::transfer_in_place(
+                vec![registers::SETUP_AW | commands::W_REGISTER, 3u8],
+                vec![0xEu8, 0u8],
+            ),
+            SpiTransaction::transaction_end(),
+            // set_channel(76)
+            SpiTransaction::transaction_start(),
+            SpiTransaction::transfer_in_place(
+                vec![registers::RF_CH | commands::W_REGISTER, 76u8],
+                vec![0xEu8, 0u8],
+            ),
+            SpiTransaction::transaction_end(),
+            // clear_status_flags()
+            SpiTransaction::transaction_start(),
+            SpiTransaction::transfer_in_place(
+                vec![registers::STATUS | commands::W_REGISTER, 0x70u8],
+                vec![0xEu8, 0u8],
+            ),
+            SpiTransaction::transaction_end(),
+            // flush_rx()
+            SpiTransaction::transaction_start(),
+            SpiTransaction::transfer_in_place(vec![commands::FLUSH_RX], vec![0xEu8]),
+            SpiTransaction::transaction_end(),
+            // flush_tx()
+            SpiTransaction::transaction_start(),
+            SpiTransaction::transfer_in_place(vec![commands::FLUSH_TX], vec![0xEu8]),
+            SpiTransaction::transaction_end(),
+            // set CONFIG register
+            SpiTransaction::transaction_start(),
+            SpiTransaction::transfer_in_place(
+                vec![registers::CONFIG | commands::W_REGISTER, 12u8],
+                vec![0xEu8, 0u8],
+            ),
+            SpiTransaction::transaction_end(),
+            // power_up()
+            SpiTransaction::transaction_start(),
+            SpiTransaction::transfer_in_place(
+                vec![registers::CONFIG | commands::W_REGISTER, 14u8],
+                vec![0xEu8, 0u8],
+            ),
+            SpiTransaction::transaction_end(),
+            // read CONFIG to test for binary corruption on SPI lines
+            SpiTransaction::transaction_start(),
+            SpiTransaction::transfer_in_place(vec![registers::CONFIG, 0u8], vec![0xEu8, 14u8]),
+            SpiTransaction::transaction_end(),
+        ];
+        let mut spi_mock = SpiMock::new(&spi_expectations);
+        let mut radio = RF24::new(pin_mock.clone(), spi_mock.clone(), delay_mock);
+        radio.init().unwrap();
+        assert!(!radio.is_plus_variant());
+        spi_mock.done();
+        pin_mock.done();
+    }
+
+    #[test]
+    pub fn start_listening() {
+        // Create pin
+        let pin_expectations = [PinTransaction::set(PinState::High)];
+        let mut pin_mock = PinMock::new(&pin_expectations);
+
+        // create delay fn
+        let delay_mock = NoopDelay::new();
+
+        let spi_expectations = [
+            // assert PRIM_RX flag
+            SpiTransaction::transaction_start(),
+            SpiTransaction::transfer_in_place(
+                vec![registers::CONFIG | commands::W_REGISTER, 1u8],
+                vec![0xEu8, 0u8],
+            ),
+            SpiTransaction::transaction_end(),
+            // clear_status_flags()
+            SpiTransaction::transaction_start(),
+            SpiTransaction::transfer_in_place(
+                vec![registers::STATUS | commands::W_REGISTER, 0x70u8],
+                vec![0xEu8, 0u8],
+            ),
+            SpiTransaction::transaction_end(),
+            // close_rx_pipe(0)
+            SpiTransaction::transaction_start(),
+            SpiTransaction::transfer_in_place(vec![registers::EN_RXADDR, 0u8], vec![0xEu8, 1u8]),
+            SpiTransaction::transaction_end(),
+            SpiTransaction::transaction_start(),
+            SpiTransaction::transfer_in_place(
+                vec![registers::EN_RXADDR | commands::W_REGISTER, 0u8],
+                vec![0xEu8, 0u8],
+            ),
+            SpiTransaction::transaction_end(),
+        ];
+        let mut spi_mock = SpiMock::new(&spi_expectations);
+        let mut radio = RF24::new(pin_mock.clone(), spi_mock.clone(), delay_mock);
+        radio.start_listening().unwrap();
+        spi_mock.done();
+        pin_mock.done();
+    }
+
+    #[test]
+    pub fn start_listening_open_pipe0() {
+        // Create pin
+        let pin_expectations = [PinTransaction::set(PinState::High)];
+        let mut pin_mock = PinMock::new(&pin_expectations);
+
+        // create delay fn
+        let delay_mock = NoopDelay::new();
+
+        let mut buf_expected = [0x55u8; 6];
+        buf_expected[0] = registers::RX_ADDR_P0 | commands::W_REGISTER;
+
+        let spi_expectations = [
+            // open_rx_pipe(0)
+            SpiTransaction::transaction_start(),
+            SpiTransaction::transfer_in_place(
+                buf_expected.clone().to_vec(),
+                vec![0xEu8, 0u8, 0u8, 0u8, 0u8, 0u8],
+            ),
+            SpiTransaction::transaction_end(),
+            // set EN_RXADDR
+            SpiTransaction::transaction_start(),
+            SpiTransaction::transfer_in_place(vec![registers::EN_RXADDR, 0u8], vec![0xEu8, 0u8]),
+            SpiTransaction::transaction_end(),
+            SpiTransaction::transaction_start(),
+            SpiTransaction::transfer_in_place(
+                vec![registers::EN_RXADDR | commands::W_REGISTER, 1u8],
+                vec![0xEu8, 0u8],
+            ),
+            SpiTransaction::transaction_end(),
+            // assert PRIM_RX flag
+            SpiTransaction::transaction_start(),
+            SpiTransaction::transfer_in_place(
+                vec![registers::CONFIG | commands::W_REGISTER, 1u8],
+                vec![0xEu8, 0u8],
+            ),
+            SpiTransaction::transaction_end(),
+            // clear_status_flags()
+            SpiTransaction::transaction_start(),
+            SpiTransaction::transfer_in_place(
+                vec![registers::STATUS | commands::W_REGISTER, 0x70u8],
+                vec![0xEu8, 0u8],
+            ),
+            SpiTransaction::transaction_end(),
+            // write cached _pipe0_rx_addr
+            SpiTransaction::transaction_start(),
+            SpiTransaction::transfer_in_place(
+                buf_expected.to_vec(),
+                vec![0xEu8, 0u8, 0u8, 0u8, 0u8, 0u8],
+            ),
+            SpiTransaction::transaction_end(),
+        ];
+        let mut spi_mock = SpiMock::new(&spi_expectations);
+        let mut radio = RF24::new(pin_mock.clone(), spi_mock.clone(), delay_mock);
+        let address = [0x55u8; 5];
+        radio.open_rx_pipe(0, &address).unwrap();
+        radio.start_listening().unwrap();
+        spi_mock.done();
+        pin_mock.done();
+    }
+
+    #[test]
+    pub fn stop_listening() {
+        // Create pin
+        let pin_expectations = [PinTransaction::set(PinState::Low)];
+        let mut pin_mock = PinMock::new(&pin_expectations);
+
+        // create delay fn
+        let delay_mock = NoopDelay::new();
+
+        let spi_expectations = [
+            // enable ACK payloads
+            // read/write FEATURE register
+            SpiTransaction::transaction_start(),
+            SpiTransaction::transfer_in_place(vec![registers::FEATURE, 0u8], vec![0xEu8, 0u8]),
+            SpiTransaction::transaction_end(),
+            SpiTransaction::transaction_start(),
+            SpiTransaction::transfer_in_place(
+                vec![
+                    registers::FEATURE | commands::W_REGISTER,
+                    mnemonics::EN_ACK_PAY | mnemonics::EN_DPL,
+                ],
+                vec![0xEu8, 0u8],
+            ),
+            SpiTransaction::transaction_end(),
+            // read/write DYNPD register
+            SpiTransaction::transaction_start(),
+            SpiTransaction::transfer_in_place(vec![registers::DYNPD, 0u8], vec![0xEu8, 0u8]),
+            SpiTransaction::transaction_end(),
+            SpiTransaction::transaction_start(),
+            SpiTransaction::transfer_in_place(
+                vec![registers::DYNPD | commands::W_REGISTER, 3u8],
+                vec![0xEu8, 0u8],
+            ),
+            SpiTransaction::transaction_end(),
+            // flush_tx() of artifact ACK payloads
+            SpiTransaction::transaction_start(),
+            SpiTransaction::transfer_in_place(vec![commands::FLUSH_TX], vec![0xEu8]),
+            SpiTransaction::transaction_end(),
+            // clear PRIM_RX flag
+            SpiTransaction::transaction_start(),
+            SpiTransaction::transfer_in_place(
+                vec![registers::CONFIG | commands::W_REGISTER, 0u8],
+                vec![0xEu8, 0u8],
+            ),
+            SpiTransaction::transaction_end(),
+            // open pipe 0 for TX (regardless of auto-ack)
+            SpiTransaction::transaction_start(),
+            SpiTransaction::transfer_in_place(vec![registers::EN_RXADDR, 0u8], vec![0xEu8, 0u8]),
+            SpiTransaction::transaction_end(),
+            SpiTransaction::transaction_start(),
+            SpiTransaction::transfer_in_place(
+                vec![registers::EN_RXADDR | commands::W_REGISTER, 1u8],
+                vec![0xEu8, 0u8],
+            ),
+            SpiTransaction::transaction_end(),
+        ];
+        let mut spi_mock = SpiMock::new(&spi_expectations);
+        let mut radio = RF24::new(pin_mock.clone(), spi_mock.clone(), delay_mock);
+        radio.allow_ack_payloads(true).unwrap();
+        radio.stop_listening().unwrap();
+        spi_mock.done();
+        pin_mock.done();
+    }
+
+    #[test]
+    pub fn send() {
+        // Create pin
+        let pin_expectations = [
+            PinTransaction::set(PinState::Low),
+            PinTransaction::set(PinState::High),
+        ];
+        let mut pin_mock = PinMock::new(&pin_expectations);
+
+        // create delay fn
+        let delay_mock = NoopDelay::new();
+
+        let mut buf = [0u8; 33];
+        buf[0] = commands::W_TX_PAYLOAD;
+        for i in 0..8 {
+            buf[i + 1] = 0x55;
+        }
+
+        let spi_expectations = [
+            // flush_tx() of artifact ACK payloads
+            SpiTransaction::transaction_start(),
+            SpiTransaction::transfer_in_place(vec![commands::FLUSH_TX], vec![0xEu8]),
+            SpiTransaction::transaction_end(),
+            // clear_status_flags()
+            SpiTransaction::transaction_start(),
+            SpiTransaction::transfer_in_place(
+                vec![
+                    registers::STATUS | commands::W_REGISTER,
+                    mnemonics::MASK_MAX_RT | mnemonics::MASK_RX_DR | mnemonics::MASK_TX_DS,
+                ],
+                vec![0xEu8, 0u8],
+            ),
+            SpiTransaction::transaction_end(),
+            // write payload
+            SpiTransaction::transaction_start(),
+            SpiTransaction::transfer_in_place(buf.to_vec(), vec![0u8; 33]),
+            SpiTransaction::transaction_end(),
+            // spoof a tx_ds event from a NOP write
+            SpiTransaction::transaction_start(),
+            SpiTransaction::transfer_in_place(
+                vec![commands::NOP],
+                vec![0xE | mnemonics::MASK_TX_DS],
+            ),
+            SpiTransaction::transaction_end(),
+        ];
+        let mut spi_mock = SpiMock::new(&spi_expectations);
+        let mut radio = RF24::new(pin_mock.clone(), spi_mock.clone(), delay_mock);
+        let payload = [0x55; 8];
+        assert!(radio.send(&payload, false).unwrap());
+        spi_mock.done();
+        pin_mock.done();
+    }
+
+    #[test]
+    pub fn read() {
+        // Create pin
+        let pin_expectations = [];
+        let mut pin_mock = PinMock::new(&pin_expectations);
+
+        // create delay fn
+        let delay_mock = NoopDelay::new();
+        let mut buf = [0u8; 33];
+        buf[0] = commands::R_RX_PAYLOAD;
+
+        let spi_expectations = [
+            // read RX payload
+            SpiTransaction::transaction_start(),
+            SpiTransaction::transfer_in_place(buf.clone().to_vec(), vec![0x55u8; 33]),
+            SpiTransaction::transaction_end(),
+            // clear the rx_dr event
+            SpiTransaction::transaction_start(),
+            SpiTransaction::transfer_in_place(
+                vec![
+                    registers::STATUS | commands::W_REGISTER,
+                    mnemonics::MASK_RX_DR,
+                ],
+                vec![0xEu8, 0u8],
+            ),
+            SpiTransaction::transaction_end(),
+        ];
+        let mut spi_mock = SpiMock::new(&spi_expectations);
+        let mut radio = RF24::new(pin_mock.clone(), spi_mock.clone(), delay_mock);
+        let mut payload = [0u8; 32];
+        radio.read(&mut payload, 32).unwrap();
+        assert_eq!(payload, [0x55u8; 32]);
+        spi_mock.done();
+        pin_mock.done();
+    }
+
+    #[test]
+    pub fn resend() {
+        // Create pin
+        let pin_expectations = [
+            PinTransaction::set(PinState::Low),
+            PinTransaction::set(PinState::High),
+        ];
+        let mut pin_mock = PinMock::new(&pin_expectations);
+
+        // create delay fn
+        let delay_mock = NoopDelay::new();
+
+        let spi_expectations = [
+            // clear the tx_df and tx_ds events
+            SpiTransaction::transaction_start(),
+            SpiTransaction::transfer_in_place(
+                vec![
+                    registers::STATUS | commands::W_REGISTER,
+                    mnemonics::MASK_MAX_RT | mnemonics::MASK_TX_DS,
+                ],
+                vec![0xEu8, 0u8],
+            ),
+            SpiTransaction::transaction_end(),
+            // assert the REUSE_TX_PL flag
+            SpiTransaction::transaction_start(),
+            SpiTransaction::transfer_in_place(vec![commands::REUSE_TX_PL], vec![0xEu8]),
+            SpiTransaction::transaction_end(),
+            // spoof a tx_ds event from a NOP write
+            SpiTransaction::transaction_start(),
+            SpiTransaction::transfer_in_place(
+                vec![commands::NOP],
+                vec![0xE | mnemonics::MASK_TX_DS],
+            ),
+            SpiTransaction::transaction_end(),
+        ];
+        let mut spi_mock = SpiMock::new(&spi_expectations);
+        let mut radio = RF24::new(pin_mock.clone(), spi_mock.clone(), delay_mock);
+        assert!(radio.resend().unwrap());
+        spi_mock.done();
+        pin_mock.done();
+    }
+
+    #[test]
+    pub fn get_last_arc() {
+        // Create pin
+        let pin_expectations = [];
+        let mut pin_mock = PinMock::new(&pin_expectations);
+
+        // create delay fn
+        let delay_mock = NoopDelay::new();
+
+        let spi_expectations = [
+            // get the ARC value from OBSERVE_TX register
+            SpiTransaction::transaction_start(),
+            SpiTransaction::transfer_in_place(
+                vec![registers::OBSERVE_TX, 0u8],
+                vec![0xEu8, 0xFFu8],
+            ),
+            SpiTransaction::transaction_end(),
+        ];
+        let mut spi_mock = SpiMock::new(&spi_expectations);
+        let mut radio = RF24::new(pin_mock.clone(), spi_mock.clone(), delay_mock);
+        assert_eq!(radio.get_last_arc().unwrap(), 15u8);
+        spi_mock.done();
+        pin_mock.done();
     }
 }

@@ -1,5 +1,6 @@
 /// Power Amplifier level. The units dBm (decibel-milliwatts or dB<sub>mW</sub>)
 /// represents a logarithmic signal loss.
+#[derive(Clone, Copy, Debug, PartialEq)]
 pub enum PaLevel {
     /// | nRF24L01 | Si24R1 with<br>LNA Enabled | Si24R1 with<br>LNA Disabled |
     /// | :-------:|:--------------------------:|:---------------------------:|
@@ -20,6 +21,7 @@ pub enum PaLevel {
 }
 
 /// How fast data moves through the air. Units are in bits per second (bps).
+#[derive(Clone, Copy, Debug, PartialEq)]
 pub enum DataRate {
     /// represents 1 Mbps
     Mbps1,
@@ -32,6 +34,7 @@ pub enum DataRate {
 /// The length of a CRC checksum that is used (if any).
 ///
 /// Cyclical Redundancy Checking (CRC) is commonly used to ensure data integrity.
+#[derive(Clone, Copy, Debug, PartialEq)]
 pub enum CrcLength {
     /// represents no CRC checksum is used
     DISABLED,
@@ -42,6 +45,7 @@ pub enum CrcLength {
 }
 
 /// The possible states of a FIFO.
+#[derive(Clone, Copy, Debug, PartialEq)]
 pub enum FifoState {
     /// Represent the state of a FIFO when it is full.
     Full,

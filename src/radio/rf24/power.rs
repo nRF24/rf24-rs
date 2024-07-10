@@ -30,7 +30,7 @@ where
 
     fn power_up(&mut self, delay: Option<u32>) -> Result<(), Self::PowerErrorType> {
         // if not powered up then power up and wait for the radio to initialize
-        if self._config_reg & 0xFD > 0 {
+        if self._config_reg & 2 > 0 {
             return Ok(());
         }
         self._config_reg |= 2;
@@ -43,5 +43,72 @@ where
             self._delay_impl.delay_us(delay.unwrap_or_else(|| 5000));
         }
         Ok(())
+    }
+}
+
+/////////////////////////////////////////////////////////////////////////////////
+/// unit tests
+#[cfg(test)]
+mod test {
+    extern crate std;
+    use crate::radio::prelude::EsbPower;
+    use crate::radio::rf24::commands;
+
+    use super::{registers, RF24};
+    use embedded_hal_mock::eh1::delay::NoopDelay;
+    use embedded_hal_mock::eh1::digital::Mock as PinMock;
+    use embedded_hal_mock::eh1::spi::{Mock as SpiMock, Transaction as SpiTransaction};
+    use std::vec;
+
+    #[test]
+    pub fn power_up() {
+        // Create pin
+        let pin_expectations = [];
+        let mut pin_mock = PinMock::new(&pin_expectations);
+
+        // create delay fn
+        let delay_mock = NoopDelay::new();
+
+        let spi_expectations = [
+            // get the RF_SETUP register value for each possible result
+            SpiTransaction::transaction_start(),
+            SpiTransaction::transfer_in_place(
+                vec![registers::CONFIG | commands::W_REGISTER, 2u8],
+                vec![0xEu8, 0u8],
+            ),
+            SpiTransaction::transaction_end(),
+        ];
+        let mut spi_mock = SpiMock::new(&spi_expectations);
+        let mut radio = RF24::new(pin_mock.clone(), spi_mock.clone(), delay_mock);
+        radio.power_up(None).unwrap();
+        radio.power_up(None).unwrap();
+        // radio.power_up(Some(0)).unwrap();
+        spi_mock.done();
+        pin_mock.done();
+    }
+
+    #[test]
+    pub fn power_up_no_blocking() {
+        // Create pin
+        let pin_expectations = [];
+        let mut pin_mock = PinMock::new(&pin_expectations);
+
+        // create delay fn
+        let delay_mock = NoopDelay::new();
+
+        let spi_expectations = [
+            // get the RF_SETUP register value for each possible result
+            SpiTransaction::transaction_start(),
+            SpiTransaction::transfer_in_place(
+                vec![registers::CONFIG | commands::W_REGISTER, 2u8],
+                vec![0xEu8, 0u8],
+            ),
+            SpiTransaction::transaction_end(),
+        ];
+        let mut spi_mock = SpiMock::new(&spi_expectations);
+        let mut radio = RF24::new(pin_mock.clone(), spi_mock.clone(), delay_mock);
+        radio.power_up(Some(0)).unwrap();
+        spi_mock.done();
+        pin_mock.done();
     }
 }
