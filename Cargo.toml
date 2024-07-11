@@ -1,7 +1,16 @@
 [package]
 name = "rf24-rs"
+description = "A pure-rust driver for the nRF24L01 wiresless tranceiver"
 version = "0.1.0"
+repository = "https://github.com/nRF24/rf24-rs"
 edition = "2021"
+rust-version = "1.70"
+exclude = [".github/", "codecov.yml"]
+keywords = ["nrf24l01", "wireless", "transceiver", "embedded", "nRF24", "RF24"]
+license = "MIT"
+license-file = "LICENSE"
+autobins = false
+autoexamples = false
 
 [dependencies]
 embedded-hal = "1.0.0"
