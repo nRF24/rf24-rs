@@ -70,7 +70,8 @@ mod test {
     use embedded_hal_mock::eh1::spi::{Mock as SpiMock, Transaction as SpiTransaction};
     use std::vec;
 
-    // set_channel() is already tested in RF24::init() and RF24::start_carrier_wave()
+    // dynamic payloads are already tested in EsbAutoAck trait as
+    // these features' behaviors are interdependent.
 
     #[test]
     pub fn set_payload_length() {

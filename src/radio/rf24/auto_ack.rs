@@ -113,8 +113,6 @@ mod test {
     use embedded_hal_mock::eh1::spi::{Mock as SpiMock, Transaction as SpiTransaction};
     use std::vec;
 
-    // set_channel() is already tested in RF24::init() and RF24::start_carrier_wave()
-
     #[test]
     pub fn allow_ack_payloads() {
         // Create pin
@@ -193,11 +191,6 @@ mod test {
         ];
         let mut spi_mock = SpiMock::new(&spi_expectations);
         let mut radio = RF24::new(pin_mock.clone(), spi_mock.clone(), delay_mock);
-
-        // This is going to be ugly because dynamic payloads is semi-controlled
-        // by the auto-ack & ACK payload feature.
-        // This algorithm wouldn't make sense in a real world scenario,
-        // but the subjective behavior has been battle-hardened for years in C++.
         radio.allow_ack_payloads(true).unwrap();
         let buf = [0x55; 2];
         assert!(!radio.write_ack_payload(9, &buf).unwrap());
@@ -209,6 +202,105 @@ mod test {
         assert_eq!(radio.get_dynamic_payload_length().unwrap(), 32u8);
         radio.set_auto_ack_pipe(false, 9).unwrap();
         radio.set_auto_ack_pipe(false, 0).unwrap();
+        spi_mock.done();
+        pin_mock.done();
+    }
+
+    #[test]
+    pub fn set_auto_ack() {
+        // Create pin
+        let pin_expectations = [];
+        let mut pin_mock = PinMock::new(&pin_expectations);
+
+        // create delay fn
+        let delay_mock = NoopDelay::new();
+
+        let spi_expectations = [
+            // enable ACK payloads
+            // read/write FEATURE register
+            SpiTransaction::transaction_start(),
+            SpiTransaction::transfer_in_place(vec![registers::FEATURE, 0u8], vec![0xEu8, 0u8]),
+            SpiTransaction::transaction_end(),
+            SpiTransaction::transaction_start(),
+            SpiTransaction::transfer_in_place(
+                vec![
+                    registers::FEATURE | commands::W_REGISTER,
+                    mnemonics::EN_ACK_PAY | mnemonics::EN_DPL,
+                ],
+                vec![0xEu8, 0u8],
+            ),
+            SpiTransaction::transaction_end(),
+            // read/write DYNPD register
+            SpiTransaction::transaction_start(),
+            SpiTransaction::transfer_in_place(vec![registers::DYNPD, 0u8], vec![0xEu8, 0u8]),
+            SpiTransaction::transaction_end(),
+            SpiTransaction::transaction_start(),
+            SpiTransaction::transfer_in_place(
+                vec![registers::DYNPD | commands::W_REGISTER, 3u8],
+                vec![0xEu8, 0u8],
+            ),
+            SpiTransaction::transaction_end(),
+            // write EN_AA register value
+            SpiTransaction::transaction_start(),
+            SpiTransaction::transfer_in_place(
+                vec![registers::EN_AA | commands::W_REGISTER, 0u8],
+                vec![0xEu8, 0u8],
+            ),
+            SpiTransaction::transaction_end(),
+            // disable ACK payloads in FEATURE register
+            SpiTransaction::transaction_start(),
+            SpiTransaction::transfer_in_place(
+                vec![registers::FEATURE, 0u8],
+                vec![0u8, mnemonics::EN_DPL],
+            ),
+            SpiTransaction::transaction_end(),
+            SpiTransaction::transaction_start(),
+            SpiTransaction::transfer_in_place(
+                vec![registers::FEATURE | commands::W_REGISTER, 0u8],
+                vec![0xEu8, 0u8],
+            ),
+            SpiTransaction::transaction_end(),
+            // clear DYNPD register
+            SpiTransaction::transaction_start(),
+            SpiTransaction::transfer_in_place(
+                vec![registers::DYNPD | commands::W_REGISTER, 0u8],
+                vec![0xEu8, 0x3Fu8],
+            ),
+            SpiTransaction::transaction_end(),
+        ];
+        let mut spi_mock = SpiMock::new(&spi_expectations);
+        let mut radio = RF24::new(pin_mock.clone(), spi_mock.clone(), delay_mock);
+        radio.allow_ack_payloads(true).unwrap();
+        radio.set_auto_ack(false).unwrap();
+        assert_eq!(radio.get_dynamic_payload_length().unwrap(), 0u8);
+        spi_mock.done();
+        pin_mock.done();
+    }
+
+    #[test]
+    pub fn allow_ask_no_ack() {
+        // Create pin
+        let pin_expectations = [];
+        let mut pin_mock = PinMock::new(&pin_expectations);
+
+        // create delay fn
+        let delay_mock = NoopDelay::new();
+
+        let spi_expectations = [
+            // disable EN_DYN_ACK flag in FEATURE register
+            SpiTransaction::transaction_start(),
+            SpiTransaction::transfer_in_place(vec![registers::FEATURE, 0u8], vec![0u8, 2u8]),
+            SpiTransaction::transaction_end(),
+            SpiTransaction::transaction_start(),
+            SpiTransaction::transfer_in_place(
+                vec![registers::FEATURE | commands::W_REGISTER, 3u8],
+                vec![0xEu8, 0u8],
+            ),
+            SpiTransaction::transaction_end(),
+        ];
+        let mut spi_mock = SpiMock::new(&spi_expectations);
+        let mut radio = RF24::new(pin_mock.clone(), spi_mock.clone(), delay_mock);
+        radio.allow_ask_no_ack(true).unwrap();
         spi_mock.done();
         pin_mock.done();
     }
