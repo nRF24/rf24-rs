@@ -84,7 +84,7 @@ where
     }
 
     /// This is also used to write SPI commands that consist of 1 byte:
-    /// ```compile_fail
+    /// ```ignore
     /// self.spi_read(0, commands::NOP)?;
     /// // STATUS register is now stored in self._status
     /// ```
