@@ -104,6 +104,7 @@ mod test {
     extern crate std;
     use crate::radio::prelude::EsbStatus;
     use crate::radio::rf24::commands;
+    use crate::spi_test_expects;
 
     use super::{registers, RF24};
     use embedded_hal_mock::eh1::delay::NoopDelay;
@@ -120,11 +121,9 @@ mod test {
         // create delay fn
         let delay_mock = NoopDelay::new();
 
-        let spi_expectations = [
+        let spi_expectations = spi_test_expects![
             // get the RF_SETUP register value for each possible result
-            SpiTransaction::transaction_start(),
-            SpiTransaction::transfer_in_place(vec![commands::NOP], vec![0x70u8]),
-            SpiTransaction::transaction_end(),
+            (vec![commands::NOP], vec![0x70u8]),
         ];
         let mut spi_mock = SpiMock::new(&spi_expectations);
         let mut radio = RF24::new(pin_mock.clone(), spi_mock.clone(), delay_mock);

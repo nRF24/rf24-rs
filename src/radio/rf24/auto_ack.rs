@@ -106,6 +106,7 @@ mod test {
     extern crate std;
     use crate::radio::prelude::{EsbAutoAck, EsbPayloadLength};
     use crate::radio::Nrf24Error;
+    use crate::spi_test_expects;
 
     use super::{commands, mnemonics, registers, RF24};
     use embedded_hal_mock::eh1::delay::NoopDelay;
@@ -124,70 +125,42 @@ mod test {
         let mut ack_buf = [0x55; 3];
         ack_buf[0] = commands::W_ACK_PAYLOAD | 2;
 
-        let spi_expectations = [
+        let spi_expectations = spi_test_expects![
             // enable ACK payloads
             // read/write FEATURE register
-            SpiTransaction::transaction_start(),
-            SpiTransaction::transfer_in_place(vec![registers::FEATURE, 0u8], vec![0xEu8, 0u8]),
-            SpiTransaction::transaction_end(),
-            SpiTransaction::transaction_start(),
-            SpiTransaction::transfer_in_place(
+            (vec![registers::FEATURE, 0u8], vec![0xEu8, 0u8]),
+            (
                 vec![
                     registers::FEATURE | commands::W_REGISTER,
                     mnemonics::EN_ACK_PAY | mnemonics::EN_DPL,
                 ],
                 vec![0xEu8, 0u8],
             ),
-            SpiTransaction::transaction_end(),
             // read/write DYNPD register
-            SpiTransaction::transaction_start(),
-            SpiTransaction::transfer_in_place(vec![registers::DYNPD, 0u8], vec![0xEu8, 0u8]),
-            SpiTransaction::transaction_end(),
-            SpiTransaction::transaction_start(),
-            SpiTransaction::transfer_in_place(
+            (vec![registers::DYNPD, 0u8], vec![0xEu8, 0u8]),
+            (
                 vec![registers::DYNPD | commands::W_REGISTER, 3u8],
                 vec![0xEu8, 0u8],
             ),
-            SpiTransaction::transaction_end(),
             // write_ack_payload()
-            SpiTransaction::transaction_start(),
-            SpiTransaction::transfer_in_place(ack_buf.to_vec(), vec![0u8; 3]),
-            SpiTransaction::transaction_end(),
+            (ack_buf.to_vec(), vec![0u8; 3]),
             // read dynamic payload length invalid value
-            SpiTransaction::transaction_start(),
-            SpiTransaction::transfer_in_place(
-                vec![commands::R_RX_PL_WID, 0u8],
-                vec![0xEu8, 0xFFu8],
-            ),
-            SpiTransaction::transaction_end(),
+            (vec![commands::R_RX_PL_WID, 0u8], vec![0xEu8, 0xFFu8]),
             // read dynamic payload length valid value
-            SpiTransaction::transaction_start(),
-            SpiTransaction::transfer_in_place(
-                vec![commands::R_RX_PL_WID, 0xFFu8],
-                vec![0xEu8, 32u8],
-            ),
-            SpiTransaction::transaction_end(),
+            (vec![commands::R_RX_PL_WID, 0xFFu8], vec![0xEu8, 32u8]),
             // read EN_AA register value
-            SpiTransaction::transaction_start(),
-            SpiTransaction::transfer_in_place(vec![registers::EN_AA, 32u8], vec![0u8, 0x3Fu8]),
-            SpiTransaction::transaction_end(),
+            (vec![registers::EN_AA, 32u8], vec![0u8, 0x3Fu8]),
             // disable ACK payloads in FEATURE register
-            SpiTransaction::transaction_start(),
-            SpiTransaction::transfer_in_place(vec![registers::FEATURE, 0x3Fu8], vec![0u8, 3u8]),
-            SpiTransaction::transaction_end(),
-            SpiTransaction::transaction_start(),
-            SpiTransaction::transfer_in_place(
+            (vec![registers::FEATURE, 0x3Fu8], vec![0u8, 3u8]),
+            (
                 vec![registers::FEATURE | commands::W_REGISTER, 1u8],
                 vec![0xEu8, 0u8],
             ),
-            SpiTransaction::transaction_end(),
             // set EN_AA register with pipe 0 disabled
-            SpiTransaction::transaction_start(),
-            SpiTransaction::transfer_in_place(
+            (
                 vec![registers::EN_AA | commands::W_REGISTER, 0x3Eu8],
                 vec![0xEu8, 0x3Fu8],
             ),
-            SpiTransaction::transaction_end(),
         ];
         let mut spi_mock = SpiMock::new(&spi_expectations);
         let mut radio = RF24::new(pin_mock.clone(), spi_mock.clone(), delay_mock);
@@ -215,58 +188,39 @@ mod test {
         // create delay fn
         let delay_mock = NoopDelay::new();
 
-        let spi_expectations = [
+        let spi_expectations = spi_test_expects![
             // enable ACK payloads
             // read/write FEATURE register
-            SpiTransaction::transaction_start(),
-            SpiTransaction::transfer_in_place(vec![registers::FEATURE, 0u8], vec![0xEu8, 0u8]),
-            SpiTransaction::transaction_end(),
-            SpiTransaction::transaction_start(),
-            SpiTransaction::transfer_in_place(
+            (vec![registers::FEATURE, 0u8], vec![0xEu8, 0u8]),
+            (
                 vec![
                     registers::FEATURE | commands::W_REGISTER,
                     mnemonics::EN_ACK_PAY | mnemonics::EN_DPL,
                 ],
                 vec![0xEu8, 0u8],
             ),
-            SpiTransaction::transaction_end(),
             // read/write DYNPD register
-            SpiTransaction::transaction_start(),
-            SpiTransaction::transfer_in_place(vec![registers::DYNPD, 0u8], vec![0xEu8, 0u8]),
-            SpiTransaction::transaction_end(),
-            SpiTransaction::transaction_start(),
-            SpiTransaction::transfer_in_place(
+            (vec![registers::DYNPD, 0u8], vec![0xEu8, 0u8]),
+            (
                 vec![registers::DYNPD | commands::W_REGISTER, 3u8],
                 vec![0xEu8, 0u8],
             ),
-            SpiTransaction::transaction_end(),
             // write EN_AA register value
-            SpiTransaction::transaction_start(),
-            SpiTransaction::transfer_in_place(
+            (
                 vec![registers::EN_AA | commands::W_REGISTER, 0u8],
                 vec![0xEu8, 0u8],
             ),
-            SpiTransaction::transaction_end(),
             // disable ACK payloads in FEATURE register
-            SpiTransaction::transaction_start(),
-            SpiTransaction::transfer_in_place(
-                vec![registers::FEATURE, 0u8],
-                vec![0u8, mnemonics::EN_DPL],
-            ),
-            SpiTransaction::transaction_end(),
-            SpiTransaction::transaction_start(),
-            SpiTransaction::transfer_in_place(
+            (vec![registers::FEATURE, 0u8], vec![0u8, mnemonics::EN_DPL]),
+            (
                 vec![registers::FEATURE | commands::W_REGISTER, 0u8],
                 vec![0xEu8, 0u8],
             ),
-            SpiTransaction::transaction_end(),
             // clear DYNPD register
-            SpiTransaction::transaction_start(),
-            SpiTransaction::transfer_in_place(
+            (
                 vec![registers::DYNPD | commands::W_REGISTER, 0u8],
                 vec![0xEu8, 0x3Fu8],
             ),
-            SpiTransaction::transaction_end(),
         ];
         let mut spi_mock = SpiMock::new(&spi_expectations);
         let mut radio = RF24::new(pin_mock.clone(), spi_mock.clone(), delay_mock);
@@ -286,17 +240,13 @@ mod test {
         // create delay fn
         let delay_mock = NoopDelay::new();
 
-        let spi_expectations = [
+        let spi_expectations = spi_test_expects![
             // disable EN_DYN_ACK flag in FEATURE register
-            SpiTransaction::transaction_start(),
-            SpiTransaction::transfer_in_place(vec![registers::FEATURE, 0u8], vec![0u8, 2u8]),
-            SpiTransaction::transaction_end(),
-            SpiTransaction::transaction_start(),
-            SpiTransaction::transfer_in_place(
+            (vec![registers::FEATURE, 0u8], vec![0u8, 2u8]),
+            (
                 vec![registers::FEATURE | commands::W_REGISTER, 3u8],
                 vec![0xEu8, 0u8],
             ),
-            SpiTransaction::transaction_end(),
         ];
         let mut spi_mock = SpiMock::new(&spi_expectations);
         let mut radio = RF24::new(pin_mock.clone(), spi_mock.clone(), delay_mock);

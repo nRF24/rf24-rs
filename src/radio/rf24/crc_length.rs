@@ -45,7 +45,7 @@ mod test {
     extern crate std;
     use crate::radio::prelude::EsbCrcLength;
     use crate::radio::rf24::commands;
-    use crate::CrcLength;
+    use crate::{spi_test_expects, CrcLength};
 
     use super::{registers, RF24};
     use embedded_hal_mock::eh1::delay::NoopDelay;
@@ -62,20 +62,12 @@ mod test {
         // create delay fn
         let delay_mock = NoopDelay::new();
 
-        let spi_expectations = [
+        let spi_expectations = spi_test_expects![
             // get the CONFIG register value for each possible result
-            SpiTransaction::transaction_start(),
-            SpiTransaction::transfer_in_place(vec![registers::CONFIG, 0u8], vec![0xEu8, 0u8]),
-            SpiTransaction::transaction_end(),
-            SpiTransaction::transaction_start(),
-            SpiTransaction::transfer_in_place(vec![registers::CONFIG, 0u8], vec![0xEu8, 0x8u8]),
-            SpiTransaction::transaction_end(),
-            SpiTransaction::transaction_start(),
-            SpiTransaction::transfer_in_place(vec![registers::CONFIG, 0x8u8], vec![0xEu8, 0xCu8]),
-            SpiTransaction::transaction_end(),
-            SpiTransaction::transaction_start(),
-            SpiTransaction::transfer_in_place(vec![registers::CONFIG, 0xCu8], vec![0xEu8, 4u8]),
-            SpiTransaction::transaction_end(),
+            (vec![registers::CONFIG, 0u8], vec![0xEu8, 0u8]),
+            (vec![registers::CONFIG, 0u8], vec![0xEu8, 0x8u8]),
+            (vec![registers::CONFIG, 0x8u8], vec![0xEu8, 0xCu8]),
+            (vec![registers::CONFIG, 0xCu8], vec![0xEu8, 4u8]),
         ];
         let mut spi_mock = SpiMock::new(&spi_expectations);
         let mut radio = RF24::new(pin_mock.clone(), spi_mock.clone(), delay_mock);
@@ -99,35 +91,23 @@ mod test {
         // create delay fn
         let delay_mock = NoopDelay::new();
 
-        let spi_expectations = [
+        let spi_expectations = spi_test_expects![
             // set the CONFIG register value for each possible enumeration of CrcLength
-            SpiTransaction::transaction_start(),
-            SpiTransaction::transfer_in_place(vec![registers::CONFIG, 0u8], vec![0xEu8, 4u8]),
-            SpiTransaction::transaction_end(),
-            SpiTransaction::transaction_start(),
-            SpiTransaction::transfer_in_place(
+            (vec![registers::CONFIG, 0u8], vec![0xEu8, 4u8]),
+            (
                 vec![registers::CONFIG | commands::W_REGISTER, 0u8],
                 vec![0xEu8, 0u8],
             ),
-            SpiTransaction::transaction_end(),
-            SpiTransaction::transaction_start(),
-            SpiTransaction::transfer_in_place(vec![registers::CONFIG, 0u8], vec![0xEu8, 4u8]),
-            SpiTransaction::transaction_end(),
-            SpiTransaction::transaction_start(),
-            SpiTransaction::transfer_in_place(
+            (vec![registers::CONFIG, 0u8], vec![0xEu8, 4u8]),
+            (
                 vec![registers::CONFIG | commands::W_REGISTER, 0x8u8],
                 vec![0xEu8, 0u8],
             ),
-            SpiTransaction::transaction_end(),
-            SpiTransaction::transaction_start(),
-            SpiTransaction::transfer_in_place(vec![registers::CONFIG, 0u8], vec![0xEu8, 4u8]),
-            SpiTransaction::transaction_end(),
-            SpiTransaction::transaction_start(),
-            SpiTransaction::transfer_in_place(
+            (vec![registers::CONFIG, 0u8], vec![0xEu8, 4u8]),
+            (
                 vec![registers::CONFIG | commands::W_REGISTER, 0xCu8],
                 vec![0xEu8, 0u8],
             ),
-            SpiTransaction::transaction_end(),
         ];
         let mut spi_mock = SpiMock::new(&spi_expectations);
         let mut radio = RF24::new(pin_mock.clone(), spi_mock.clone(), delay_mock);

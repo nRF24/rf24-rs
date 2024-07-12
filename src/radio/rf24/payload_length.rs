@@ -59,10 +59,12 @@ where
 
 /////////////////////////////////////////////////////////////////////////////////
 /// unit tests
+
 #[cfg(test)]
 mod test {
     extern crate std;
     use crate::radio::prelude::EsbPayloadLength;
+    use crate::spi_test_expects;
 
     use super::{commands, registers, RF24};
     use embedded_hal_mock::eh1::delay::NoopDelay;
@@ -82,51 +84,34 @@ mod test {
         // create delay fn
         let delay_mock = NoopDelay::new();
 
-        let spi_expectations = [
+        let spi_expectations = spi_test_expects![
             // set payload length to 32 bytes on all pipes
-            SpiTransaction::transaction_start(),
-            SpiTransaction::transfer_in_place(
+            (
                 vec![registers::RX_PW_P0 + 0 | commands::W_REGISTER, 32u8],
-                vec![0xEu8, 0u8],
+                vec![0xEu8, 0u8]
             ),
-            SpiTransaction::transaction_end(),
-            SpiTransaction::transaction_start(),
-            SpiTransaction::transfer_in_place(
+            (
                 vec![registers::RX_PW_P0 + 1 | commands::W_REGISTER, 32u8],
-                vec![0xEu8, 0u8],
+                vec![0xEu8, 0u8]
             ),
-            SpiTransaction::transaction_end(),
-            SpiTransaction::transaction_start(),
-            SpiTransaction::transfer_in_place(
+            (
                 vec![registers::RX_PW_P0 + 2 | commands::W_REGISTER, 32u8],
-                vec![0xEu8, 0u8],
+                vec![0xEu8, 0u8]
             ),
-            SpiTransaction::transaction_end(),
-            SpiTransaction::transaction_start(),
-            SpiTransaction::transfer_in_place(
+            (
                 vec![registers::RX_PW_P0 + 3 | commands::W_REGISTER, 32u8],
-                vec![0xEu8, 0u8],
+                vec![0xEu8, 0u8]
             ),
-            SpiTransaction::transaction_end(),
-            SpiTransaction::transaction_start(),
-            SpiTransaction::transfer_in_place(
+            (
                 vec![registers::RX_PW_P0 + 4 | commands::W_REGISTER, 32u8],
-                vec![0xEu8, 0u8],
+                vec![0xEu8, 0u8]
             ),
-            SpiTransaction::transaction_end(),
-            SpiTransaction::transaction_start(),
-            SpiTransaction::transfer_in_place(
+            (
                 vec![registers::RX_PW_P0 + 5 | commands::W_REGISTER, 32u8],
-                vec![0xEu8, 0u8],
+                vec![0xEu8, 0u8]
             ),
-            SpiTransaction::transaction_end(),
             // get payload length for all pipe 0 (because all pipes will use the same static length)
-            SpiTransaction::transaction_start(),
-            SpiTransaction::transfer_in_place(
-                vec![registers::RX_PW_P0 + 0, 0u8],
-                vec![0xEu8, 32u8],
-            ),
-            SpiTransaction::transaction_end(),
+            (vec![registers::RX_PW_P0 + 0, 0u8], vec![0xEu8, 32u8]),
         ];
         let mut spi_mock = SpiMock::new(&spi_expectations);
         let mut radio = RF24::new(pin_mock.clone(), spi_mock.clone(), delay_mock);

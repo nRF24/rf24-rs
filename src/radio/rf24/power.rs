@@ -40,7 +40,7 @@ where
         // There must be a delay of Tpd2stby (see Table 16.) after the nRF24L01+ leaves power down mode before
         // the CEis set high. - Tpd2stby can be up to 5ms per the 1.0 datasheet
         if delay.is_some_and(|val| val > 0) || delay.is_none() {
-            self._delay_impl.delay_us(delay.unwrap_or_else(|| 5000));
+            self._delay_impl.delay_ns(delay.unwrap_or_else(|| 5000000));
         }
         Ok(())
     }
@@ -53,6 +53,7 @@ mod test {
     extern crate std;
     use crate::radio::prelude::EsbPower;
     use crate::radio::rf24::commands;
+    use crate::spi_test_expects;
 
     use super::{registers, RF24};
     use embedded_hal_mock::eh1::delay::NoopDelay;
@@ -69,14 +70,12 @@ mod test {
         // create delay fn
         let delay_mock = NoopDelay::new();
 
-        let spi_expectations = [
+        let spi_expectations = spi_test_expects![
             // get the RF_SETUP register value for each possible result
-            SpiTransaction::transaction_start(),
-            SpiTransaction::transfer_in_place(
+            (
                 vec![registers::CONFIG | commands::W_REGISTER, 2u8],
                 vec![0xEu8, 0u8],
             ),
-            SpiTransaction::transaction_end(),
         ];
         let mut spi_mock = SpiMock::new(&spi_expectations);
         let mut radio = RF24::new(pin_mock.clone(), spi_mock.clone(), delay_mock);
@@ -96,14 +95,12 @@ mod test {
         // create delay fn
         let delay_mock = NoopDelay::new();
 
-        let spi_expectations = [
+        let spi_expectations = spi_test_expects![
             // get the RF_SETUP register value for each possible result
-            SpiTransaction::transaction_start(),
-            SpiTransaction::transfer_in_place(
+            (
                 vec![registers::CONFIG | commands::W_REGISTER, 2u8],
                 vec![0xEu8, 0u8],
             ),
-            SpiTransaction::transaction_end(),
         ];
         let mut spi_mock = SpiMock::new(&spi_expectations);
         let mut radio = RF24::new(pin_mock.clone(), spi_mock.clone(), delay_mock);

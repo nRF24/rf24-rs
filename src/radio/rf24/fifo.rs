@@ -60,7 +60,7 @@ where
 mod test {
     extern crate std;
     use crate::radio::prelude::EsbFifo;
-    use crate::FifoState;
+    use crate::{spi_test_expects, FifoState};
 
     use super::{registers, RF24};
     use embedded_hal_mock::eh1::delay::NoopDelay;
@@ -77,15 +77,11 @@ mod test {
         // create delay fn
         let delay_mock = NoopDelay::new();
 
-        let spi_expectations = [
+        let spi_expectations = spi_test_expects![
             // read FIFO register value
-            SpiTransaction::transaction_start(),
-            SpiTransaction::transfer_in_place(vec![registers::FIFO_STATUS, 0u8], vec![0xEu8, 2u8]),
-            SpiTransaction::transaction_end(),
+            (vec![registers::FIFO_STATUS, 0u8], vec![0xEu8, 2u8]),
             // do it again, but with empty RX FIFO_STATUS
-            SpiTransaction::transaction_start(),
-            SpiTransaction::transfer_in_place(vec![registers::FIFO_STATUS, 2u8], vec![0xEu8, 1u8]),
-            SpiTransaction::transaction_end(),
+            (vec![registers::FIFO_STATUS, 2u8], vec![0xEu8, 1u8]),
         ];
         let mut spi_mock = SpiMock::new(&spi_expectations);
         let mut radio = RF24::new(pin_mock.clone(), spi_mock.clone(), delay_mock);
@@ -104,15 +100,11 @@ mod test {
         // create delay fn
         let delay_mock = NoopDelay::new();
 
-        let spi_expectations = [
+        let spi_expectations = spi_test_expects![
             // read FIFO register value
-            SpiTransaction::transaction_start(),
-            SpiTransaction::transfer_in_place(vec![registers::FIFO_STATUS, 0u8], vec![0xEu8, 2u8]),
-            SpiTransaction::transaction_end(),
+            (vec![registers::FIFO_STATUS, 0u8], vec![0xEu8, 2u8]),
             // read STATUS register value
-            SpiTransaction::transaction_start(),
-            SpiTransaction::transfer_in_place(vec![registers::STATUS, 2u8], vec![0xEu8, 0xEu8]),
-            SpiTransaction::transaction_end(),
+            (vec![registers::STATUS, 2u8], vec![0xEu8, 0xEu8]),
         ];
         let mut spi_mock = SpiMock::new(&spi_expectations);
         let mut radio = RF24::new(pin_mock.clone(), spi_mock.clone(), delay_mock);
@@ -132,40 +124,19 @@ mod test {
         // create delay fn
         let delay_mock = NoopDelay::new();
 
-        let spi_expectations = [
+        let spi_expectations = spi_test_expects![
             // read FIFO register value with empty TX FIFO_STATUS
-            SpiTransaction::transaction_start(),
-            SpiTransaction::transfer_in_place(
-                vec![registers::FIFO_STATUS, 0u8],
-                vec![0xEu8, 0x10u8],
-            ),
-            SpiTransaction::transaction_end(),
+            (vec![registers::FIFO_STATUS, 0u8], vec![0xEu8, 0x10u8]),
             // read FIFO register value with full TX FIFO_STATUS
-            SpiTransaction::transaction_start(),
-            SpiTransaction::transfer_in_place(
-                vec![registers::FIFO_STATUS, 0x10u8],
-                vec![0xEu8, 0x20u8],
-            ),
-            SpiTransaction::transaction_end(),
+            (vec![registers::FIFO_STATUS, 0x10u8], vec![0xEu8, 0x20u8]),
             // read FIFO register value with occupied TX FIFO_STATUS
-            SpiTransaction::transaction_start(),
-            SpiTransaction::transfer_in_place(
-                vec![registers::FIFO_STATUS, 0x20u8],
-                vec![0xEu8, 0u8],
-            ),
-            SpiTransaction::transaction_end(),
+            (vec![registers::FIFO_STATUS, 0x20u8], vec![0xEu8, 0u8]),
             // read FIFO register value with empty RX FIFO_STATUS
-            SpiTransaction::transaction_start(),
-            SpiTransaction::transfer_in_place(vec![registers::FIFO_STATUS, 0u8], vec![0xEu8, 1u8]),
-            SpiTransaction::transaction_end(),
+            (vec![registers::FIFO_STATUS, 0u8], vec![0xEu8, 1u8]),
             // read FIFO register value with full RX FIFO_STATUS
-            SpiTransaction::transaction_start(),
-            SpiTransaction::transfer_in_place(vec![registers::FIFO_STATUS, 1u8], vec![0xEu8, 2u8]),
-            SpiTransaction::transaction_end(),
+            (vec![registers::FIFO_STATUS, 1u8], vec![0xEu8, 2u8]),
             // read FIFO register value with occupied RX FIFO_STATUS
-            SpiTransaction::transaction_start(),
-            SpiTransaction::transfer_in_place(vec![registers::FIFO_STATUS, 2u8], vec![0xEu8, 0u8]),
-            SpiTransaction::transaction_end(),
+            (vec![registers::FIFO_STATUS, 2u8], vec![0xEu8, 0u8]),
         ];
         let mut spi_mock = SpiMock::new(&spi_expectations);
         let mut radio = RF24::new(pin_mock.clone(), spi_mock.clone(), delay_mock);

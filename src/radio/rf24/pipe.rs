@@ -94,6 +94,7 @@ mod test {
     extern crate std;
     use crate::radio::prelude::EsbPipe;
     use crate::radio::rf24::commands;
+    use crate::spi_test_expects;
 
     use super::{registers, RF24};
     use embedded_hal_mock::eh1::delay::NoopDelay;
@@ -110,24 +111,18 @@ mod test {
         // create delay fn
         let delay_mock = NoopDelay::new();
 
-        let spi_expectations = [
+        let spi_expectations = spi_test_expects![
             // open_rx_pipe(5)
-            SpiTransaction::transaction_start(),
-            SpiTransaction::transfer_in_place(
+            (
                 vec![registers::RX_ADDR_P0 + 5 | commands::W_REGISTER, 0x55u8],
                 vec![0xEu8, 0u8],
             ),
-            SpiTransaction::transaction_end(),
             // set EN_RXADDR
-            SpiTransaction::transaction_start(),
-            SpiTransaction::transfer_in_place(vec![registers::EN_RXADDR, 0u8], vec![0xEu8, 1u8]),
-            SpiTransaction::transaction_end(),
-            SpiTransaction::transaction_start(),
-            SpiTransaction::transfer_in_place(
+            (vec![registers::EN_RXADDR, 0u8], vec![0xEu8, 1u8]),
+            (
                 vec![registers::EN_RXADDR | commands::W_REGISTER, 0x21u8],
                 vec![0xEu8, 0u8],
             ),
-            SpiTransaction::transaction_end(),
         ];
         let mut spi_mock = SpiMock::new(&spi_expectations);
         let mut radio = RF24::new(pin_mock.clone(), spi_mock.clone(), delay_mock);
@@ -154,14 +149,10 @@ mod test {
         let mut response = [0u8; 6];
         response[0] = 0xEu8;
 
-        let spi_expectations = [
+        let spi_expectations = spi_test_expects![
             // open_rx_pipe(5)
-            SpiTransaction::transaction_start(),
-            SpiTransaction::transfer_in_place(expected_buf.to_vec(), response.clone().to_vec()),
-            SpiTransaction::transaction_end(),
-            SpiTransaction::transaction_start(),
-            SpiTransaction::transfer_in_place(p0_buf.to_vec(), response.to_vec()),
-            SpiTransaction::transaction_end(),
+            (expected_buf.to_vec(), response.clone().to_vec()),
+            (p0_buf.to_vec(), response.to_vec()),
         ];
         let mut spi_mock = SpiMock::new(&spi_expectations);
         let mut radio = RF24::new(pin_mock.clone(), spi_mock.clone(), delay_mock);
@@ -181,55 +172,39 @@ mod test {
         // create delay fn
         let delay_mock = NoopDelay::new();
 
-        let spi_expectations = [
+        let spi_expectations = spi_test_expects![
             // for 2 byte addresses
             // write the SETUP_AW register value
-            SpiTransaction::transaction_start(),
-            SpiTransaction::transfer_in_place(
+            (
                 vec![registers::SETUP_AW | commands::W_REGISTER, 0u8],
                 vec![0xEu8, 0u8],
             ),
-            SpiTransaction::transaction_end(),
             // read the SETUP_AW register value
-            SpiTransaction::transaction_start(),
-            SpiTransaction::transfer_in_place(vec![registers::SETUP_AW, 0u8], vec![0xEu8, 0u8]),
-            SpiTransaction::transaction_end(),
+            (vec![registers::SETUP_AW, 0u8], vec![0xEu8, 0u8]),
             // for 3 byte addresses
             // write the SETUP_AW register value
-            SpiTransaction::transaction_start(),
-            SpiTransaction::transfer_in_place(
+            (
                 vec![registers::SETUP_AW | commands::W_REGISTER, 1u8],
                 vec![0xEu8, 0u8],
             ),
-            SpiTransaction::transaction_end(),
             // read the SETUP_AW register value
-            SpiTransaction::transaction_start(),
-            SpiTransaction::transfer_in_place(vec![registers::SETUP_AW, 0u8], vec![0xEu8, 1u8]),
-            SpiTransaction::transaction_end(),
+            (vec![registers::SETUP_AW, 0u8], vec![0xEu8, 1u8]),
             // for 4 byte addresses
             // write the SETUP_AW register value
-            SpiTransaction::transaction_start(),
-            SpiTransaction::transfer_in_place(
+            (
                 vec![registers::SETUP_AW | commands::W_REGISTER, 2u8],
                 vec![0xEu8, 0u8],
             ),
-            SpiTransaction::transaction_end(),
             // read the SETUP_AW register value
-            SpiTransaction::transaction_start(),
-            SpiTransaction::transfer_in_place(vec![registers::SETUP_AW, 0u8], vec![0xEu8, 2u8]),
-            SpiTransaction::transaction_end(),
+            (vec![registers::SETUP_AW, 0u8], vec![0xEu8, 2u8]),
             // for 5 byte addresses
             // write the SETUP_AW register value
-            SpiTransaction::transaction_start(),
-            SpiTransaction::transfer_in_place(
+            (
                 vec![registers::SETUP_AW | commands::W_REGISTER, 3u8],
                 vec![0xEu8, 0u8],
             ),
-            SpiTransaction::transaction_end(),
             // read the SETUP_AW register value
-            SpiTransaction::transaction_start(),
-            SpiTransaction::transfer_in_place(vec![registers::SETUP_AW, 0u8], vec![0xEu8, 3u8]),
-            SpiTransaction::transaction_end(),
+            (vec![registers::SETUP_AW, 0u8], vec![0xEu8, 3u8]),
         ];
         let mut spi_mock = SpiMock::new(&spi_expectations);
         let mut radio = RF24::new(pin_mock.clone(), spi_mock.clone(), delay_mock);

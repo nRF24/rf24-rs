@@ -164,7 +164,7 @@ where
         self.set_channel(channel)?;
         self._ce_pin.set_high().map_err(Nrf24Error::Gpo)?;
         if self._is_plus_variant {
-            self._delay_impl.delay_ms(1); // datasheet says 1 ms is ok in this instance
+            self._delay_impl.delay_ns(1000000); // datasheet says 1 ms is ok in this instance
             self.rewrite()?;
         }
         Ok(())
@@ -205,6 +205,7 @@ mod test {
     extern crate std;
     use super::{commands, registers, RF24};
     use crate::radio::rf24::mnemonics;
+    use crate::spi_test_expects;
     use embedded_hal_mock::eh1::delay::NoopDelay;
     use embedded_hal_mock::eh1::digital::{
         Mock as PinMock, State as PinState, Transaction as PinTransaction,
@@ -221,11 +222,9 @@ mod test {
         // create delay fn
         let delay_mock = NoopDelay::new();
 
-        let spi_expectations = [
+        let spi_expectations = spi_test_expects![
             // get the RPD register value
-            SpiTransaction::transaction_start(),
-            SpiTransaction::transfer_in_place(vec![registers::RPD, 0u8], vec![0xEu8, 0xFFu8]),
-            SpiTransaction::transaction_end(),
+            (vec![registers::RPD, 0u8], vec![0xEu8, 0xFFu8]),
         ];
         let mut spi_mock = SpiMock::new(&spi_expectations);
         let mut radio = RF24::new(pin_mock.clone(), spi_mock.clone(), delay_mock);
@@ -253,103 +252,69 @@ mod test {
         let mut address = [0xFFu8; 6];
         address[0] = registers::TX_ADDR | commands::W_REGISTER;
 
-        let spi_expectations = [
+        let spi_expectations = spi_test_expects![
             // stop_listening()
             // clear PRIM_RX flag
-            SpiTransaction::transaction_start(),
-            SpiTransaction::transfer_in_place(
+            (
                 vec![registers::CONFIG | commands::W_REGISTER, 0u8],
                 vec![0xEu8, 0u8],
             ),
-            SpiTransaction::transaction_end(),
             // open pipe 0 for TX (regardless of auto-ack)
-            SpiTransaction::transaction_start(),
-            SpiTransaction::transfer_in_place(vec![registers::EN_RXADDR, 0u8], vec![0xEu8, 0u8]),
-            SpiTransaction::transaction_end(),
-            SpiTransaction::transaction_start(),
-            SpiTransaction::transfer_in_place(
+            (vec![registers::EN_RXADDR, 0u8], vec![0xEu8, 0u8]),
+            (
                 vec![registers::EN_RXADDR | commands::W_REGISTER, 1u8],
                 vec![0xEu8, 0u8],
             ),
-            SpiTransaction::transaction_end(),
             // set special flags in RF_SETUP register value
-            SpiTransaction::transaction_start(),
-            SpiTransaction::transfer_in_place(vec![registers::RF_SETUP, 0u8], vec![0xEu8, 0u8]),
-            SpiTransaction::transaction_end(),
-            SpiTransaction::transaction_start(),
-            SpiTransaction::transfer_in_place(
+            (vec![registers::RF_SETUP, 0u8], vec![0xEu8, 0u8]),
+            (
                 vec![registers::RF_SETUP | commands::W_REGISTER, 0x90u8],
                 vec![0xEu8, 0u8],
             ),
-            SpiTransaction::transaction_end(),
             // disable auto-ack
-            SpiTransaction::transaction_start(),
-            SpiTransaction::transfer_in_place(
+            (
                 vec![registers::EN_AA | commands::W_REGISTER, 0u8],
                 vec![0xEu8, 0u8],
             ),
-            SpiTransaction::transaction_end(),
             // disable auto-retries
-            SpiTransaction::transaction_start(),
-            SpiTransaction::transfer_in_place(
+            (
                 vec![registers::SETUP_RETR | commands::W_REGISTER, 0u8],
                 vec![0xEu8, 0u8],
             ),
-            SpiTransaction::transaction_end(),
             // set TX address
-            SpiTransaction::transaction_start(),
-            SpiTransaction::transfer_in_place(address.to_vec(), vec![0u8; 6]),
-            SpiTransaction::transaction_end(),
+            (address.to_vec(), vec![0u8; 6]),
             // flush_tx()
-            SpiTransaction::transaction_start(),
-            SpiTransaction::transfer_in_place(vec![commands::FLUSH_TX], vec![0xEu8]),
-            SpiTransaction::transaction_end(),
+            (vec![commands::FLUSH_TX], vec![0xEu8]),
             // set TX payload
-            SpiTransaction::transaction_start(),
-            SpiTransaction::transfer_in_place(buf.to_vec(), vec![0u8; 33]),
-            SpiTransaction::transaction_end(),
+            (buf.to_vec(), vec![0u8; 33]),
             // set_crc_length(disabled)
-            SpiTransaction::transaction_start(),
-            SpiTransaction::transfer_in_place(vec![registers::CONFIG, 0u8], vec![0xEu8, 0xCu8]),
-            SpiTransaction::transaction_end(),
-            SpiTransaction::transaction_start(),
-            SpiTransaction::transfer_in_place(
+            (vec![registers::CONFIG, 0u8], vec![0xEu8, 0xCu8]),
+            (
                 vec![registers::CONFIG | commands::W_REGISTER, 0u8],
                 vec![0xEu8, 0u8],
             ),
-            SpiTransaction::transaction_end(),
             // set_pa_level()
             // set special flags in RF_SETUP register value
-            SpiTransaction::transaction_start(),
-            SpiTransaction::transfer_in_place(vec![registers::RF_SETUP, 0u8], vec![0xEu8, 0x91u8]),
-            SpiTransaction::transaction_end(),
-            SpiTransaction::transaction_start(),
-            SpiTransaction::transfer_in_place(
+            (vec![registers::RF_SETUP, 0u8], vec![0xEu8, 0x91u8]),
+            (
                 vec![registers::RF_SETUP | commands::W_REGISTER, 0x97u8],
                 vec![0xEu8, 0u8],
             ),
-            SpiTransaction::transaction_end(),
             // set_channel(125)
-            SpiTransaction::transaction_start(),
-            SpiTransaction::transfer_in_place(
+            (
                 vec![registers::RF_CH | commands::W_REGISTER, 125u8],
                 vec![0xEu8, 0u8],
             ),
-            SpiTransaction::transaction_end(),
             // clear the tx_df and tx_ds events
-            SpiTransaction::transaction_start(),
-            SpiTransaction::transfer_in_place(
+            (
                 vec![
                     registers::STATUS | commands::W_REGISTER,
                     mnemonics::MASK_MAX_RT | mnemonics::MASK_TX_DS,
                 ],
                 vec![0xEu8, 0u8],
             ),
-            SpiTransaction::transaction_end(),
             // assert the REUSE_TX_PL flag
-            SpiTransaction::transaction_start(),
-            SpiTransaction::transfer_in_place(vec![commands::REUSE_TX_PL], vec![0xEu8]),
-            SpiTransaction::transaction_end(),
+            (vec![commands::REUSE_TX_PL], vec![0xEu8]),
         ];
         let mut spi_mock = SpiMock::new(&spi_expectations);
         let mut radio = RF24::new(pin_mock.clone(), spi_mock.clone(), delay_mock);
@@ -372,24 +337,18 @@ mod test {
         // create delay fn
         let delay_mock = NoopDelay::new();
 
-        let spi_expectations = [
+        let spi_expectations = spi_test_expects![
             // power_down()
-            SpiTransaction::transaction_start(),
-            SpiTransaction::transfer_in_place(
+            (
                 vec![registers::CONFIG | commands::W_REGISTER, 0u8],
                 vec![0xEu8, 0u8],
             ),
-            SpiTransaction::transaction_end(),
             // clear special flags in RF_SETUP register
-            SpiTransaction::transaction_start(),
-            SpiTransaction::transfer_in_place(vec![registers::RF_SETUP, 0u8], vec![0xEu8, 0x90u8]),
-            SpiTransaction::transaction_end(),
-            SpiTransaction::transaction_start(),
-            SpiTransaction::transfer_in_place(
+            (vec![registers::RF_SETUP, 0u8], vec![0xEu8, 0x90u8]),
+            (
                 vec![registers::RF_SETUP | commands::W_REGISTER, 0u8],
                 vec![0xEu8, 0u8],
             ),
-            SpiTransaction::transaction_end(),
         ];
         let mut spi_mock = SpiMock::new(&spi_expectations);
         let mut radio = RF24::new(pin_mock.clone(), spi_mock.clone(), delay_mock);
@@ -407,17 +366,13 @@ mod test {
         // create delay fn
         let delay_mock = NoopDelay::new();
 
-        let spi_expectations = [
+        let spi_expectations = spi_test_expects![
             // clear the LNA_CUR flag in RF-SETUP
-            SpiTransaction::transaction_start(),
-            SpiTransaction::transfer_in_place(vec![registers::RF_SETUP, 0u8], vec![0xEu8, 1u8]),
-            SpiTransaction::transaction_end(),
-            SpiTransaction::transaction_start(),
-            SpiTransaction::transfer_in_place(
+            (vec![registers::RF_SETUP, 0u8], vec![0xEu8, 1u8]),
+            (
                 vec![registers::RF_SETUP | commands::W_REGISTER, 0u8],
                 vec![0xEu8, 0u8],
             ),
-            SpiTransaction::transaction_end(),
         ];
         let mut spi_mock = SpiMock::new(&spi_expectations);
         let mut radio = RF24::new(pin_mock.clone(), spi_mock.clone(), delay_mock);
