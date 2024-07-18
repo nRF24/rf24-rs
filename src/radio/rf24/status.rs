@@ -61,16 +61,10 @@ where
         tx_ds: bool,
         tx_df: bool,
     ) -> Result<(), Self::StatusErrorType> {
-        let mut new_config = 0;
-        if rx_dr {
-            new_config |= mnemonics::MASK_RX_DR;
-        }
-        if tx_ds {
-            new_config |= mnemonics::MASK_TX_DS;
-        }
-        if tx_df {
-            new_config |= mnemonics::MASK_MAX_RT;
-        }
+        let new_config = 0
+            | (mnemonics::MASK_RX_DR * rx_dr as u8)
+            | (mnemonics::MASK_TX_DS * tx_ds as u8)
+            | (mnemonics::MASK_MAX_RT * tx_df as u8);
         self.spi_write_byte(registers::STATUS, new_config)
     }
 
