@@ -25,6 +25,7 @@ pub mod commands {
     pub const R_RX_PL_WID: u8 = 0x60;
     pub const R_RX_PAYLOAD: u8 = 0x61;
     pub const W_TX_PAYLOAD: u8 = 0xA0;
+    pub const W_TX_PAYLOAD_NO_ACK: u8 = 0xB0;
     pub const W_ACK_PAYLOAD: u8 = 0xA8;
     pub const FLUSH_TX: u8 = 0xE1;
     pub const FLUSH_RX: u8 = 0xE2;

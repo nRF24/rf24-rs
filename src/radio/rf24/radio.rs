@@ -168,16 +168,13 @@ where
             // TX FIFO is full already
             return Ok(false);
         }
-        let mut buf_len = {
-            let len = buf.len();
-            if len > 32 {
-                32
-            } else {
-                len
-            }
-        };
+        let mut buf_len = buf.len().min(32);
         // to avoid resizing the given buf, we'll have to use self._buf directly
-        self._buf[0] = commands::W_TX_PAYLOAD | ((ask_no_ack as u8) << 4);
+        self._buf[0] = if !ask_no_ack {
+            commands::W_TX_PAYLOAD
+        } else {
+            commands::W_TX_PAYLOAD_NO_ACK
+        };
         self._buf[1..(buf_len + 1)].copy_from_slice(&buf[..buf_len]);
         // ensure payload_length setting is respected
         if !self._dynamic_payloads_enabled && buf_len < self._payload_length as usize {
