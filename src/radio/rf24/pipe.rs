@@ -31,9 +31,7 @@ where
             // start_listening() will have to restore it.
             if pipe == 0 {
                 let mut cached_addr = self._pipe0_rx_addr.unwrap_or_default();
-                for i in 0..width {
-                    cached_addr[i] = address[i];
-                }
+                cached_addr[..width].copy_from_slice(&address[..width]);
                 self._pipe0_rx_addr = Some(cached_addr);
             }
             self.spi_write_buf(registers::RX_ADDR_P0 + pipe, &address[..width])?;

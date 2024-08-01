@@ -29,10 +29,10 @@ where
         let pa_bin = 1
             | ({
                 match pa_level {
-                    PaLevel::MIN => 0 as u8,
-                    PaLevel::LOW => 1 as u8,
-                    PaLevel::HIGH => 2 as u8,
-                    PaLevel::MAX => 3 as u8,
+                    PaLevel::MIN => 0u8,
+                    PaLevel::LOW => 1u8,
+                    PaLevel::HIGH => 2u8,
+                    PaLevel::MAX => 3u8,
                 }
             } << 1);
         self.spi_read(1, registers::RF_SETUP)?;

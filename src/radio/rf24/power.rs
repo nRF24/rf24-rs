@@ -40,7 +40,7 @@ where
         // There must be a delay of Tpd2stby (see Table 16.) after the nRF24L01+ leaves power down mode before
         // the CEis set high. - Tpd2stby can be up to 5ms per the 1.0 datasheet
         if delay.is_some_and(|val| val > 0) || delay.is_none() {
-            self._delay_impl.delay_ns(delay.unwrap_or_else(|| 5000000));
+            self._delay_impl.delay_ns(delay.unwrap_or(5000000));
         }
         Ok(())
     }

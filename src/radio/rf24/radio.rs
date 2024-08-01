@@ -90,11 +90,11 @@ where
 
         // if config is not set correctly then there was a bad response from module
         self.spi_read(1, registers::CONFIG)?;
-        return if self._buf[1] == self._config_reg {
+        if self._buf[1] == self._config_reg {
             Ok(())
         } else {
             Err(Nrf24Error::BinaryCorruption)
-        };
+        }
     }
 
     fn start_listening(&mut self) -> Result<(), Self::RadioErrorType> {
@@ -178,9 +178,7 @@ where
         };
         // to avoid resizing the given buf, we'll have to use self._buf directly
         self._buf[0] = commands::W_TX_PAYLOAD | ((ask_no_ack as u8) << 4);
-        for i in 0..buf_len {
-            self._buf[i + 1] = buf[i];
-        }
+        self._buf[1..(buf_len + 1)].copy_from_slice(&buf[..buf_len]);
         // ensure payload_length setting is respected
         if !self._dynamic_payloads_enabled && buf_len < self._payload_length as usize {
             // pad buf with zeros

@@ -29,15 +29,15 @@ where
             match data_rate {
                 DataRate::Mbps1 => {
                     self._tx_delay = 280;
-                    0 as u8
+                    0u8
                 }
                 DataRate::Mbps2 => {
                     self._tx_delay = 240;
-                    1 as u8
+                    1u8
                 }
                 DataRate::Kbps250 => {
                     self._tx_delay = 505;
-                    4 as u8
+                    4u8
                 }
             }
         } << 3;

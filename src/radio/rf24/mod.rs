@@ -62,7 +62,7 @@ where
             _status: 0,
             _ce_pin: ce_pin,
             _spi: spi,
-            _buf: [0 as u8; 33],
+            _buf: [0u8; 33],
             _is_plus_variant: true,
             _ack_payloads_enabled: false,
             _dynamic_payloads_enabled: false,
@@ -110,9 +110,7 @@ where
     ) -> Result<(), Nrf24Error<SPI::Error, DO::Error>> {
         self._buf[0] = command | commands::W_REGISTER;
         let buf_len = buf.len();
-        for i in 0..buf_len {
-            self._buf[i + 1] = buf[i];
-        }
+        self._buf[1..(buf_len + 1)].copy_from_slice(&buf[..buf_len]);
         self.spi_transfer(buf_len as u8 + 1)
     }
 

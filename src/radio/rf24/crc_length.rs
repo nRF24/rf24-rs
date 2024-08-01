@@ -27,9 +27,9 @@ where
     fn set_crc_length(&mut self, data_rate: CrcLength) -> Result<(), Self::CrcLengthErrorType> {
         let crc_bin = {
             match data_rate {
-                CrcLength::DISABLED => 0 as u8,
-                CrcLength::BIT8 => 2 as u8,
-                CrcLength::BIT16 => 3 as u8,
+                CrcLength::DISABLED => 0u8,
+                CrcLength::BIT8 => 2u8,
+                CrcLength::BIT16 => 3u8,
             }
         } << 2;
         self.spi_read(1, registers::CONFIG)?;
