@@ -23,10 +23,10 @@ jobs:
           name: rf24-rs docs
           path: target/doc
       - run: rustup component add llvm-tools-preview
-      - name: Install cargo-nextest and cargo-llvm-cov
+      - name: Install cargo-llvm-cov
         uses: taiki-e/install-action@v2
         with:
-          tool: cargo-llvm-cov,cargo-binstall
+          tool: cargo-llvm-cov
       - name: Run tests
         run: cargo llvm-cov --lcov --output-path lcov.info
       - uses: codecov/codecov-action@v4

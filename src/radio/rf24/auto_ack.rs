@@ -67,14 +67,7 @@ where
 
     fn write_ack_payload(&mut self, pipe: u8, buf: &[u8]) -> Result<bool, Self::AutoAckErrorType> {
         if self._ack_payloads_enabled && pipe <= 5 {
-            let len = {
-                let buf_len = buf.len();
-                if buf_len > 32 {
-                    32usize
-                } else {
-                    buf_len
-                }
-            };
+            let len = buf.len().min(32);
             self.spi_write_buf(commands::W_ACK_PAYLOAD | pipe, &buf[..len])?;
             return Ok(0 == self._status & 1);
         }
@@ -82,20 +75,7 @@ where
     }
 
     fn set_auto_retries(&mut self, delay: u8, count: u8) -> Result<(), Self::AutoAckErrorType> {
-        let out = {
-            if count > 15 {
-                15
-            } else {
-                count
-            }
-        } | ({
-            if delay > 15 {
-                15
-            } else {
-                delay
-            }
-        } << 4);
-        self.spi_write_byte(registers::SETUP_RETR, out)
+        self.spi_write_byte(registers::SETUP_RETR, count.min(15) | (delay.min(15) << 4))
     }
 }
 

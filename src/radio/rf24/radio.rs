@@ -213,16 +213,7 @@ where
     ///   The nRF24L01 will repeatedly use the last byte from the last
     ///   payload even when [`RF24::read()`] is called with an empty RX FIFO.
     fn read(&mut self, buf: &mut [u8], len: u8) -> Result<(), Self::RadioErrorType> {
-        let buf_len = {
-            let max_len = buf.len() as u8;
-            if len > max_len {
-                max_len
-            } else if len > 32 {
-                32u8
-            } else {
-                len
-            }
-        };
+        let buf_len = (buf.len() as u8).min(len).min(32);
         if buf_len == 0 {
             return Ok(());
         }

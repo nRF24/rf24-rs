@@ -20,11 +20,7 @@ where
         if pipe < 2 {
             // Clamp the address length used: min(self._addr_length, address.len());
             // This means that we only write the bytes that were passed
-            let width = if address.len() < self._addr_length as usize {
-                address.len()
-            } else {
-                self._addr_length as usize
-            };
+            let width = address.len().min(self._addr_length as usize);
 
             // If this is pipe 0, cache the address.  This is needed because
             // open_writing_pipe() will overwrite the pipe 0 address, so
@@ -70,7 +66,6 @@ where
             2 => 0,
             3 => 1,
             4 => 2,
-            5 => 3,
             _ => 3,
         };
         self.spi_write_byte(registers::SETUP_AW, width)?;

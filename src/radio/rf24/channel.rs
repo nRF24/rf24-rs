@@ -13,14 +13,7 @@ where
     /// The nRF24L01 support 126 channels. The specified `channel` is
     /// clamped to the range [0, 125].
     fn set_channel(&mut self, channel: u8) -> Result<(), Self::ChannelErrorType> {
-        let ch = {
-            if channel > 125 {
-                125
-            } else {
-                channel
-            }
-        };
-        self.spi_write_byte(registers::RF_CH, ch)
+        self.spi_write_byte(registers::RF_CH, channel.min(125))
     }
 
     /// See also [`RF24::set_channel()`].

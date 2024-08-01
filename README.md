@@ -12,7 +12,7 @@ This is a pure-rust driver for the nRF24L01 wireless transceivers.
 This project aims to support the [embedded rust][embedded-rs] ecosystem.
 This includes but is not limited to Linux on RPi. Other points of interest:
 - [crates.io for embedded-hal crates][crates-hal]
-- [awesome embedded rust][awesome-hal]
+- the [awesome embedded rust][awesome-hal] list
 - the [embedded-hal][eh] framework
 
 ## Goals

@@ -20,20 +20,17 @@ where
             0 => Ok(PaLevel::MIN),
             1 => Ok(PaLevel::LOW),
             2 => Ok(PaLevel::HIGH),
-            3 => Ok(PaLevel::MAX),
-            _ => unreachable!(),
+            _ => Ok(PaLevel::MAX),
         }
     }
 
     fn set_pa_level(&mut self, pa_level: PaLevel) -> Result<(), Self::PaLevelErrorType> {
         let pa_bin = 1
-            | ({
-                match pa_level {
-                    PaLevel::MIN => 0u8,
-                    PaLevel::LOW => 1u8,
-                    PaLevel::HIGH => 2u8,
-                    PaLevel::MAX => 3u8,
-                }
+            | (match pa_level {
+                PaLevel::MIN => 0u8,
+                PaLevel::LOW => 1u8,
+                PaLevel::HIGH => 2u8,
+                PaLevel::MAX => 3u8,
             } << 1);
         self.spi_read(1, registers::RF_SETUP)?;
         let out = self._buf[1] & !(3 << 1) | pa_bin;
