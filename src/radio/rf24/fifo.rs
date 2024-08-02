@@ -46,10 +46,9 @@ where
         let offset = about_tx as u8 * 4;
         let status = (self._buf[1] & (3 << offset)) >> offset;
         match status {
-            0 => Ok(FifoState::Occupied),
             1 => Ok(FifoState::Empty),
             2 => Ok(FifoState::Full),
-            _ => unreachable!(),
+            _ => Ok(FifoState::Occupied),
         }
     }
 }
