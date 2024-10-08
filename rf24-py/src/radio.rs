@@ -24,12 +24,16 @@ impl PyRF24 {
         signature = (ce_pin, cs_pin, dev_gpio_chip = 0u8, dev_spi_bus = 0u8),
     )]
     pub fn new(ce_pin: u32, cs_pin: u8, dev_gpio_chip: u8, dev_spi_bus: u8) -> PyResult<Self> {
-        // get the desired "dev/gpiochip{dev_gpio_chip}"
+        // get the desired "/dev/gpiochip{dev_gpio_chip}"
         let mut dev_gpio = chips()
             .map_err(|_| PyOSError::new_err("Failed to get list of GPIO chips for the system"))?
             .find(|chip| {
                 if let Ok(chip) = chip {
-                    if chip.path().ends_with(dev_gpio_chip.to_string()) {
+                    if chip
+                        .path()
+                        .to_string_lossy()
+                        .ends_with(&dev_gpio_chip.to_string())
+                    {
                         return true;
                     }
                 }

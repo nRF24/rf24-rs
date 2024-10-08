@@ -15,11 +15,15 @@ pub struct BoardHardware {
 
 impl BoardHardware {
     pub fn new(dev_gpio_chip: u8, ce_pin: u32, dev_spi_bus: u8, cs_pin: u8) -> Result<Self> {
-        // get the desired "dev/gpiochip{dev_gpio_chip}"
+        // get the desired "/dev/gpiochip{dev_gpio_chip}"
         let mut dev_gpio = chips()?
             .find(|chip| {
                 if let Ok(chip) = chip {
-                    if chip.path().ends_with(dev_gpio_chip.to_string()) {
+                    if chip
+                        .path()
+                        .to_string_lossy()
+                        .ends_with(&dev_gpio_chip.to_string())
+                    {
                         return true;
                     }
                 }
