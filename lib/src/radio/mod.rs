@@ -362,7 +362,7 @@ pub mod prelude {
         fn get_crc_length(&mut self) -> Result<CrcLength, Self::CrcLengthErrorType>;
 
         /// Set the radio's CRC (Cyclical Redundancy Checksum) length
-        fn set_crc_length(&mut self, data_rate: CrcLength) -> Result<(), Self::CrcLengthErrorType>;
+        fn set_crc_length(&mut self, crc_length: CrcLength) -> Result<(), Self::CrcLengthErrorType>;
     }
 
     pub trait EsbDataRate {

@@ -1,5 +1,5 @@
 [workspace]
-members = ["lib", "examples"]
+members = ["lib", "examples", "rf24-py"]
 default-members = ["lib"]
 resolver = "2"
 

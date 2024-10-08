@@ -7,12 +7,14 @@ on:
       - 'lib/**'
       - '!lib/README.md'
       - Cargo.toml
+      - .github/workflows/tests.yml
   pull_request:
     branches: [main]
     paths:
       - 'lib/**'
       - '!lib/README.md'
       - Cargo.toml
+      - .github/workflows/tests.yml
 
 jobs:
   lint:

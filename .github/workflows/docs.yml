@@ -8,6 +8,7 @@ on:
       - 'lib/**'
       - Cargo.toml
       - '*.md'
+      - .github/workflows/docs.yml
   pull_request:
     branches: [main]
     paths:
@@ -15,6 +16,7 @@ on:
       - 'lib/**'
       - Cargo.toml
       - '*.md'
+      - .github/workflows/docs.yml
 
 jobs:
   supplemental:

@@ -24,9 +24,9 @@ where
         }
     }
 
-    fn set_crc_length(&mut self, data_rate: CrcLength) -> Result<(), Self::CrcLengthErrorType> {
+    fn set_crc_length(&mut self, crc_length: CrcLength) -> Result<(), Self::CrcLengthErrorType> {
         let crc_bin = {
-            match data_rate {
+            match crc_length {
                 CrcLength::DISABLED => 0u8,
                 CrcLength::BIT8 => 2u8,
                 CrcLength::BIT16 => 3u8,

@@ -10,8 +10,12 @@ words:
   - Kbps
   - linenums
   - Mbps
+  - milliwatts
   - mkdocs
+  - pyclass
   - pymdownx
+  - pymethods
+  - pymodule
   - RETR
   - rustc
   - RXADDR

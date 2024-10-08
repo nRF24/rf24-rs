@@ -125,7 +125,7 @@ where
     /// Is this radio a nRF24L01+ variant?
     ///
     /// The bool that this function returns is only valid _after_ calling [`RF24::init()`].
-    pub fn is_plus_variant(&mut self) -> bool {
+    pub fn is_plus_variant(&self) -> bool {
         self._is_plus_variant
     }
 
