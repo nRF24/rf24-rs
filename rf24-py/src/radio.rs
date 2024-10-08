@@ -1,4 +1,6 @@
 #![cfg(target_os = "linux")]
+use std::borrow::Cow;
+
 use crate::enums::{PyCrcLength, PyDataRate, PyFifoState, PyPaLevel};
 use linux_embedded_hal::{
     gpio_cdev::{chips, LineRequestFlags},
@@ -14,16 +16,23 @@ use rf24_rs::radio::{prelude::*, RF24};
 #[pyclass(name = "RF24", module = "rf24_py")]
 pub struct PyRF24 {
     inner: RF24<SpidevDevice, CdevPin, Delay>,
+    read_buf: [u8; 32],
 }
 
 #[pymethods]
 impl PyRF24 {
     #[new]
     #[pyo3(
-        text_signature = "(ce_pin: int, cs_pin: int, dev_gpio_chip: int = 0, dev_spi_bus: int = 0) -> RF24",
-        signature = (ce_pin, cs_pin, dev_gpio_chip = 0u8, dev_spi_bus = 0u8),
+        text_signature = "(ce_pin: int, cs_pin: int, dev_gpio_chip: int = 0, dev_spi_bus: int = 0, spi_speed: int = 10000000) -> RF24",
+        signature = (ce_pin, cs_pin, dev_gpio_chip = 0u8, dev_spi_bus = 0u8, spi_speed = 10_000_000),
     )]
-    pub fn new(ce_pin: u32, cs_pin: u8, dev_gpio_chip: u8, dev_spi_bus: u8) -> PyResult<Self> {
+    pub fn new(
+        ce_pin: u32,
+        cs_pin: u8,
+        dev_gpio_chip: u8,
+        dev_spi_bus: u8,
+        spi_speed: u32,
+    ) -> PyResult<Self> {
         // get the desired "/dev/gpiochip{dev_gpio_chip}"
         let mut dev_gpio = chips()
             .map_err(|_| PyOSError::new_err("Failed to get list of GPIO chips for the system"))?
@@ -64,7 +73,7 @@ impl PyRF24 {
             )
             })?;
         let config = SpidevOptions::new()
-            .max_speed_hz(10000000)
+            .max_speed_hz(spi_speed)
             .mode(SpiModeFlags::SPI_MODE_0)
             .bits_per_word(8)
             .build();
@@ -73,6 +82,7 @@ impl PyRF24 {
 
         Ok(Self {
             inner: RF24::new(ce_pin, spi, Delay),
+            read_buf: [0u8; 32],
         })
     }
 
@@ -94,24 +104,31 @@ impl PyRF24 {
             .map_err(|e| PyRuntimeError::new_err(format!("{e:?}")))
     }
 
+    #[pyo3(
+        signature = (buf, ask_no_ack = false),
+        text_signature = "(buf: bytes | bytearray, ask_no_ack = False) -> bool",
+    )]
     pub fn send(&mut self, buf: &[u8], ask_no_ack: bool) -> PyResult<bool> {
         self.inner
             .send(buf, ask_no_ack)
             .map_err(|e| PyRuntimeError::new_err(format!("{e:?}")))
     }
 
+    #[pyo3(
+        signature = (buf, ask_no_ack = false, start_tx = true),
+        text_signature = "(buf: bytes | bytearray, ask_no_ack = False, start_tx = True) -> bool",
+    )]
     pub fn write(&mut self, buf: &[u8], ask_no_ack: bool, start_tx: bool) -> PyResult<bool> {
         self.inner
             .write(buf, ask_no_ack, start_tx)
             .map_err(|e| PyRuntimeError::new_err(format!("{e:?}")))
     }
 
-    pub fn read(&mut self, len: u8) -> PyResult<Vec<u8>> {
-        let mut buf = Vec::with_capacity(len as usize);
+    pub fn read(&mut self, len: u8) -> PyResult<Cow<[u8]>> {
         self.inner
-            .read(&mut buf, len)
+            .read(&mut self.read_buf, len)
             .map_err(|e| PyRuntimeError::new_err(format!("{e:?}")))?;
-        Ok(buf)
+        Ok(Cow::from(&self.read_buf[0..len as usize]))
     }
 
     pub fn resend(&mut self) -> PyResult<bool> {
@@ -165,26 +182,31 @@ impl PyRF24 {
             .allow_ack_payloads(enable)
             .map_err(|e| PyRuntimeError::new_err(format!("{e:?}")))
     }
+
     pub fn set_auto_ack(&mut self, enable: bool) -> PyResult<()> {
         self.inner
             .set_auto_ack(enable)
             .map_err(|e| PyRuntimeError::new_err(format!("{e:?}")))
     }
+
     pub fn set_auto_ack_pipe(&mut self, enable: bool, pipe: u8) -> PyResult<()> {
         self.inner
             .set_auto_ack_pipe(enable, pipe)
             .map_err(|e| PyRuntimeError::new_err(format!("{e:?}")))
     }
+
     pub fn allow_ask_no_ack(&mut self, enable: bool) -> PyResult<()> {
         self.inner
             .allow_ask_no_ack(enable)
             .map_err(|e| PyRuntimeError::new_err(format!("{e:?}")))
     }
+
     pub fn write_ack_payload(&mut self, pipe: u8, buf: &[u8]) -> PyResult<bool> {
         self.inner
             .write_ack_payload(pipe, buf)
             .map_err(|e| PyRuntimeError::new_err(format!("{e:?}")))
     }
+
     pub fn set_auto_retries(&mut self, delay: u8, count: u8) -> PyResult<()> {
         self.inner
             .set_auto_retries(delay, count)
@@ -215,12 +237,14 @@ impl PyRF24 {
             .set_crc_length(crc_length.into_inner())
             .map_err(|e| PyRuntimeError::new_err(format!("{e:?}")))
     }
+
     pub fn get_data_rate(&mut self) -> PyResult<PyDataRate> {
         self.inner
             .get_data_rate()
             .map_err(|e| PyRuntimeError::new_err(format!("{e:?}")))
             .map(|e| PyDataRate::from_inner(e))
     }
+
     pub fn set_data_rate(&mut self, data_rate: PyDataRate) -> PyResult<()> {
         self.inner
             .set_data_rate(data_rate.into_inner())

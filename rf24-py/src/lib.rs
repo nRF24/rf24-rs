@@ -1,5 +1,5 @@
 use pyo3::prelude::*;
-#[cfg(target_os = "linux")]
+// #[cfg(target_os = "linux")]
 mod radio;
 mod enums;
 
