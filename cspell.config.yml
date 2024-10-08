@@ -1,0 +1,21 @@
+version: "0.2"
+words:
+  - Cdev
+  - Doherty
+  - DYNPD
+  - fontawesome
+  - gpio
+  - gpiochip
+  - inlinehilite
+  - Kbps
+  - linenums
+  - Mbps
+  - mkdocs
+  - pymdownx
+  - RETR
+  - rustc
+  - RXADDR
+  - Spidev
+  - struct
+  - superfences
+  - tasklist

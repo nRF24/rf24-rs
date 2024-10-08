@@ -314,27 +314,27 @@ mod test {
             ),
             // set payload length to 32 bytes on all pipes
             (
-                vec![registers::RX_PW_P0 + 0 | commands::W_REGISTER, 32u8],
+                vec![registers::RX_PW_P0 | commands::W_REGISTER, 32u8],
                 vec![0xEu8, 0u8],
             ),
             (
-                vec![registers::RX_PW_P0 + 1 | commands::W_REGISTER, 32u8],
+                vec![(registers::RX_PW_P0 + 1) | commands::W_REGISTER, 32u8],
                 vec![0xEu8, 0u8],
             ),
             (
-                vec![registers::RX_PW_P0 + 2 | commands::W_REGISTER, 32u8],
+                vec![(registers::RX_PW_P0 + 2) | commands::W_REGISTER, 32u8],
                 vec![0xEu8, 0u8],
             ),
             (
-                vec![registers::RX_PW_P0 + 3 | commands::W_REGISTER, 32u8],
+                vec![(registers::RX_PW_P0 + 3) | commands::W_REGISTER, 32u8],
                 vec![0xEu8, 0u8],
             ),
             (
-                vec![registers::RX_PW_P0 + 4 | commands::W_REGISTER, 32u8],
+                vec![(registers::RX_PW_P0 + 4) | commands::W_REGISTER, 32u8],
                 vec![0xEu8, 0u8],
             ),
             (
-                vec![registers::RX_PW_P0 + 5 | commands::W_REGISTER, 32u8],
+                vec![(registers::RX_PW_P0 + 5) | commands::W_REGISTER, 32u8],
                 vec![0xEu8, 0u8],
             ),
             // set_address_length(5)

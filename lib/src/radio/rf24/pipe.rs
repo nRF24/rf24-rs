@@ -107,7 +107,7 @@ mod test {
         let spi_expectations = spi_test_expects![
             // open_rx_pipe(5)
             (
-                vec![registers::RX_ADDR_P0 + 5 | commands::W_REGISTER, 0x55u8],
+                vec![(registers::RX_ADDR_P0 + 5) | commands::W_REGISTER, 0x55u8],
                 vec![0xEu8, 0u8],
             ),
             // set EN_RXADDR
