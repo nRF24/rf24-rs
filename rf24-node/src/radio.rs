@@ -24,10 +24,15 @@ impl NodeRF24 {
     pub fn new(
         ce_pin: u32,
         cs_pin: u8,
-        dev_gpio_chip: u8,
-        dev_spi_bus: u8,
-        spi_speed: u32,
+        spi_speed: Option<u32>,
+        dev_gpio_chip: Option<u8>,
+        dev_spi_bus: Option<u8>,
     ) -> Result<Self> {
+        // convert optional arg to default values
+        let spi_speed = spi_speed.unwrap_or(10_000_000);
+        let dev_gpio_chip = dev_gpio_chip.unwrap_or_default(); // 0
+        let dev_spi_bus = dev_spi_bus.unwrap_or_default(); // 0
+
         // get the desired "/dev/gpiochip{dev_gpio_chip}"
         let mut dev_gpio = chips()
             .map_err(|_| {
@@ -118,16 +123,27 @@ impl NodeRF24 {
     }
 
     #[napi]
-    pub fn send(&mut self, buf: &[u8], ask_no_ack: bool) -> Result<bool> {
+    pub fn send(&mut self, buf: Buffer, ask_no_ack: Option<bool>) -> Result<bool> {
+        let buf = buf.to_vec();
         self.inner
-            .send(buf, ask_no_ack)
+            .send(&buf, ask_no_ack.unwrap_or_default())
             .map_err(|e| Error::new(Status::GenericFailure, format!("{e:?}")))
     }
 
     #[napi]
-    pub fn write(&mut self, buf: &[u8], ask_no_ack: bool, start_tx: bool) -> Result<bool> {
+    pub fn write(
+        &mut self,
+        buf: Buffer,
+        ask_no_ack: Option<bool>,
+        start_tx: Option<bool>,
+    ) -> Result<bool> {
+        let buf = buf.to_vec();
         self.inner
-            .write(buf, ask_no_ack, start_tx)
+            .write(
+                &buf,
+                ask_no_ack.unwrap_or_default(),
+                start_tx.unwrap_or(true),
+            )
             .map_err(|e| Error::new(Status::GenericFailure, format!("{e:?}")))
     }
 
@@ -222,9 +238,10 @@ impl NodeRF24 {
     }
 
     #[napi]
-    pub fn write_ack_payload(&mut self, pipe: u8, buf: &[u8]) -> Result<bool> {
+    pub fn write_ack_payload(&mut self, pipe: u8, buf: Buffer) -> Result<bool> {
+        let buf = buf.to_vec();
         self.inner
-            .write_ack_payload(pipe, buf)
+            .write_ack_payload(pipe, &buf)
             .map_err(|e| Error::new(Status::GenericFailure, format!("{e:?}")))
     }
 
@@ -367,16 +384,18 @@ impl NodeRF24 {
     }
 
     #[napi]
-    pub fn open_rx_pipe(&mut self, pipe: u8, address: &[u8]) -> Result<()> {
+    pub fn open_rx_pipe(&mut self, pipe: u8, address: Buffer) -> Result<()> {
+        let address = address.to_vec();
         self.inner
-            .open_rx_pipe(pipe, address)
+            .open_rx_pipe(pipe, &address)
             .map_err(|e| Error::new(Status::GenericFailure, format!("{e:?}")))
     }
 
     #[napi]
-    pub fn open_tx_pipe(&mut self, address: &[u8]) -> Result<()> {
+    pub fn open_tx_pipe(&mut self, address: Buffer) -> Result<()> {
+        let address = address.to_vec();
         self.inner
-            .open_tx_pipe(address)
+            .open_tx_pipe(&address)
             .map_err(|e| Error::new(Status::GenericFailure, format!("{e:?}")))
     }
 

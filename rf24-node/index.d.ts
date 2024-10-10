@@ -77,12 +77,12 @@ export const enum FifoState {
 }
 export type NodeRF24 = RF24
 export declare class RF24 {
-  constructor(cePin: number, csPin: number, devGpioChip: number, devSpiBus: number, spiSpeed: number)
+  constructor(cePin: number, csPin: number, spiSpeed?: number | undefined | null, devGpioChip?: number | undefined | null, devSpiBus?: number | undefined | null)
   begin(): void
   startListening(): void
   stopListening(): void
-  send(buf: Uint8Array, askNoAck: boolean): boolean
-  write(buf: Uint8Array, askNoAck: boolean, startTx: boolean): boolean
+  send(buf: Buffer, askNoAck?: boolean | undefined | null): boolean
+  write(buf: Buffer, askNoAck?: boolean | undefined | null, startTx?: boolean | undefined | null): boolean
   read(len: number): Buffer
   resend(): boolean
   rewrite(): void
@@ -96,7 +96,7 @@ export declare class RF24 {
   setAutoAck(enable: boolean): void
   setAutoAckPipe(enable: boolean, pipe: number): void
   allowAskNoAck(enable: boolean): void
-  writeAckPayload(pipe: number, buf: Uint8Array): boolean
+  writeAckPayload(pipe: number, buf: Buffer): boolean
   setAutoRetries(delay: number, count: number): void
   setChannel(channel: number): void
   getChannel(): number
@@ -117,8 +117,8 @@ export declare class RF24 {
   getPayloadLength(): number
   setDynamicPayloads(enable: boolean): void
   getDynamicPayloadLength(): number
-  openRxPipe(pipe: number, address: Uint8Array): void
-  openTxPipe(address: Uint8Array): void
+  openRxPipe(pipe: number, address: Buffer): void
+  openTxPipe(address: Buffer): void
   /** If the given `pipe` number is  not in range [0, 5], then this function does nothing. */
   closeRxPipe(pipe: number): void
   setAddressLength(length: number): void
