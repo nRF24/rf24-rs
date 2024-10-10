@@ -1,7 +1,8 @@
 #![cfg(target_os = "linux")]
 
 use crate::enums::{
-    AvailablePipe, NodeCrcLength, NodeDataRate, NodeFifoState, NodePaLevel, StatusFlags,
+    AvailablePipe, HardwareConfig, NodeCrcLength, NodeDataRate, NodeFifoState, NodePaLevel,
+    StatusFlags, WriteConfig,
 };
 use linux_embedded_hal::{
     gpio_cdev::{chips, LineRequestFlags},
@@ -21,17 +22,12 @@ pub struct NodeRF24 {
 #[napi]
 impl NodeRF24 {
     #[napi(constructor)]
-    pub fn new(
-        ce_pin: u32,
-        cs_pin: u8,
-        spi_speed: Option<u32>,
-        dev_gpio_chip: Option<u8>,
-        dev_spi_bus: Option<u8>,
-    ) -> Result<Self> {
+    pub fn new(ce_pin: u32, cs_pin: u8, hardware_config: Option<HardwareConfig>) -> Result<Self> {
         // convert optional arg to default values
-        let spi_speed = spi_speed.unwrap_or(10_000_000);
-        let dev_gpio_chip = dev_gpio_chip.unwrap_or_default(); // 0
-        let dev_spi_bus = dev_spi_bus.unwrap_or_default(); // 0
+        let hw_config = hardware_config.unwrap_or_default();
+        let spi_speed = hw_config.spi_speed.unwrap_or(10_000_000);
+        let dev_gpio_chip = hw_config.dev_gpio_chip.unwrap_or_default();
+        let dev_spi_bus = hw_config.dev_spi_bus.unwrap_or_default();
 
         // get the desired "/dev/gpiochip{dev_gpio_chip}"
         let mut dev_gpio = chips()
@@ -43,6 +39,7 @@ impl NodeRF24 {
             })?
             .find(|chip| {
                 if let Ok(chip) = chip {
+                    println!("{:?}", chip.path());
                     if chip
                         .path()
                         .to_string_lossy()
@@ -131,18 +128,14 @@ impl NodeRF24 {
     }
 
     #[napi]
-    pub fn write(
-        &mut self,
-        buf: Buffer,
-        ask_no_ack: Option<bool>,
-        start_tx: Option<bool>,
-    ) -> Result<bool> {
+    pub fn write(&mut self, buf: Buffer, write_config: Option<WriteConfig>) -> Result<bool> {
         let buf = buf.to_vec();
+        let options = write_config.unwrap_or_default();
         self.inner
             .write(
                 &buf,
-                ask_no_ack.unwrap_or_default(),
-                start_tx.unwrap_or(true),
+                options.ask_no_ack.unwrap_or_default(),
+                options.start_tx.unwrap_or(true),
             )
             .map_err(|e| Error::new(Status::GenericFailure, format!("{e:?}")))
     }
@@ -436,16 +429,18 @@ impl NodeRF24 {
     }
 
     #[napi]
-    pub fn set_status_flags(&mut self, rx_dr: bool, tx_ds: bool, tx_df: bool) -> Result<()> {
+    pub fn set_status_flags(&mut self, status_flags: Option<StatusFlags>) -> Result<()> {
+        let status_flags = status_flags.unwrap_or_default();
         self.inner
-            .set_status_flags(rx_dr, tx_ds, tx_df)
+            .set_status_flags(status_flags.rx_dr, status_flags.tx_ds, status_flags.tx_df)
             .map_err(|e| Error::new(Status::GenericFailure, format!("{e:?}")))
     }
 
     #[napi]
-    pub fn clear_status_flags(&mut self, rx_dr: bool, tx_ds: bool, tx_df: bool) -> Result<()> {
+    pub fn clear_status_flags(&mut self, status_flags: Option<StatusFlags>) -> Result<()> {
+        let status_flags = status_flags.unwrap_or_default();
         self.inner
-            .clear_status_flags(rx_dr, tx_ds, tx_df)
+            .clear_status_flags(status_flags.rx_dr, status_flags.tx_ds, status_flags.tx_df)
             .map_err(|e| Error::new(Status::GenericFailure, format!("{e:?}")))
     }
 
