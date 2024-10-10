@@ -1,0 +1,454 @@
+#![cfg(target_os = "linux")]
+
+use crate::enums::{
+    AvailablePipe, NodeCrcLength, NodeDataRate, NodeFifoState, NodePaLevel, StatusFlags,
+};
+use linux_embedded_hal::{
+    gpio_cdev::{chips, LineRequestFlags},
+    spidev::{SpiModeFlags, SpidevOptions},
+    CdevPin, Delay, SpidevDevice,
+};
+use napi::{bindgen_prelude::Buffer, Error, Result, Status};
+
+use rf24_rs::radio::{prelude::*, RF24};
+
+#[napi(js_name = "RF24")]
+pub struct NodeRF24 {
+    inner: RF24<SpidevDevice, CdevPin, Delay>,
+    read_buf: [u8; 32],
+}
+
+#[napi]
+impl NodeRF24 {
+    #[napi(constructor)]
+    pub fn new(
+        ce_pin: u32,
+        cs_pin: u8,
+        dev_gpio_chip: u8,
+        dev_spi_bus: u8,
+        spi_speed: u32,
+    ) -> Result<Self> {
+        // get the desired "/dev/gpiochip{dev_gpio_chip}"
+        let mut dev_gpio = chips()
+            .map_err(|_| {
+                Error::new(
+                    Status::GenericFailure,
+                    "Failed to get list of GPIO chips for the system",
+                )
+            })?
+            .find(|chip| {
+                if let Ok(chip) = chip {
+                    if chip
+                        .path()
+                        .to_string_lossy()
+                        .ends_with(&dev_gpio_chip.to_string())
+                    {
+                        return true;
+                    }
+                }
+                false
+            })
+            .ok_or(Error::new(
+                Status::InvalidArg,
+                format!("Could not find specified dev/gpiochip{dev_gpio_chip} for this system."),
+            ))?
+            .map_err(|e| {
+                Error::new(
+                    Status::InvalidArg,
+                    format!("Could not open GPIO chip dev/gpiochip{dev_gpio_chip}: {e:?}"),
+                )
+            })?;
+        let ce_line = dev_gpio.get_line(ce_pin).map_err(|e| {
+            Error::new(
+                Status::InvalidArg,
+                format!("GPIO{ce_pin} is unavailable: {e:?}"),
+            )
+        })?;
+        let ce_line_handle = ce_line
+            .request(LineRequestFlags::OUTPUT, 0, "rf24-rs")
+            .map_err(|e| {
+                Error::new(
+                    Status::InvalidArg,
+                    format!("GPIO{ce_pin} is already in use: {e:?}"),
+                )
+            })?;
+        let ce_pin = CdevPin::new(ce_line_handle)
+            .map_err(|e| Error::new(Status::GenericFailure, format!("{e:?}")))?;
+
+        let mut spi =
+            SpidevDevice::open(format!("/dev/spidev{dev_spi_bus}.{cs_pin}")).map_err(|_| {
+                Error::new(Status::InvalidArg, format!(
+                    "SPI bus {dev_spi_bus} with CS pin option {cs_pin} is not available in this system"
+                )
+            )
+            })?;
+        let config = SpidevOptions::new()
+            .max_speed_hz(spi_speed)
+            .mode(SpiModeFlags::SPI_MODE_0)
+            .bits_per_word(8)
+            .build();
+        spi.configure(&config)
+            .map_err(|e| Error::new(Status::GenericFailure, format!("{e:?}")))?;
+
+        Ok(Self {
+            inner: RF24::new(ce_pin, spi, Delay),
+            read_buf: [0u8; 32],
+        })
+    }
+
+    #[napi]
+    pub fn begin(&mut self) -> Result<()> {
+        self.inner
+            .init()
+            .map_err(|e| Error::new(Status::GenericFailure, format!("{e:?}")))
+    }
+
+    #[napi]
+    pub fn start_listening(&mut self) -> Result<()> {
+        self.inner
+            .start_listening()
+            .map_err(|e| Error::new(Status::GenericFailure, format!("{e:?}")))
+    }
+
+    #[napi]
+    pub fn stop_listening(&mut self) -> Result<()> {
+        self.inner
+            .stop_listening()
+            .map_err(|e| Error::new(Status::GenericFailure, format!("{e:?}")))
+    }
+
+    #[napi]
+    pub fn send(&mut self, buf: &[u8], ask_no_ack: bool) -> Result<bool> {
+        self.inner
+            .send(buf, ask_no_ack)
+            .map_err(|e| Error::new(Status::GenericFailure, format!("{e:?}")))
+    }
+
+    #[napi]
+    pub fn write(&mut self, buf: &[u8], ask_no_ack: bool, start_tx: bool) -> Result<bool> {
+        self.inner
+            .write(buf, ask_no_ack, start_tx)
+            .map_err(|e| Error::new(Status::GenericFailure, format!("{e:?}")))
+    }
+
+    #[napi]
+    pub fn read(&mut self, len: u8) -> Result<Buffer> {
+        self.inner
+            .read(&mut self.read_buf, len)
+            .map_err(|e| Error::new(Status::GenericFailure, format!("{e:?}")))?;
+        Ok(Buffer::from(&self.read_buf[0..len as usize]))
+    }
+
+    #[napi]
+    pub fn resend(&mut self) -> Result<bool> {
+        self.inner
+            .resend()
+            .map_err(|e| Error::new(Status::GenericFailure, format!("{e:?}")))
+    }
+
+    #[napi]
+    pub fn rewrite(&mut self) -> Result<()> {
+        self.inner
+            .rewrite()
+            .map_err(|e| Error::new(Status::GenericFailure, format!("{e:?}")))
+    }
+
+    #[napi]
+    pub fn get_last_arc(&mut self) -> Result<u8> {
+        self.inner
+            .get_last_arc()
+            .map_err(|e| Error::new(Status::GenericFailure, format!("{e:?}")))
+    }
+
+    #[napi]
+    pub fn is_plus_variant(&self) -> bool {
+        self.inner.is_plus_variant()
+    }
+
+    #[napi]
+    pub fn test_rpd(&mut self) -> Result<bool> {
+        self.inner
+            .test_rpd()
+            .map_err(|e| Error::new(Status::GenericFailure, format!("{e:?}")))
+    }
+
+    #[napi]
+    pub fn start_carrier_wave(&mut self, level: NodePaLevel, channel: u8) -> Result<()> {
+        self.inner
+            .start_carrier_wave(level.into_inner(), channel)
+            .map_err(|e| Error::new(Status::GenericFailure, format!("{e:?}")))
+    }
+
+    #[napi]
+    pub fn stop_carrier_wave(&mut self) -> Result<()> {
+        self.inner
+            .stop_carrier_wave()
+            .map_err(|e| Error::new(Status::GenericFailure, format!("{e:?}")))
+    }
+
+    #[napi]
+    pub fn set_lna(&mut self, enable: bool) -> Result<()> {
+        self.inner
+            .set_lna(enable)
+            .map_err(|e| Error::new(Status::GenericFailure, format!("{e:?}")))
+    }
+
+    #[napi]
+    pub fn allow_ack_payloads(&mut self, enable: bool) -> Result<()> {
+        self.inner
+            .allow_ack_payloads(enable)
+            .map_err(|e| Error::new(Status::GenericFailure, format!("{e:?}")))
+    }
+
+    #[napi]
+    pub fn set_auto_ack(&mut self, enable: bool) -> Result<()> {
+        self.inner
+            .set_auto_ack(enable)
+            .map_err(|e| Error::new(Status::GenericFailure, format!("{e:?}")))
+    }
+
+    #[napi]
+    pub fn set_auto_ack_pipe(&mut self, enable: bool, pipe: u8) -> Result<()> {
+        self.inner
+            .set_auto_ack_pipe(enable, pipe)
+            .map_err(|e| Error::new(Status::GenericFailure, format!("{e:?}")))
+    }
+
+    #[napi]
+    pub fn allow_ask_no_ack(&mut self, enable: bool) -> Result<()> {
+        self.inner
+            .allow_ask_no_ack(enable)
+            .map_err(|e| Error::new(Status::GenericFailure, format!("{e:?}")))
+    }
+
+    #[napi]
+    pub fn write_ack_payload(&mut self, pipe: u8, buf: &[u8]) -> Result<bool> {
+        self.inner
+            .write_ack_payload(pipe, buf)
+            .map_err(|e| Error::new(Status::GenericFailure, format!("{e:?}")))
+    }
+
+    #[napi]
+    pub fn set_auto_retries(&mut self, delay: u8, count: u8) -> Result<()> {
+        self.inner
+            .set_auto_retries(delay, count)
+            .map_err(|e| Error::new(Status::GenericFailure, format!("{e:?}")))
+    }
+
+    #[napi]
+    pub fn set_channel(&mut self, channel: u8) -> Result<()> {
+        self.inner
+            .set_channel(channel)
+            .map_err(|e| Error::new(Status::GenericFailure, format!("{e:?}")))
+    }
+
+    #[napi]
+    pub fn get_channel(&mut self) -> Result<u8> {
+        self.inner
+            .get_channel()
+            .map_err(|e| Error::new(Status::GenericFailure, format!("{e:?}")))
+    }
+
+    #[napi]
+    pub fn get_crc_length(&mut self) -> Result<NodeCrcLength> {
+        self.inner
+            .get_crc_length()
+            .map_err(|e| Error::new(Status::GenericFailure, format!("{e:?}")))
+            .map(|e| NodeCrcLength::from_inner(e))
+    }
+
+    #[napi]
+    pub fn set_crc_length(&mut self, crc_length: NodeCrcLength) -> Result<()> {
+        self.inner
+            .set_crc_length(crc_length.into_inner())
+            .map_err(|e| Error::new(Status::GenericFailure, format!("{e:?}")))
+    }
+
+    #[napi]
+    pub fn get_data_rate(&mut self) -> Result<NodeDataRate> {
+        self.inner
+            .get_data_rate()
+            .map_err(|e| Error::new(Status::GenericFailure, format!("{e:?}")))
+            .map(|e| NodeDataRate::from_inner(e))
+    }
+
+    #[napi]
+    pub fn set_data_rate(&mut self, data_rate: NodeDataRate) -> Result<()> {
+        self.inner
+            .set_data_rate(data_rate.into_inner())
+            .map_err(|e| Error::new(Status::GenericFailure, format!("{e:?}")))
+    }
+
+    #[napi]
+    pub fn available(&mut self) -> Result<bool> {
+        self.inner
+            .available()
+            .map_err(|e| Error::new(Status::GenericFailure, format!("{e:?}")))
+    }
+
+    #[napi]
+    pub fn available_pipe(&mut self) -> Result<AvailablePipe> {
+        let mut pipe = Some(0u8);
+        let result = self
+            .inner
+            .available_pipe(&mut pipe)
+            .map_err(|e| Error::new(Status::GenericFailure, format!("{e:?}")))?;
+        Ok(AvailablePipe {
+            available: result,
+            pipe: pipe.expect("`pipe` should be a number"),
+        })
+    }
+
+    /// Use this to discard all 3 layers in the radio's RX FIFO.
+    #[napi]
+    pub fn flush_rx(&mut self) -> Result<()> {
+        self.inner
+            .flush_rx()
+            .map_err(|e| Error::new(Status::GenericFailure, format!("{e:?}")))
+    }
+
+    /// Use this to discard all 3 layers in the radio's TX FIFO.
+    #[napi]
+    pub fn flush_tx(&mut self) -> Result<()> {
+        self.inner
+            .flush_tx()
+            .map_err(|e| Error::new(Status::GenericFailure, format!("{e:?}")))
+    }
+
+    #[napi]
+    pub fn get_fifo_state(&mut self, about_tx: bool) -> Result<NodeFifoState> {
+        self.inner
+            .get_fifo_state(about_tx)
+            .map_err(|e| Error::new(Status::GenericFailure, format!("{e:?}")))
+            .map(|e| NodeFifoState::from_inner(e))
+    }
+
+    #[napi]
+    pub fn get_pa_level(&mut self) -> Result<NodePaLevel> {
+        self.inner
+            .get_pa_level()
+            .map_err(|e| Error::new(Status::GenericFailure, format!("{e:?}")))
+            .map(|e| NodePaLevel::from_inner(e))
+    }
+
+    #[napi]
+    pub fn set_pa_level(&mut self, pa_level: NodePaLevel) -> Result<()> {
+        self.inner
+            .set_pa_level(pa_level.into_inner())
+            .map_err(|e| Error::new(Status::GenericFailure, format!("{e:?}")))
+    }
+
+    #[napi]
+    pub fn set_payload_length(&mut self, length: u8) -> Result<()> {
+        self.inner
+            .set_payload_length(length)
+            .map_err(|e| Error::new(Status::GenericFailure, format!("{e:?}")))
+    }
+
+    #[napi]
+    pub fn get_payload_length(&mut self) -> Result<u8> {
+        self.inner
+            .get_payload_length()
+            .map_err(|e| Error::new(Status::GenericFailure, format!("{e:?}")))
+    }
+
+    #[napi]
+    pub fn set_dynamic_payloads(&mut self, enable: bool) -> Result<()> {
+        self.inner
+            .set_dynamic_payloads(enable)
+            .map_err(|e| Error::new(Status::GenericFailure, format!("{e:?}")))
+    }
+
+    #[napi]
+    pub fn get_dynamic_payload_length(&mut self) -> Result<u8> {
+        self.inner
+            .get_dynamic_payload_length()
+            .map_err(|e| Error::new(Status::GenericFailure, format!("{e:?}")))
+    }
+
+    #[napi]
+    pub fn open_rx_pipe(&mut self, pipe: u8, address: &[u8]) -> Result<()> {
+        self.inner
+            .open_rx_pipe(pipe, address)
+            .map_err(|e| Error::new(Status::GenericFailure, format!("{e:?}")))
+    }
+
+    #[napi]
+    pub fn open_tx_pipe(&mut self, address: &[u8]) -> Result<()> {
+        self.inner
+            .open_tx_pipe(address)
+            .map_err(|e| Error::new(Status::GenericFailure, format!("{e:?}")))
+    }
+
+    /// If the given `pipe` number is  not in range [0, 5], then this function does nothing.
+    #[napi]
+    pub fn close_rx_pipe(&mut self, pipe: u8) -> Result<()> {
+        self.inner
+            .close_rx_pipe(pipe)
+            .map_err(|e| Error::new(Status::GenericFailure, format!("{e:?}")))
+    }
+
+    #[napi]
+    pub fn set_address_length(&mut self, length: u8) -> Result<()> {
+        self.inner
+            .set_address_length(length)
+            .map_err(|e| Error::new(Status::GenericFailure, format!("{e:?}")))
+    }
+
+    #[napi]
+    pub fn get_address_length(&mut self) -> Result<u8> {
+        self.inner
+            .get_address_length()
+            .map_err(|e| Error::new(Status::GenericFailure, format!("{e:?}")))
+    }
+
+    #[napi]
+    pub fn power_down(&mut self) -> Result<()> {
+        self.inner
+            .power_down()
+            .map_err(|e| Error::new(Status::GenericFailure, format!("{e:?}")))
+    }
+
+    #[napi]
+    pub fn power_up(&mut self, delay: Option<u32>) -> Result<()> {
+        self.inner
+            .power_up(delay)
+            .map_err(|e| Error::new(Status::GenericFailure, format!("{e:?}")))
+    }
+
+    #[napi]
+    pub fn set_status_flags(&mut self, rx_dr: bool, tx_ds: bool, tx_df: bool) -> Result<()> {
+        self.inner
+            .set_status_flags(rx_dr, tx_ds, tx_df)
+            .map_err(|e| Error::new(Status::GenericFailure, format!("{e:?}")))
+    }
+
+    #[napi]
+    pub fn clear_status_flags(&mut self, rx_dr: bool, tx_ds: bool, tx_df: bool) -> Result<()> {
+        self.inner
+            .clear_status_flags(rx_dr, tx_ds, tx_df)
+            .map_err(|e| Error::new(Status::GenericFailure, format!("{e:?}")))
+    }
+
+    #[napi]
+    pub fn update(&mut self) -> Result<()> {
+        self.inner
+            .update()
+            .map_err(|e| Error::new(Status::GenericFailure, format!("{e:?}")))
+    }
+
+    #[napi]
+    pub fn get_status_flags(&mut self) -> Result<StatusFlags> {
+        let mut rx_dr = Some(false);
+        let mut tx_ds = Some(false);
+        let mut tx_df = Some(false);
+        self.inner
+            .get_status_flags(&mut rx_dr, &mut tx_ds, &mut tx_df)
+            .map_err(|e| Error::new(Status::GenericFailure, format!("{e:?}")))?;
+        Ok(StatusFlags {
+            rx_dr: rx_dr.unwrap(),
+            tx_ds: tx_ds.unwrap(),
+            tx_df: tx_df.unwrap(),
+        })
+    }
+}

@@ -1,5 +1,5 @@
 [workspace]
-members = ["lib", "examples", "rf24-py"]
+members = ["lib", "examples", "rf24-py", "rf24-node"]
 default-members = ["lib"]
 resolver = "2"
 
@@ -10,3 +10,7 @@ homepage = "https://nRF24.github.io/rf24-rs"
 edition = "2021"
 rust-version = "1.70"
 license-file = "LICENSE"
+
+[profile.release]
+lto = true
+strip = "symbols"
