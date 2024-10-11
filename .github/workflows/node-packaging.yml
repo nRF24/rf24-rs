@@ -132,12 +132,18 @@ jobs:
         run: ${{ matrix.settings.build }}
         if: ${{ !matrix.settings.docker }}
         shell: bash
-      - name: Upload artifact
+      - name: Upload native module as artifact
         uses: actions/upload-artifact@v4
         with:
           name: bindings-${{ matrix.settings.target }}
           path: ${{ env.ARTIFACT_PATH }}
           if-no-files-found: error
+      - name: Upload generated index.* as artifact
+        if: matrix.settings.target == 'armv7-unknown-linux-gnueabihf'
+        uses: actions/upload-artifact@v4
+        with:
+          name: generated-index
+          path: rf24-node/index.*
 
   universal-macOS:
     name: Build universal macOS binary
@@ -189,10 +195,16 @@ jobs:
           cache: yarn
       - name: Install dependencies
         run: yarn install
-      - name: Download all artifacts
+      - name: Download native artifacts
         uses: actions/download-artifact@v4
         with:
+          pattern: binding-*
           path: rf24-node/artifacts
+      - name: Download generated index artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: generated-index
+          path: rf24-node
       - name: Move artifacts
         run: yarn artifacts
       - name: List packages
