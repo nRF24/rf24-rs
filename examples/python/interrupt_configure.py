@@ -95,7 +95,7 @@ def interrupt_handler() -> None:
     print("\tIRQ pin went active LOW.")
     radio.update()
     flags: StatusFlags = radio.get_status_flags()  # update IRQ status flags
-    print(f"\ttx_ds: {flags.tx_ds}, tx_df: {flags.tx_df}, rx_dr: {flags.rx_dr}")
+    print(f"\t{repr(flags)}")
     if pl_iterator[0] == 0:
         print("'data ready' event test", ("passed" if flags.rx_dr else "failed"))
     elif pl_iterator[0] == 1:
@@ -165,6 +165,7 @@ def master() -> None:
         print("Slave node should not be listening anymore.")
     else:
         print("Slave node was unresponsive.")
+    radio.clear_status_flags()
 
     # on "data fail" test
     print("\nConfiguring IRQ pin to go active for all events.")
@@ -193,10 +194,9 @@ def slave(timeout=6):  # will listen for 6 seconds before timing out
     radio.write_ack_payload(1, ack_payloads[1])
     radio.write_ack_payload(1, ack_payloads[2])
     radio.listen = True  # start listening & clear irq_dr flag
-    start_timer = time.monotonic()  # start timer now
+    end_timer = time.monotonic() + timeout  # set end time
     while (
-        not radio.get_fifo_state(False) != FifoState.Full
-        and time.monotonic() - start_timer < timeout
+        radio.get_fifo_state(False) != FifoState.Full and time.monotonic() < end_timer
     ):
         # if RX FIFO is not full and timeout is not reached, then keep waiting
         pass

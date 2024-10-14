@@ -25,6 +25,13 @@ impl PyStatusFlags {
             tx_df,
         }
     }
+
+    pub fn __repr__(&self) -> String {
+        format!(
+            "<StatusFlags rx_dr: {}, tx_ds: {}, tx_df: {}>",
+            self.rx_dr, self.tx_ds, self.tx_df
+        )
+    }
 }
 
 #[cfg(target_os = "linux")]

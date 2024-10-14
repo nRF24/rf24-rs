@@ -386,13 +386,11 @@ impl PyRF24 {
             .map_err(|e| PyRuntimeError::new_err(format!("{e:?}")))
     }
 
-
     #[setter]
     pub fn set_power(&mut self, enable: bool) -> PyResult<()> {
         if enable {
             self.power_up(None)
-        }
-        else {
+        } else {
             self.power_down()
         }
     }
@@ -420,25 +418,17 @@ impl PyRF24 {
 
     #[pyo3(signature = (flags = None))]
     pub fn set_status_flags(&mut self, flags: Option<PyStatusFlags>) -> PyResult<()> {
-        let flags = flags.unwrap_or(PyStatusFlags {
-            rx_dr: true,
-            tx_ds: true,
-            tx_df: true,
-        });
+        let flags = flags.map(|f| f.into_inner());
         self.inner
-            .set_status_flags(Some(flags.into_inner()))
+            .set_status_flags(flags)
             .map_err(|e| PyRuntimeError::new_err(format!("{e:?}")))
     }
 
     #[pyo3(signature = (flags = None))]
     pub fn clear_status_flags(&mut self, flags: Option<PyStatusFlags>) -> PyResult<()> {
-        let flags = flags.unwrap_or(PyStatusFlags {
-            rx_dr: true,
-            tx_ds: true,
-            tx_df: true,
-        });
+        let flags = flags.map(|f| f.into_inner());
         self.inner
-            .clear_status_flags(Some(flags.into_inner()))
+            .clear_status_flags(flags)
             .map_err(|e| PyRuntimeError::new_err(format!("{e:?}")))
     }
 

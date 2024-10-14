@@ -25,7 +25,7 @@ where
             tx_df: true,
         });
         self.spi_read(1, registers::CONFIG)?;
-        self._config_reg = self._buf[1] & !(3 << 4);
+        self._config_reg = self._buf[1] & 0x0F;
         if !flags.rx_dr {
             self._config_reg |= mnemonics::MASK_RX_DR;
         }
@@ -47,9 +47,9 @@ where
             tx_ds: true,
             tx_df: true,
         });
-        let new_config = (mnemonics::MASK_RX_DR * flags.rx_dr as u8)
-            | (mnemonics::MASK_TX_DS * flags.tx_ds as u8)
-            | (mnemonics::MASK_MAX_RT * flags.tx_df as u8);
+        let new_config = (mnemonics::MASK_RX_DR * (flags.rx_dr as u8))
+            | (mnemonics::MASK_TX_DS * (flags.tx_ds as u8))
+            | (mnemonics::MASK_MAX_RT * (flags.tx_df as u8));
         self.spi_write_byte(registers::STATUS, new_config)
     }
 
@@ -58,9 +58,9 @@ where
     }
 
     fn get_status_flags(&self, flags: &mut StatusFlags) {
-        flags.rx_dr = self._status & mnemonics::MASK_RX_DR > 0;
-        flags.tx_ds = self._status & mnemonics::MASK_TX_DS > 0;
-        flags.tx_df = self._status & mnemonics::MASK_MAX_RT > 0;
+        flags.rx_dr = (self._status & mnemonics::MASK_RX_DR) > 0;
+        flags.tx_ds = (self._status & mnemonics::MASK_TX_DS) > 0;
+        flags.tx_df = (self._status & mnemonics::MASK_MAX_RT) > 0;
     }
 }
 
