@@ -6,7 +6,7 @@
 #![no_std]
 
 mod enums;
-pub use enums::{CrcLength, DataRate, FifoState, PaLevel};
+pub use enums::{CrcLength, DataRate, FifoState, PaLevel, StatusFlags};
 pub mod radio;
 
 #[cfg(test)]

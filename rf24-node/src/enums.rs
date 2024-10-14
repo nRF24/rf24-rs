@@ -1,5 +1,5 @@
 #[cfg(target_os = "linux")]
-use rf24_rs::{CrcLength, DataRate, FifoState, PaLevel};
+use rf24_rs::{CrcLength, DataRate, FifoState, PaLevel, StatusFlags};
 
 /// Optional configuration parameters to fine tune instantiating the RF24 object.
 /// Pass this object as third parameter to RF24 constructor.
@@ -41,22 +41,32 @@ impl Default for HardwareConfig {
 ///
 /// These flags default to `true` if not specified for `RF24.setStatusFlags()`
 /// or `RF24.clearStatusFlags()`.
-#[napi(object)]
-pub struct StatusFlags {
+#[napi(object, js_name = "StatusFlags")]
+#[derive(Default)]
+pub struct NodeStatusFlags {
     /// A flag to describe if RX Data Ready to read.
-    pub rx_dr: bool,
+    pub rx_dr: Option<bool>,
     /// A flag to describe if TX Data Sent.
-    pub tx_ds: bool,
+    pub tx_ds: Option<bool>,
     /// A flag to describe if TX Data Failed.
-    pub tx_df: bool,
+    pub tx_df: Option<bool>,
 }
 
-impl Default for StatusFlags {
-    fn default() -> Self {
+#[cfg(target_os = "linux")]
+impl NodeStatusFlags {
+    pub fn into_inner(self) -> StatusFlags {
+        StatusFlags {
+            rx_dr: self.rx_dr.unwrap_or_default(),
+            tx_ds: self.tx_ds.unwrap_or_default(),
+            tx_df: self.tx_df.unwrap_or_default(),
+        }
+    }
+
+    pub fn from_inner(other: StatusFlags) -> Self {
         Self {
-            rx_dr: true,
-            tx_ds: true,
-            tx_df: true,
+            rx_dr: Some(other.rx_dr),
+            tx_ds: Some(other.tx_ds),
+            tx_df: Some(other.tx_df),
         }
     }
 }
@@ -105,19 +115,19 @@ pub struct AvailablePipe {
 #[derive(Debug, PartialEq)]
 pub enum NodePaLevel {
     /// | nRF24L01 | Si24R1 with<br>LNA Enabled | Si24R1 with<br>LNA Disabled |
-    /// | :-------:|:--------------------------:|:---------------------------:|
+    /// |:--------:|:--------------------------:|:---------------------------:|
     /// | -18 dBm | -6 dBm | -12 dBm |
     MIN,
     /// | nRF24L01 | Si24R1 with<br>LNA Enabled | Si24R1 with<br>LNA Disabled |
-    /// | :-------:|:--------------------------:|:---------------------------:|
+    /// |:--------:|:--------------------------:|:---------------------------:|
     /// | -12 dBm | 0 dBm | -4 dBm |
     LOW,
     /// | nRF24L01 | Si24R1 with<br>LNA Enabled | Si24R1 with<br>LNA Disabled |
-    /// | :-------:|:--------------------------:|:---------------------------:|
+    /// |:--------:|:--------------------------:|:---------------------------:|
     /// | -6 dBm | 3 dBm | 1 dBm |
     HIGH,
     /// | nRF24L01 | Si24R1 with<br>LNA Enabled | Si24R1 with<br>LNA Disabled |
-    /// | :-------:|:--------------------------:|:---------------------------:|
+    /// |:--------:|:--------------------------:|:---------------------------:|
     /// | 0 dBm | 7 dBm | 4 dBm |
     MAX,
 }

@@ -52,6 +52,10 @@ Tracker = "https://github.com/nRF24/rf24-rs/issues"
 [tool.mypy]
 show_error_codes = true
 pretty = true
+files = [
+    "examples/python/*.py",
+    "rf24_py.pyi"
+]
 
 [tool.maturin]
 features = ["pyo3/extension-module"]

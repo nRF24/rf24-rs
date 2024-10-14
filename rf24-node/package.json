@@ -28,9 +28,6 @@
     "@napi-rs/cli": "^2.18.4",
     "@types/node": "^22.7.5"
   },
-  "ava": {
-    "timeout": "3m"
-  },
   "engines": {
     "node": ">= 10"
   },

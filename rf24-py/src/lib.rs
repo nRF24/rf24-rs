@@ -1,7 +1,7 @@
 use pyo3::prelude::*;
 // #[cfg(target_os = "linux")]
-mod radio;
 mod enums;
+mod radio;
 
 #[cfg(target_os = "linux")]
 fn bind_radio_impl(m: &Bound<'_, PyModule>) -> PyResult<()> {
@@ -21,5 +21,6 @@ fn rf24_py(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<enums::PyDataRate>()?;
     m.add_class::<enums::PyFifoState>()?;
     m.add_class::<enums::PyPaLevel>()?;
+    m.add_class::<enums::PyStatusFlags>()?;
     Ok(())
 }

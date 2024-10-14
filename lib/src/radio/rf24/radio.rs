@@ -1,6 +1,5 @@
 use super::{commands, mnemonics, registers, Nrf24Error, RF24};
-use crate::radio::prelude::*;
-use crate::DataRate;
+use crate::{radio::prelude::*, DataRate, StatusFlags};
 use embedded_hal::{delay::DelayNs, digital::OutputPin, spi::SpiDevice};
 
 impl<SPI, DO, DELAY> EsbRadio for RF24<SPI, DO, DELAY>
@@ -70,7 +69,7 @@ where
 
         // Reset current status
         // Notice reset and flush is the last thing we do
-        self.clear_status_flags(true, true, true)?;
+        self.clear_status_flags(None)?;
 
         // Flush buffers
         self.flush_rx()?;
@@ -100,7 +99,7 @@ where
     fn start_listening(&mut self) -> Result<(), Self::RadioErrorType> {
         self._config_reg |= 1;
         self.spi_write_byte(registers::CONFIG, self._config_reg)?;
-        self.clear_status_flags(true, true, true)?;
+        self.clear_status_flags(None)?;
         self._ce_pin.set_high().map_err(Nrf24Error::Gpo)?;
 
         // Restore the pipe0 address, if exists
@@ -126,6 +125,10 @@ where
         self.spi_read(1, registers::EN_RXADDR)?;
         let out = self._buf[1] | 1;
         self.spi_write_byte(registers::EN_RXADDR, out)
+    }
+
+    fn is_listening(&self) -> bool {
+        (self._config_reg & 1) == 1
     }
 
     /// See [`EsbRadio::send()`] for implementation-agnostic detail.
@@ -163,7 +166,7 @@ where
         ask_no_ack: bool,
         start_tx: bool,
     ) -> Result<bool, Self::RadioErrorType> {
-        self.clear_status_flags(true, true, true)?;
+        self.clear_status_flags(None)?;
         if self._status & 1 == 1 {
             // TX FIFO is full already
             return Ok(false);
@@ -209,17 +212,27 @@ where
     ///   padding for the data saved to the `buf` parameter's object.
     ///   The nRF24L01 will repeatedly use the last byte from the last
     ///   payload even when [`RF24::read()`] is called with an empty RX FIFO.
-    fn read(&mut self, buf: &mut [u8], len: u8) -> Result<(), Self::RadioErrorType> {
-        let buf_len = (buf.len() as u8).min(len).min(32);
+    fn read(&mut self, buf: &mut [u8], len: Option<u8>) -> Result<u8, Self::RadioErrorType> {
+        let buf_len = (buf.len() as u8)
+            .min(len.unwrap_or(if self._dynamic_payloads_enabled {
+                self.get_dynamic_payload_length()?
+            } else {
+                self._payload_length
+            }))
+            .min(32);
         if buf_len == 0 {
-            return Ok(());
+            return Ok(0);
         }
         self.spi_read(buf_len, commands::R_RX_PAYLOAD)?;
         for i in 0..buf_len {
             buf[i as usize] = self._buf[i as usize + 1];
         }
-        self.clear_status_flags(true, false, false)?;
-        Ok(())
+        let flags = StatusFlags {
+            rx_dr: true,
+            ..Default::default()
+        };
+        self.clear_status_flags(Some(flags))?;
+        Ok(buf_len)
     }
 
     fn resend(&mut self) -> Result<bool, Self::RadioErrorType> {
@@ -234,7 +247,12 @@ where
 
     fn rewrite(&mut self) -> Result<(), Self::RadioErrorType> {
         self._ce_pin.set_low().map_err(Nrf24Error::Gpo)?;
-        self.clear_status_flags(false, true, true)?;
+        let flags = StatusFlags {
+            rx_dr: false,
+            tx_ds: true,
+            tx_df: true,
+        };
+        self.clear_status_flags(Some(flags))?;
         self.spi_read(0, commands::REUSE_TX_PL)?;
         self._ce_pin.set_high().map_err(Nrf24Error::Gpo)
     }
@@ -251,8 +269,7 @@ where
 mod test {
     extern crate std;
     use super::{commands, registers, RF24};
-    use crate::radio::prelude::*;
-    use crate::radio::rf24::mnemonics;
+    use crate::radio::{prelude::*, rf24::mnemonics};
     use crate::spi_test_expects;
     use embedded_hal_mock::eh1::delay::NoopDelay;
     use embedded_hal_mock::eh1::digital::{
@@ -555,12 +572,27 @@ mod test {
 
         // create delay fn
         let delay_mock = NoopDelay::new();
-        let mut buf = [0u8; 33];
-        buf[0] = commands::R_RX_PAYLOAD;
+        let mut buf_static = [0u8; 33];
+        buf_static[0] = commands::R_RX_PAYLOAD;
+        let mut buf_dynamic = [0x55u8; 33];
+        buf_dynamic[0] = commands::R_RX_PAYLOAD;
+        buf_dynamic[1] = 32;
 
         let spi_expectations = spi_test_expects![
             // read RX payload
-            (buf.clone().to_vec(), vec![0x55u8; 33]),
+            (buf_static.clone().to_vec(), vec![0x55u8; 33]),
+            // clear the rx_dr event
+            (
+                vec![
+                    registers::STATUS | commands::W_REGISTER,
+                    mnemonics::MASK_RX_DR,
+                ],
+                vec![0xEu8, 0u8],
+            ),
+            // read dynamic payload length
+            (vec![commands::R_RX_PL_WID, 0u8], vec![0xEu8, 32u8]),
+            // read RX payload
+            (buf_dynamic.clone().to_vec(), vec![0xAAu8; 33]),
             // clear the rx_dr event
             (
                 vec![
@@ -573,8 +605,11 @@ mod test {
         let mut spi_mock = SpiMock::new(&spi_expectations);
         let mut radio = RF24::new(pin_mock.clone(), spi_mock.clone(), delay_mock);
         let mut payload = [0u8; 32];
-        radio.read(&mut payload, 32).unwrap();
+        assert_eq!(32u8, radio.read(&mut payload, None).unwrap());
         assert_eq!(payload, [0x55u8; 32]);
+        radio._dynamic_payloads_enabled = true;
+        assert_eq!(32u8, radio.read(&mut payload, None).unwrap());
+        assert_eq!(payload, [0xAA; 32]);
         spi_mock.done();
         pin_mock.done();
     }

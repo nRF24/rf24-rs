@@ -1,7 +1,7 @@
 mod rf24;
 pub use rf24::{Nrf24Error, RF24};
 pub mod prelude {
-    use crate::enums::{CrcLength, DataRate, FifoState, PaLevel};
+    use crate::enums::{CrcLength, DataRate, FifoState, PaLevel, StatusFlags};
 
     pub trait EsbPipe {
         type PipeErrorType;
@@ -51,9 +51,14 @@ pub mod prelude {
 
         /// Close a specified pipe from receiving data when radio is in RX role.
         fn close_rx_pipe(&mut self, pipe: u8) -> Result<(), Self::PipeErrorType>;
+
+        /// Set the address length (applies to all pipes).
         fn set_address_length(&mut self, length: u8) -> Result<(), Self::PipeErrorType>;
+
+        /// Get the currently configured address length (applied to all pipes).
         fn get_address_length(&mut self) -> Result<u8, Self::PipeErrorType>;
     }
+
     pub trait EsbChannel {
         type ChannelErrorType;
 
@@ -69,24 +74,40 @@ pub mod prelude {
 
     pub trait EsbStatus {
         type StatusErrorType;
-        fn get_status_flags(
-            &mut self,
-            rx_dr: &mut Option<bool>,
-            tx_ds: &mut Option<bool>,
-            tx_df: &mut Option<bool>,
-        ) -> Result<(), Self::StatusErrorType>;
+
+        /// Get the [`StatusFlags`] state that was cached from the latest SPI transaction.
+        fn get_status_flags(&self, flags: &mut StatusFlags);
+
+        /// Configure which status flags trigger the radio's IRQ pin.
+        ///
+        /// Set any member of [`StatusFlags`] to `false` to have the
+        /// IRQ pin ignore the corresponding event.
+        /// By default, all events are enabled and will trigger the IRQ pin,
+        /// a behavior equivalent to `set_status_flags(None)`.
         fn set_status_flags(
             &mut self,
-            rx_dr: bool,
-            tx_ds: bool,
-            tx_df: bool,
+            flags: Option<StatusFlags>,
         ) -> Result<(), Self::StatusErrorType>;
+
+        /// Clear the radio's IRQ status flags
+        ///
+        /// This needs to be done after the event has been handled.
+        ///
+        /// Set any member of [`StatusFlags`] to `true` to clear the corresponding
+        /// interrupt event. Setting any member of [`StatusFlags`] to `false` will leave
+        /// the corresponding status flag untouched. This means that the IRQ pin can remain
+        /// active (LOW) when multiple events occurred but only flag was cleared.
+        ///
+        /// Pass [`None`] to clear all status flags.
         fn clear_status_flags(
             &mut self,
-            rx_dr: bool,
-            tx_ds: bool,
-            tx_df: bool,
+            flags: Option<StatusFlags>,
         ) -> Result<(), Self::StatusErrorType>;
+
+        /// Refresh the internal cache of status byte
+        /// (which is also saved from every SPI transaction).
+        ///
+        /// Use [`EsbStatus::get_status_flags()`] to get the updated status flags.
         fn update(&mut self) -> Result<(), Self::StatusErrorType>;
     }
 
@@ -341,7 +362,7 @@ pub mod prelude {
         /// This wakes the radio from a sleep state, resulting in a
         /// power standby mode that allows the radio to receive or transmit data.
         ///
-        /// To ensure proper operation, this function will `delay` after the radio is awaken.
+        /// To ensure proper operation, this function will `delay` after the radio is powered up.
         /// If the `delay` parameter is given a [`Some`] value, then the this function
         /// will wait for the specified number of microseconds. If `delay` is a [`None`]
         /// value, this function will wait for 5 milliseconds.
@@ -353,6 +374,11 @@ pub mod prelude {
         /// radio.start_listening().unwrap();
         /// ```
         fn power_up(&mut self, delay: Option<u32>) -> Result<(), Self::PowerErrorType>;
+
+        /// Get the current (cached) state of the radio's power.
+        ///
+        /// Returns `true` if powered up or `false` if powered down.
+        fn is_powered(&self) -> bool;
     }
 
     pub trait EsbCrcLength {
@@ -362,7 +388,8 @@ pub mod prelude {
         fn get_crc_length(&mut self) -> Result<CrcLength, Self::CrcLengthErrorType>;
 
         /// Set the radio's CRC (Cyclical Redundancy Checksum) length
-        fn set_crc_length(&mut self, crc_length: CrcLength) -> Result<(), Self::CrcLengthErrorType>;
+        fn set_crc_length(&mut self, crc_length: CrcLength)
+            -> Result<(), Self::CrcLengthErrorType>;
     }
 
     pub trait EsbDataRate {
@@ -397,6 +424,9 @@ pub mod prelude {
 
         /// Put the radio into TX role
         fn stop_listening(&mut self) -> Result<(), Self::RadioErrorType>;
+
+        /// Is the radio in RX mode?
+        fn is_listening(&self) -> bool;
 
         /// Blocking write.
         ///
@@ -451,7 +481,10 @@ pub mod prelude {
         ///
         /// The `len` parameter determines how much data is stored to `buf`. Ultimately,
         /// the value of `len` is restricted by the radio's maximum 32 byte limit and the
-        /// length of the given `buf`.
-        fn read(&mut self, buf: &mut [u8], len: u8) -> Result<(), Self::RadioErrorType>;
+        /// length of the given `buf`. Pass [`None`] to automatically use static payload length
+        /// (set by [`EsbPayloadLength::set_payload_length()`]) or the dynamic payload length
+        /// (fetched internally using [`EsbPayloadLength::get_dynamic_payload_length()`]) if
+        /// dynamic payload lengths are enable (see [`EsbPayloadLength::set_dynamic_payloads()`]).
+        fn read(&mut self, buf: &mut [u8], len: Option<u8>) -> Result<u8, Self::RadioErrorType>;
     }
 }

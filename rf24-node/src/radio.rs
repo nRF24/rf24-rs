@@ -2,7 +2,7 @@
 
 use crate::enums::{
     AvailablePipe, HardwareConfig, NodeCrcLength, NodeDataRate, NodeFifoState, NodePaLevel,
-    StatusFlags, WriteConfig,
+    NodeStatusFlags, WriteConfig,
 };
 use linux_embedded_hal::{
     gpio_cdev::{chips, LineRequestFlags},
@@ -12,6 +12,7 @@ use linux_embedded_hal::{
 use napi::{bindgen_prelude::Buffer, Error, Result, Status};
 
 use rf24_rs::radio::{prelude::*, RF24};
+use rf24_rs::StatusFlags;
 
 #[napi(js_name = "RF24")]
 pub struct NodeRF24 {
@@ -105,6 +106,11 @@ impl NodeRF24 {
             .map_err(|e| Error::new(Status::GenericFailure, format!("{e:?}")))
     }
 
+    #[napi(getter)]
+    pub fn is_listening(&self) -> bool {
+        self.inner.is_listening()
+    }
+
     #[napi]
     pub fn start_listening(&mut self) -> Result<()> {
         self.inner
@@ -141,8 +147,9 @@ impl NodeRF24 {
     }
 
     #[napi]
-    pub fn read(&mut self, len: u8) -> Result<Buffer> {
-        self.inner
+    pub fn read(&mut self, len: Option<u8>) -> Result<Buffer> {
+        let len = self
+            .inner
             .read(&mut self.read_buf, len)
             .map_err(|e| Error::new(Status::GenericFailure, format!("{e:?}")))?;
         Ok(Buffer::from(&self.read_buf[0..len as usize]))
@@ -169,13 +176,13 @@ impl NodeRF24 {
             .map_err(|e| Error::new(Status::GenericFailure, format!("{e:?}")))
     }
 
-    #[napi]
+    #[napi(getter)]
     pub fn is_plus_variant(&self) -> bool {
         self.inner.is_plus_variant()
     }
 
-    #[napi]
-    pub fn test_rpd(&mut self) -> Result<bool> {
+    #[napi(getter)]
+    pub fn rpd(&mut self) -> Result<bool> {
         self.inner
             .test_rpd()
             .map_err(|e| Error::new(Status::GenericFailure, format!("{e:?}")))
@@ -414,6 +421,11 @@ impl NodeRF24 {
             .map_err(|e| Error::new(Status::GenericFailure, format!("{e:?}")))
     }
 
+    #[napi(getter)]
+    pub fn is_powered(&self) -> bool {
+        self.inner.is_powered()
+    }
+
     #[napi]
     pub fn power_down(&mut self) -> Result<()> {
         self.inner
@@ -429,18 +441,26 @@ impl NodeRF24 {
     }
 
     #[napi]
-    pub fn set_status_flags(&mut self, status_flags: Option<StatusFlags>) -> Result<()> {
-        let status_flags = status_flags.unwrap_or_default();
+    pub fn set_status_flags(&mut self, flags: Option<NodeStatusFlags>) -> Result<()> {
+        let flags = flags.unwrap_or(NodeStatusFlags {
+            rx_dr: Some(true),
+            tx_ds: Some(true),
+            tx_df: Some(true),
+        });
         self.inner
-            .set_status_flags(status_flags.rx_dr, status_flags.tx_ds, status_flags.tx_df)
+            .set_status_flags(Some(flags.into_inner()))
             .map_err(|e| Error::new(Status::GenericFailure, format!("{e:?}")))
     }
 
     #[napi]
-    pub fn clear_status_flags(&mut self, status_flags: Option<StatusFlags>) -> Result<()> {
-        let status_flags = status_flags.unwrap_or_default();
+    pub fn clear_status_flags(&mut self, flags: Option<NodeStatusFlags>) -> Result<()> {
+        let flags = flags.unwrap_or(NodeStatusFlags {
+            rx_dr: Some(true),
+            tx_ds: Some(true),
+            tx_df: Some(true),
+        });
         self.inner
-            .clear_status_flags(status_flags.rx_dr, status_flags.tx_ds, status_flags.tx_df)
+            .clear_status_flags(Some(flags.into_inner()))
             .map_err(|e| Error::new(Status::GenericFailure, format!("{e:?}")))
     }
 
@@ -452,17 +472,9 @@ impl NodeRF24 {
     }
 
     #[napi]
-    pub fn get_status_flags(&mut self) -> Result<StatusFlags> {
-        let mut rx_dr = Some(false);
-        let mut tx_ds = Some(false);
-        let mut tx_df = Some(false);
-        self.inner
-            .get_status_flags(&mut rx_dr, &mut tx_ds, &mut tx_df)
-            .map_err(|e| Error::new(Status::GenericFailure, format!("{e:?}")))?;
-        Ok(StatusFlags {
-            rx_dr: rx_dr.unwrap(),
-            tx_ds: tx_ds.unwrap(),
-            tx_df: tx_df.unwrap(),
-        })
+    pub fn get_status_flags(&mut self) -> NodeStatusFlags {
+        let mut flags = StatusFlags::default();
+        self.inner.get_status_flags(&mut flags);
+        NodeStatusFlags::from_inner(flags)
     }
 }

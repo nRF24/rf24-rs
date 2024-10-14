@@ -1,7 +1,7 @@
 #![cfg(target_os = "linux")]
 use std::borrow::Cow;
 
-use crate::enums::{PyCrcLength, PyDataRate, PyFifoState, PyPaLevel};
+use crate::enums::{PyCrcLength, PyDataRate, PyFifoState, PyPaLevel, PyStatusFlags};
 use linux_embedded_hal::{
     gpio_cdev::{chips, LineRequestFlags},
     spidev::{SpiModeFlags, SpidevOptions},
@@ -12,6 +12,7 @@ use pyo3::{
     prelude::*,
 };
 use rf24_rs::radio::{prelude::*, RF24};
+use rf24_rs::StatusFlags;
 
 #[pyclass(name = "RF24", module = "rf24_py")]
 pub struct PyRF24 {
@@ -92,6 +93,20 @@ impl PyRF24 {
             .map_err(|e| PyRuntimeError::new_err(format!("{e:?}")))
     }
 
+    #[setter]
+    pub fn set_listen(&mut self, enable: bool) -> PyResult<()> {
+        if enable {
+            self.start_listening()
+        } else {
+            self.stop_listening()
+        }
+    }
+
+    #[getter]
+    pub fn get_listen(&self) -> bool {
+        self.inner.is_listening()
+    }
+
     pub fn start_listening(&mut self) -> PyResult<()> {
         self.inner
             .start_listening()
@@ -124,8 +139,10 @@ impl PyRF24 {
             .map_err(|e| PyRuntimeError::new_err(format!("{e:?}")))
     }
 
-    pub fn read(&mut self, len: u8) -> PyResult<Cow<[u8]>> {
-        self.inner
+    #[pyo3(signature = (len = None))]
+    pub fn read(&mut self, len: Option<u8>) -> PyResult<Cow<[u8]>> {
+        let len = self
+            .inner
             .read(&mut self.read_buf, len)
             .map_err(|e| PyRuntimeError::new_err(format!("{e:?}")))?;
         Ok(Cow::from(&self.read_buf[0..len as usize]))
@@ -149,11 +166,13 @@ impl PyRF24 {
             .map_err(|e| PyRuntimeError::new_err(format!("{e:?}")))
     }
 
+    #[getter]
     pub fn is_plus_variant(&self) -> bool {
         self.inner.is_plus_variant()
     }
 
-    pub fn test_rpd(&mut self) -> PyResult<bool> {
+    #[getter]
+    pub fn get_rpd(&mut self) -> PyResult<bool> {
         self.inner
             .test_rpd()
             .map_err(|e| PyRuntimeError::new_err(format!("{e:?}")))
@@ -213,18 +232,21 @@ impl PyRF24 {
             .map_err(|e| PyRuntimeError::new_err(format!("{e:?}")))
     }
 
+    #[setter]
     pub fn set_channel(&mut self, channel: u8) -> PyResult<()> {
         self.inner
             .set_channel(channel)
             .map_err(|e| PyRuntimeError::new_err(format!("{e:?}")))
     }
 
+    #[getter]
     pub fn get_channel(&mut self) -> PyResult<u8> {
         self.inner
             .get_channel()
             .map_err(|e| PyRuntimeError::new_err(format!("{e:?}")))
     }
 
+    #[getter]
     pub fn get_crc_length(&mut self) -> PyResult<PyCrcLength> {
         self.inner
             .get_crc_length()
@@ -232,12 +254,14 @@ impl PyRF24 {
             .map(|e| PyCrcLength::from_inner(e))
     }
 
+    #[setter]
     pub fn set_crc_length(&mut self, crc_length: PyCrcLength) -> PyResult<()> {
         self.inner
             .set_crc_length(crc_length.into_inner())
             .map_err(|e| PyRuntimeError::new_err(format!("{e:?}")))
     }
 
+    #[getter]
     pub fn get_data_rate(&mut self) -> PyResult<PyDataRate> {
         self.inner
             .get_data_rate()
@@ -245,6 +269,7 @@ impl PyRF24 {
             .map(|e| PyDataRate::from_inner(e))
     }
 
+    #[setter]
     pub fn set_data_rate(&mut self, data_rate: PyDataRate) -> PyResult<()> {
         self.inner
             .set_data_rate(data_rate.into_inner())
@@ -287,6 +312,7 @@ impl PyRF24 {
             .map(|e| PyFifoState::from_inner(e))
     }
 
+    #[getter]
     pub fn get_pa_level(&mut self) -> PyResult<PyPaLevel> {
         self.inner
             .get_pa_level()
@@ -294,18 +320,21 @@ impl PyRF24 {
             .map(|e| PyPaLevel::from_inner(e))
     }
 
+    #[setter]
     pub fn set_pa_level(&mut self, pa_level: PyPaLevel) -> PyResult<()> {
         self.inner
             .set_pa_level(pa_level.into_inner())
             .map_err(|e| PyRuntimeError::new_err(format!("{e:?}")))
     }
 
+    #[setter]
     pub fn set_payload_length(&mut self, length: u8) -> PyResult<()> {
         self.inner
             .set_payload_length(length)
             .map_err(|e| PyRuntimeError::new_err(format!("{e:?}")))
     }
 
+    #[getter]
     pub fn get_payload_length(&mut self) -> PyResult<u8> {
         self.inner
             .get_payload_length()
@@ -343,16 +372,34 @@ impl PyRF24 {
             .map_err(|e| PyRuntimeError::new_err(format!("{e:?}")))
     }
 
+    #[setter]
     pub fn set_address_length(&mut self, length: u8) -> PyResult<()> {
         self.inner
             .set_address_length(length)
             .map_err(|e| PyRuntimeError::new_err(format!("{e:?}")))
     }
 
+    #[getter]
     pub fn get_address_length(&mut self) -> PyResult<u8> {
         self.inner
             .get_address_length()
             .map_err(|e| PyRuntimeError::new_err(format!("{e:?}")))
+    }
+
+
+    #[setter]
+    pub fn set_power(&mut self, enable: bool) -> PyResult<()> {
+        if enable {
+            self.power_up(None)
+        }
+        else {
+            self.power_down()
+        }
+    }
+
+    #[getter]
+    pub fn get_power(&self) -> bool {
+        self.inner.is_powered()
     }
 
     pub fn power_down(&mut self) -> PyResult<()> {
@@ -371,15 +418,27 @@ impl PyRF24 {
             .map_err(|e| PyRuntimeError::new_err(format!("{e:?}")))
     }
 
-    pub fn set_status_flags(&mut self, rx_dr: bool, tx_ds: bool, tx_df: bool) -> PyResult<()> {
+    #[pyo3(signature = (flags = None))]
+    pub fn set_status_flags(&mut self, flags: Option<PyStatusFlags>) -> PyResult<()> {
+        let flags = flags.unwrap_or(PyStatusFlags {
+            rx_dr: true,
+            tx_ds: true,
+            tx_df: true,
+        });
         self.inner
-            .set_status_flags(rx_dr, tx_ds, tx_df)
+            .set_status_flags(Some(flags.into_inner()))
             .map_err(|e| PyRuntimeError::new_err(format!("{e:?}")))
     }
 
-    pub fn clear_status_flags(&mut self, rx_dr: bool, tx_ds: bool, tx_df: bool) -> PyResult<()> {
+    #[pyo3(signature = (flags = None))]
+    pub fn clear_status_flags(&mut self, flags: Option<PyStatusFlags>) -> PyResult<()> {
+        let flags = flags.unwrap_or(PyStatusFlags {
+            rx_dr: true,
+            tx_ds: true,
+            tx_df: true,
+        });
         self.inner
-            .clear_status_flags(rx_dr, tx_ds, tx_df)
+            .clear_status_flags(Some(flags.into_inner()))
             .map_err(|e| PyRuntimeError::new_err(format!("{e:?}")))
     }
 
@@ -389,13 +448,9 @@ impl PyRF24 {
             .map_err(|e| PyRuntimeError::new_err(format!("{e:?}")))
     }
 
-    pub fn get_status_flags(&mut self) -> PyResult<(bool, bool, bool)> {
-        let mut rx_dr = Some(false);
-        let mut tx_ds = Some(false);
-        let mut tx_df = Some(false);
-        self.inner
-            .get_status_flags(&mut rx_dr, &mut tx_ds, &mut tx_df)
-            .map_err(|e| PyRuntimeError::new_err(format!("{e:?}")))?;
-        Ok((rx_dr.unwrap(), tx_ds.unwrap(), tx_df.unwrap()))
+    pub fn get_status_flags(&mut self) -> PyStatusFlags {
+        let mut flags = StatusFlags::default();
+        self.inner.get_status_flags(&mut flags);
+        PyStatusFlags::from_inner(flags)
     }
 }

@@ -5,7 +5,9 @@ words:
   - armv
   - bindgen
   - bytearray
+  - calcsize
   - Cdev
+  - datasheet
   - Doherty
   - DYNPD
   - eabi
@@ -13,6 +15,7 @@ words:
   - gnueabihf
   - gpio
   - gpiochip
+  - gpiod
   - inlinehilite
   - Kbps
   - linenums

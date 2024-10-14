@@ -54,3 +54,14 @@ pub enum FifoState {
     /// Represent the state of a FIFO when it is not full but not empty either.
     Occupied,
 }
+
+#[derive(Clone, Copy, Debug, Default)]
+/// A struct used to describe the different interruptable events.
+pub struct StatusFlags {
+    /// A flag to describe if RX Data Ready to read.
+    pub rx_dr: bool,
+    /// A flag to describe if TX Data Sent.
+    pub tx_ds: bool,
+    /// A flag to describe if TX Data Failed.
+    pub tx_df: bool,
+}

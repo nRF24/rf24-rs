@@ -1,6 +1,6 @@
 [package]
 edition = "2021"
-name = "rf24_rf24"
+name = "rf24_node"
 version = "0.0.0"
 
 [lib]

@@ -1,8 +1,50 @@
 use pyo3::prelude::*;
 
 #[cfg(target_os = "linux")]
-use rf24_rs::{CrcLength, PaLevel, DataRate, FifoState};
+use rf24_rs::{CrcLength, DataRate, FifoState, PaLevel, StatusFlags};
 
+#[pyclass(name = "StatusFlags", frozen, get_all, module = "rf24_py")]
+#[derive(Default, Clone)]
+pub struct PyStatusFlags {
+    /// A flag to describe if RX Data Ready to read.
+    pub rx_dr: bool,
+    /// A flag to describe if TX Data Sent.
+    pub tx_ds: bool,
+    /// A flag to describe if TX Data Failed.
+    pub tx_df: bool,
+}
+
+#[pymethods]
+impl PyStatusFlags {
+    #[new]
+    #[pyo3(signature = (rx_dr = false, tx_ds = false, tx_df = false))]
+    fn new(rx_dr: bool, tx_ds: bool, tx_df: bool) -> Self {
+        Self {
+            rx_dr,
+            tx_ds,
+            tx_df,
+        }
+    }
+}
+
+#[cfg(target_os = "linux")]
+impl PyStatusFlags {
+    pub fn into_inner(self) -> StatusFlags {
+        StatusFlags {
+            rx_dr: self.rx_dr,
+            tx_ds: self.tx_ds,
+            tx_df: self.tx_df,
+        }
+    }
+
+    pub fn from_inner(other: StatusFlags) -> Self {
+        Self {
+            rx_dr: other.rx_dr,
+            tx_ds: other.tx_ds,
+            tx_df: other.tx_df,
+        }
+    }
+}
 
 /// Power Amplifier level. The units dBm (decibel-milliwatts or dB<sub>mW</sub>)
 /// represents a logarithmic signal loss.

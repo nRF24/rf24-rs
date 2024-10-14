@@ -44,6 +44,11 @@ where
         }
         Ok(())
     }
+
+    /// Is the radio powered up?
+    fn is_powered(&self) -> bool {
+        (self._config_reg & 2) != 2
+    }
 }
 
 /////////////////////////////////////////////////////////////////////////////////
@@ -105,6 +110,23 @@ mod test {
         let mut spi_mock = SpiMock::new(&spi_expectations);
         let mut radio = RF24::new(pin_mock.clone(), spi_mock.clone(), delay_mock);
         radio.power_up(Some(0)).unwrap();
+        spi_mock.done();
+        pin_mock.done();
+    }
+
+    #[test]
+    pub fn power_getter() {
+        // Create pin
+        let pin_expectations = [];
+        let mut pin_mock = PinMock::new(&pin_expectations);
+
+        // create delay fn
+        let delay_mock = NoopDelay::new();
+
+        let spi_expectations = vec![];
+        let mut spi_mock = SpiMock::new(&spi_expectations);
+        let radio = RF24::new(pin_mock.clone(), spi_mock.clone(), delay_mock);
+        assert!(radio.is_powered());
         spi_mock.done();
         pin_mock.done();
     }
