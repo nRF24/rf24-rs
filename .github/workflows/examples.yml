@@ -1,4 +1,4 @@
-# lint/build examples
+name: Examples
 
 on:
   push:
