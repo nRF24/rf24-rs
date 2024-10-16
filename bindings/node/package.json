@@ -26,15 +26,16 @@
   "license": "MIT",
   "devDependencies": {
     "@napi-rs/cli": "^2.18.4",
-    "@types/node": "^22.7.5"
+    "@types/node": "^22.7.5",
+    "prettier": "3.3.3"
   },
   "engines": {
     "node": ">= 10"
   },
   "scripts": {
     "artifacts": "napi artifacts",
-    "build": "napi build --platform --release",
-    "build:debug": "napi build --platform",
+    "build": "napi build --platform --release --pipe 'yarn run prettier --write'",
+    "build:debug": "napi build --platform --pipe 'yarn run prettier --write'",
     "prepublishOnly": "napi prepublish -t npm",
     "universal": "napi universal",
     "version": "napi version"
