@@ -4,7 +4,7 @@ set windows-shell := ["powershell.exe", "-NoLogo", "-Command"]
 [group("code coverage")]
 test profile='default':
     cargo llvm-cov --no-report \
-    nextest --manifest-path lib/Cargo.toml \
+    nextest --manifest-path library/Cargo.toml \
     --lib --tests --color always --profile {{ profile }}
 
 # Clear previous test build artifacts
@@ -16,19 +16,19 @@ test-clean:
 # generate pretty coverage report
 [group("code coverage")]
 pretty-cov *args='':
-    cargo llvm-cov report --json --output-path coverage.json --ignore-filename-regex main
+    cargo llvm-cov report --json --output-path coverage.json --ignore-filename-regex details
     llvm-cov-pretty coverage.json {{ args }}
 
 # pass "--open" to this recipe's args to load HTML in your browser
 # generate detailed coverage report
 [group("code coverage")]
 llvm-cov *args='':
-    cargo llvm-cov report --html --ignore-filename-regex main {{ args }}
+    cargo llvm-cov report --html --ignore-filename-regex details {{ args }}
 
 # generate lcov.info
 [group("code coverage")]
 lcov:
-    cargo llvm-cov report --lcov --output-path lcov.info --ignore-filename-regex main
+    cargo llvm-cov report --lcov --output-path lcov.info --ignore-filename-regex details
 
 # pass "--open" to this recipe's "open" arg to load HTML in your browser
 # serve mkdocs
@@ -47,7 +47,18 @@ docs-build:
 docs-rs open='':
     cargo doc --no-deps --lib --manifest-path Cargo.toml {{ open }}
 
-# run clippy and rustfmt
+# run clippy and rustfmt (on library only)
 lint:
     cargo clippy --allow-staged --allow-dirty --fix
     cargo fmt
+
+
+# run clippy and rustfmt (on examples/rust only)
+lint-examples:
+    cargo clippy \
+    --manifest-path examples/rust/Cargo.toml \
+    --features linux \
+    --allow-staged \
+    --allow-dirty \
+    --fix
+    cargo fmt --manifest-path examples/rust/Cargo.toml

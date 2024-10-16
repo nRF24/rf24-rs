@@ -8,6 +8,7 @@ words:
   - calcsize
   - Cdev
   - datasheet
+  - defmt
   - Doherty
   - DYNPD
   - eabi
@@ -22,6 +23,7 @@ words:
   - Mbps
   - milliwatts
   - mkdocs
+  - mosi
   - msvc
   - musleabihf
   - napi
@@ -29,6 +31,7 @@ words:
   - pymdownx
   - pymethods
   - pymodule
+  - repr
   - RETR
   - riscv
   - rustc

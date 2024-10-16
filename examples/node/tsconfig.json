@@ -1,0 +1,10 @@
+{
+  "compilerOptions": {
+    /* Visit https://aka.ms/tsconfig to read more about this file */
+    "target": "es2022", /* Set the JavaScript language version for emitted JavaScript and include compatible library declarations. */
+    "module": "nodenext", /* Specify what module code is generated. */
+    "outDir": "./js", /* Specify an output folder for all emitted files. */
+    "strict": true, /* Enable all strict type-checking options. */
+  },
+  "include": ["./ts/*"]
+}

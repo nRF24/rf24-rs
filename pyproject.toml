@@ -58,5 +58,4 @@ files = [
 ]
 
 [tool.maturin]
-features = ["pyo3/extension-module"]
-manifest-path = "rf24-py/Cargo.toml"
+manifest-path = "bindings/python/Cargo.toml"

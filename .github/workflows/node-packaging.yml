@@ -1,18 +1,24 @@
 name: Node.js Builds
 env:
   DEBUG: napi:*
-  ARTIFACT_PATH: rf24-node/rf24.*.node
+  ARTIFACT_PATH: bindings/node/rf24.*.node
   MACOSX_DEPLOYMENT_TARGET: '10.13'
+
 on:
   push:
     branches: [main]
     tags: ['v*']
     paths:
-      - 'lib/src/**'
-      - 'rf24-node/**'
+      - 'library/src/**'
+      - 'bindings/node/**'
       - '!**/*.md'
   pull_request:
     branches: [main]
+    paths:
+      - 'library/src/**'
+      - 'bindings/node/**'
+      - '!**/*.md'
+
 jobs:
   build:
     strategy:
@@ -143,7 +149,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: generated-index
-          path: rf24-node/index.*
+          path: bindings/node/index.*
 
   universal-macOS:
     name: Build universal macOS binary
@@ -163,12 +169,12 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: bindings-x86_64-apple-darwin
-          path: rf24-node/artifacts
+          path: bindings/node/artifacts
       - name: Download macOS arm64 artifact
         uses: actions/download-artifact@v4
         with:
           name: bindings-aarch64-apple-darwin
-          path: rf24-node/artifacts
+          path: bindings/node/artifacts
       - name: Combine binaries
         run: yarn universal
       - name: Upload artifact
@@ -199,16 +205,16 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           pattern: binding-*
-          path: rf24-node/artifacts
+          path: bindings/node/artifacts
       - name: Download generated index artifact
         uses: actions/download-artifact@v4
         with:
           name: generated-index
-          path: rf24-node
+          path: bindings/node
       - name: Move artifacts
         run: yarn artifacts
       - name: List packages
-        run: ls -R ./rf24-node/npm
+        run: ls -R ./bindings/node/npm
         shell: bash
       - name: Publish
         run: |

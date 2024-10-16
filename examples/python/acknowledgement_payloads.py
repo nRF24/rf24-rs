@@ -52,7 +52,7 @@ radio.begin()
 
 # set the Power Amplifier level to -12 dBm since this test example is
 # usually run with nRF24L01 transceivers in close proximity of each other
-radio.pa_level = PaLevel.LOW  # PaLevel.MAX is default
+radio.pa_level = PaLevel.Low  # PaLevel.Max is default
 
 # ACK payloads are dynamically sized, so we need to enable that feature also
 radio.set_dynamic_payloads(True)
@@ -67,7 +67,7 @@ radio.open_tx_pipe(address[radio_number])  # always uses pipe 0
 radio.open_rx_pipe(1, address[not radio_number])  # using pipe 1
 
 # for debugging
-# radio.print_pretty_details()
+# radio.print_details()
 
 
 def master(count: int = 5):  # count = 5 will only transmit 5 packets

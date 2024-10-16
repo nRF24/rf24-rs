@@ -1,6 +1,6 @@
 [workspace]
-members = ["lib", "examples/rust", "rf24-py", "rf24-node"]
-default-members = ["lib"]
+members = ["library", "examples/rust", "bindings/python", "bindings/node"]
+default-members = ["library"]
 resolver = "2"
 
 [workspace.package]

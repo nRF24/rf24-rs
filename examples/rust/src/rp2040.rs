@@ -17,19 +17,21 @@ pub struct BoardHardware<'b> {
 impl BoardHardware<'_> {
     pub fn new() -> Self {
         let peri = embassy_rp::init(Default::default());
-        let mut spi_config = Config::default();
-        spi_config.frequency = 10_000_000;
+
+        let ce = peri.PIN_9;
+        let ce_pin = Output::new(ce, Level::Low);
+        
         let clk = peri.PIN_10;
         let mosi = peri.PIN_11;
         let miso = peri.PIN_12;
-        let ce = peri.PIN_9;
-        let cs = peri.PIN_25;
-
+        let mut spi_config = Config::default();
+        spi_config.frequency = 10_000_000;
         let spi = Spi::new_blocking(peri.SPI1, clk, mosi, miso, spi_config);
         let spi_bus_mutex: Mutex<NoopRawMutex, RefCell<_>> = Mutex::new(RefCell::new(spi));
-        let cs_pin = Output::new(ce, Level::High);
-        let ce_pin = Output::new(cs, Level::Low);
+        let cs = peri.PIN_25;
+        let cs_pin = Output::new(cs, Level::High);
         let spi_device = SpiDevice::new(&spi_bus_mutex, cs_pin);
+
         BoardHardware {
             peri,
             spi_bus_mutex,

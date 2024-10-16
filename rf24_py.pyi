@@ -2,15 +2,15 @@ from dataclasses import dataclass
 from enum import Enum, auto
 
 class PaLevel(Enum):
-    MIN = auto()
-    LOW = auto()
-    HIGH = auto()
-    MAX = auto()
+    Min = auto()
+    Low = auto()
+    High = auto()
+    Max = auto()
 
 class CrcLength(Enum):
-    DISABLED = auto()
-    BIT8 = auto()
-    BIT16 = auto()
+    Disabled = auto()
+    Bit8 = auto()
+    Bit16 = auto()
 
 class FifoState(Enum):
     Full = auto()

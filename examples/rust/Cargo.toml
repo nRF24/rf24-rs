@@ -4,7 +4,7 @@ version.workspace = true
 edition.workspace = true
 
 [dependencies]
-rf24-rs = {path = "../../lib"}
+rf24-rs = {path = "../../library"}
 embedded-hal = "1.0.0"
 anyhow = {version = "1.0.89", default-features = false }
 linux-embedded-hal = {version = "0.4.0", optional = true}
@@ -15,8 +15,8 @@ embassy-embedded-hal = {version = "0.1.0", optional = true}
 [features]
 default = ["linux"]
 # default = ["rp2040"]
-rp2040 = ["dep:embassy-rp", "dep:embassy-sync", "dep:embassy-embedded-hal"]
-linux = ["dep:linux-embedded-hal"]
+rp2040 = ["dep:embassy-rp", "dep:embassy-sync", "dep:embassy-embedded-hal", "rf24-rs/defmt"]
+linux = ["dep:linux-embedded-hal", "rf24-rs/std"]
 
 [[bin]]
 name = "getting-started"

@@ -1,2 +1,2 @@
-[target.<architecture-triple>]
-runner = 'probe-rs run --chip <chip-name>'
+# [target.<architecture-triple>]
+# runner = 'probe-rs run --chip <chip-name>'

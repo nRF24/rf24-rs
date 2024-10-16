@@ -52,7 +52,7 @@ radio.begin()
 
 # set the Power Amplifier level to -12 dBm since this test example is
 # usually run with nRF24L01 transceivers in close proximity of each other
-radio.pa_level = PaLevel.LOW  # PaLevel.MAX is default
+radio.pa_level = PaLevel.Low  # PaLevel.Max is default
 
 # set TX address of RX node into the TX pipe
 radio.open_tx_pipe(address[radio_number])  # always uses pipe 0
@@ -68,7 +68,7 @@ radio.payload_length = struct.calcsize("<f")
 # for debugging
 # radio.print_details()
 # or for human readable data
-# radio.print_pretty_details()
+# radio.print_details()
 
 
 def master(count: int = 5):  # count = 5 will only transmit 5 packets

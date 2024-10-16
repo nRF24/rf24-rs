@@ -38,7 +38,7 @@ radio.begin()
 # turn off RX features specific to the nRF24L01 module
 radio.set_auto_ack(False)
 radio.set_dynamic_payloads(False)
-radio.crc_length = CrcLength.DISABLED
+radio.crc_length = CrcLength.Disabled
 radio.set_auto_retries(0, 0)
 
 # use reverse engineering tactics for a better "snapshot"

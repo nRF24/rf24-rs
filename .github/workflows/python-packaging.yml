@@ -9,8 +9,8 @@ on:
   push:
     branches: [main]
     paths:
-      - rf24-py/**
-      - lib/src/**
+      - bindings/python/**
+      - library/src/**
       - Cargo.toml
       - pyproject.toml
       - .github/workflows/python-packaging.yml
@@ -19,8 +19,8 @@ on:
   pull_request:
     branches: [main]
     paths:
-      - rf24-py/**
-      - lib/src/**
+      - bindings/python/**
+      - library/src/**
       - Cargo.toml
       - pyproject.toml
       - .github/workflows/python-packaging.yml
