@@ -1,0 +1,2 @@
+[target.'cfg(feature = "defmt")']
+rustflags = ["-C", "link-arg=-Tdefmt.x"]
