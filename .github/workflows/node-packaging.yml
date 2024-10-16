@@ -216,6 +216,7 @@ jobs:
       - name: List packages
         run: ls -R ./bindings/node/npm
         shell: bash
+      - run: yarn format
       - name: Publish
         run: |
           npm config set provenance true

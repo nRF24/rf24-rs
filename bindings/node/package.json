@@ -34,8 +34,8 @@
   },
   "scripts": {
     "artifacts": "napi artifacts",
-    "build": "napi build --platform --release --pipe 'yarn run prettier --write'",
-    "build:debug": "napi build --platform --pipe 'yarn run prettier --write'",
+    "build": "napi build --platform --release",
+    "build:debug": "napi build --platform",
     "prepublishOnly": "napi prepublish -t npm",
     "universal": "napi universal",
     "version": "napi version"
