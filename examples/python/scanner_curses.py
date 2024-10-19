@@ -136,7 +136,7 @@ def init_radio():
     """init the radio"""
     radio.begin()
     radio.set_auto_ack(False)
-    radio.crc_length = CrcLength.DISABLED
+    radio.crc_length = CrcLength.Disabled
     radio.address_length = 2
     for pipe, address in enumerate(noise_address):
         radio.open_rx_pipe(pipe, address)
