@@ -10,7 +10,7 @@ const io = readline.createInterface({
 
 type AppState = {
   radio: RF24;
-  payload: Buffer;
+  counter: number;
 };
 
 console.log(module.filename);
@@ -62,15 +62,10 @@ export async function setup(): Promise<AppState> {
   // usually run with nRF24L01 transceivers in close proximity of each other
   radio.setPaLevel(PaLevel.Low); // PaLevel.Max is default
 
-  // To save time during transmission, we'll set the payload size to be only what
-  // we need. A 32-bit float value occupies 4 bytes in memory (using little-endian).
-  const payloadLength = 4;
-  radio.setPayloadLength(payloadLength);
-  // we'll use a DataView object to store our float number into a bytearray buffer
-  const payload = Buffer.alloc(payloadLength);
-  payload.writeFloatLE(0.0, 0);
+  radio.allowAckPayloads(true);
+  radio.setDynamicPayloads(true);
 
-  return { radio: radio, payload: payload };
+  return { radio: radio, counter: 0 };
 }
 
 /**
@@ -79,14 +74,29 @@ export async function setup(): Promise<AppState> {
  */
 export async function master(example: AppState, count: number | null) {
   example.radio.stopListening();
+  // we'll use a DataView object to store our string and number into a bytearray buffer
+  const outgoing = Buffer.from("Hello \0.");
   for (let i = 0; i < (count || 5); i++) {
+    outgoing.writeUint8(example.counter, 7);
     const start = process.hrtime.bigint();
-    const result = example.radio.send(example.payload);
+    const result = example.radio.send(outgoing);
     const end = process.hrtime.bigint();
     if (result) {
       const elapsed = (end - start) / BigInt(1000);
-      console.log(`Transmission successful! Time to Transmit: ${elapsed} us`);
-      example.payload.writeFloatLE(example.payload.readFloatLE(0) + 0.01, 0);
+      process.stdout.write(
+        `Transmission successful! Time to Transmit: ${elapsed} us. Sent: ` +
+          `${outgoing.subarray(0, 6).toString()}${example.counter} `,
+      );
+      example.counter += 1;
+      if (example.radio.available()) {
+        const incoming = example.radio.read();
+        const counter = incoming.readUint8(7);
+        console.log(
+          ` Received: ${incoming.subarray(0, 6).toString()}${counter}`,
+        );
+      } else {
+        console.log("Received an empty ACK packet");
+      }
     } else {
       console.log("Transmission failed or timed out!");
     }
@@ -100,20 +110,28 @@ export async function master(example: AppState, count: number | null) {
  */
 export function slave(example: AppState, duration: number | null) {
   example.radio.startListening();
+  // we'll use a DataView object to store our string and number into a bytearray buffer
+  const outgoing = Buffer.from("World \0.");
+  outgoing.writeUint8(example.counter, 7);
+  example.radio.writeAckPayload(1, outgoing);
   let timeout = Date.now() + (duration || 6) * 1000;
   while (Date.now() < timeout) {
     const hasRx = example.radio.availablePipe();
     if (hasRx.available) {
       const incoming = example.radio.read();
-      example.payload = incoming;
-      const data = incoming.readFloatLE(0);
+      const counter = incoming.readUint8(7);
       console.log(
-        `Received ${incoming.length} bytes on pipe ${hasRx.pipe}: ${data}`,
+        `Received ${incoming.length} bytes on pipe ${hasRx.pipe}: ` +
+          `${incoming.subarray(0, 6).toString()}${counter} Sent: ` +
+          `${outgoing.subarray(0, 6).toString()}${example.counter}`,
       );
+      example.counter = counter;
+      outgoing.writeUint8(counter + 1, 7);
+      example.radio.writeAckPayload(1, outgoing);
       timeout = Date.now() + (duration || 6) * 1000;
     }
   }
-  example.radio.stopListening();
+  example.radio.stopListening(); // flushes TX FIFO when ACK payloads are enabled
 }
 
 /**

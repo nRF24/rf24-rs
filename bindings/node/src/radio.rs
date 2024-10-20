@@ -40,7 +40,6 @@ impl NodeRF24 {
             })?
             .find(|chip| {
                 if let Ok(chip) = chip {
-                    println!("{:?}", chip.path());
                     if chip
                         .path()
                         .to_string_lossy()
