@@ -1,0 +1,10 @@
+{
+    "plugin": ["typedoc-plugin-markdown"],
+    "mergeReadme": true,
+    "useCodeBlocks": true,
+    "hidePageHeader": true,
+    "hideBreadcrumbs": true,
+    "hidePageTitle": true,
+    "expandParameters": true,
+    "parametersFormat": "table",
+}
