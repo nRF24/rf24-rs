@@ -37,7 +37,7 @@ export async function setup(): Promise<AppState> {
   //   - `<b>` is the CSN pin (must be unique for each device on the same SPI bus)
   const CSN_PIN = 0; // aka CE0 for SPI bus 0 (/dev/spidev0.0)
 
-  // create a radio object for the specified hard ware config:
+  // create a radio object for the specified hardware config:
   const radio = new RF24(CE_PIN, CSN_PIN, {
     devGpioChip: DEV_GPIO_CHIP,
   });
@@ -109,7 +109,7 @@ export function printHeader() {
 /**
  * The scanner behavior.
  */
-export async function scan(example: AppState, duration: number | null) {
+export async function scan(app: AppState, duration: number | null) {
   printHeader();
   const caches = [];
   for (let i = 0; i < CHANNELS; i++) {
@@ -120,17 +120,17 @@ export async function scan(example: AppState, duration: number | null) {
 
   const timeout = Date.now() + (duration || 30) * 1000;
   while (Date.now() < timeout) {
-    example.radio.setChannel(channel);
-    example.radio.startListening();
+    app.radio.setChannel(channel);
+    app.radio.startListening();
     await timer.setTimeout(0.13); // needs to be at least 130 microseconds
-    const rpd = example.radio.rpd;
-    example.radio.stopListening();
-    const foundSignal = example.radio.available();
+    const rpd = app.radio.rpd;
+    app.radio.stopListening();
+    const foundSignal = app.radio.available();
 
-    caches[channel] += Number(foundSignal || rpd || example.radio.rpd);
+    caches[channel] += Number(foundSignal || rpd || app.radio.rpd);
 
     if (foundSignal) {
-      example.radio.flushRx(); // discard any packets (noise) saved in RX FIFO
+      app.radio.flushRx(); // discard any packets (noise) saved in RX FIFO
     }
     const total = caches[channel];
     process.stdout.write(total > 0 ? total.toString(16) : "-");
@@ -164,21 +164,21 @@ export async function scan(example: AppState, duration: number | null) {
 /**
  * Sniff ambient noise and print it out as hexadecimal string.
  */
-export function noise(example: AppState, duration: number | null) {
+export function noise(app: AppState, duration: number | null) {
   const timeout = Date.now() + (duration || 10) * 1000;
-  example.radio.startListening();
+  app.radio.startListening();
   while (
-    example.radio.isListening ||
-    example.radio.getFifoState(false) != FifoState.Empty
+    app.radio.isListening ||
+    app.radio.getFifoState(false) != FifoState.Empty
   ) {
-    const payload = example.radio.read();
+    const payload = app.radio.read();
     const hexArray = [];
     for (let i = 0; i < payload.length; i++) {
       hexArray.push(payload[i].toString(16).padStart(2, "0"));
     }
     console.log(hexArray.join(" "));
-    if (Date.now() > timeout && example.radio.isListening) {
-      example.radio.stopListening();
+    if (Date.now() > timeout && app.radio.isListening) {
+      app.radio.stopListening();
     }
   }
 }
@@ -186,7 +186,7 @@ export function noise(example: AppState, duration: number | null) {
 /**
  * This function prompts the user and performs the specified role for the radio.
  */
-export async function setRole(example: AppState): Promise<boolean> {
+export async function setRole(app: AppState): Promise<boolean> {
   const prompt =
     "*** Enter 'S' to scan\n" +
     "*** Enter 'N' to print noise\n" +
@@ -198,25 +198,25 @@ export async function setRole(example: AppState): Promise<boolean> {
   }
   switch (input[0].charAt(0).toLowerCase()) {
     case "s":
-      await scan(example, param);
+      await scan(app, param);
       return true;
     case "n":
-      noise(example, param);
+      noise(app, param);
       return true;
     default:
       console.log(`'${input[0].charAt(0)}' is an unrecognized input`);
       return true;
     case "q":
-      example.radio.powerDown();
+      app.radio.powerDown();
       return false;
   }
 }
 
 export async function main() {
-  const example = await setup();
-  while (await setRole(example));
+  const app = await setup();
+  while (await setRole(app));
   io.close();
-  example.radio.powerDown();
+  app.radio.powerDown();
 }
 
 main();

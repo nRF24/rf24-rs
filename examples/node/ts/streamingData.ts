@@ -1,7 +1,6 @@
 import * as readline from "readline/promises";
 import * as fs from "fs";
-import * as timer from "timers/promises";
-import { RF24, PaLevel } from "@rf24/rf24";
+import { RF24, PaLevel, FifoState } from "@rf24/rf24";
 
 const io = readline.createInterface({
   input: process.stdin,
@@ -10,7 +9,6 @@ const io = readline.createInterface({
 
 type AppState = {
   radio: RF24;
-  payload: Buffer;
 };
 
 console.log(module.filename);
@@ -62,54 +60,108 @@ export async function setup(): Promise<AppState> {
   // usually run with nRF24L01 transceivers in close proximity of each other
   radio.setPaLevel(PaLevel.Low); // PaLevel.Max is default
 
-  // To save time during transmission, we'll set the payload size to be only what
-  // we need. A 32-bit float value occupies 4 bytes in memory (using little-endian).
-  const payloadLength = 4;
-  radio.setPayloadLength(payloadLength);
-  // we'll use a DataView object to store our float number into a bytearray buffer
-  const payload = Buffer.alloc(payloadLength);
-  payload.writeFloatLE(0.0, 0);
+  return { radio: radio };
+}
 
-  return { radio: radio, payload: payload };
+export function makePayloads(size: number): Array<Buffer> {
+  const arr = Array<Buffer>();
+  for (let i = 0; i < size; i++) {
+    // prefix each payload with a letter to indicate which payloads were lost (if any)
+    const prefix = i + (i < 26 ? 65 : 71);
+    let payload = String.fromCharCode(prefix);
+    const middleByte = Math.abs((size - 1) / 2 - i);
+    for (let j = 0; j < size - 1; j++) {
+      const byte =
+        Boolean(j >= (size - 1) / 2 + middleByte) ||
+        Boolean(j < (size - 1) / 2 - middleByte);
+      payload += String.fromCharCode(Number(byte) + 48);
+    }
+    arr.push(Buffer.from(payload));
+  }
+  return arr;
 }
 
 /**
  * The transmitting node's behavior.
- * @param count The number of payloads to send
+ * @param count The number of streams to send
+ * @param size The number of payloads (and the payloads' size) in each stream.
  */
-export async function master(app: AppState, count: number | null) {
-  app.radio.stopListening();
-  for (let i = 0; i < (count || 5); i++) {
-    const start = process.hrtime.bigint();
-    const result = app.radio.send(app.payload);
-    const end = process.hrtime.bigint();
-    if (result) {
-      const elapsed = (end - start) / BigInt(1000);
-      console.log(`Transmission successful! Time to Transmit: ${elapsed} us`);
-      app.payload.writeFloatLE(app.payload.readFloatLE(0) + 0.01, 0);
-    } else {
-      console.log("Transmission failed or timed out!");
+export async function master(
+  app: AppState,
+  count: number | null,
+  size: number | null,
+) {
+  // minimum stream size should be at least 6 payloads for this example.
+  const payloadSize = Math.max(Math.min(size || 32, 32), 6);
+  const payloads = makePayloads(payloadSize);
+  // save on transmission time by setting the radio to only transmit the
+  // number of bytes we need to transmit
+  app.radio.setPayloadLength(payloadSize); // default is the maximum 32 bytes
+
+  app.radio.stopListening(); // put radio into TX mode
+  for (let cnt = 0; cnt < (count || 1); cnt++) {
+    // for each stream
+
+    let failures = 0;
+    const start = Date.now();
+    for (let bufIndex = 0; bufIndex < payloadSize; bufIndex++) {
+      // for each payload in stream
+      while (!app.radio.write(payloads[bufIndex])) {
+        // upload to TX FIFO failed because TX FIFO is full.
+        // check status flags
+        app.radio.update();
+        const flags = app.radio.getStatusFlags();
+        if (flags.txDf) {
+          // transmission failed
+          app.radio.rewrite(); // resets txDf flag and reuses top level of TX FIFO
+          failures += 1; // increment manual retry count
+          if (failures > 99) {
+            // too many failures detected
+            break; // prevent infinite loop
+          }
+        }
+      }
+      if (failures > 99 && bufIndex < 7 && cnt < 2) {
+        app.radio.flushTx();
+        break; // receiver radio seems unresponsive
+      }
     }
-    await timer.setTimeout(1000);
+    // wait for radio to finish transmitting everything in the TX FIFO
+    while (app.radio.getFifoState(true) != FifoState.Empty && failures < 99) {
+      // getFifoState() also update()s the StatusFlags
+      const flags = app.radio.getStatusFlags();
+      if (flags.txDf) {
+        failures += 1;
+        app.radio.rewrite();
+      }
+    }
+    const end = Date.now();
+    console.log(
+      `Transmission took ${end - start} ms with ${failures} failures detected`,
+    );
   }
+  app.radio.stopListening(); // ensure radio exits active TX mode
 }
 
 /**
  * The receiving node's behavior.
  * @param duration The timeout duration (in seconds) to listen after receiving a payload.
+ * @param size The number of bytes in each payload
  */
-export function slave(app: AppState, duration: number | null) {
+export function slave(
+  app: AppState,
+  duration: number | null,
+  size: number | null,
+) {
+  app.radio.setPayloadLength(Math.max(Math.min(size || 32, 32), 6));
+  let count = 0;
   app.radio.startListening();
   let timeout = Date.now() + (duration || 6) * 1000;
   while (Date.now() < timeout) {
-    const hasRx = app.radio.availablePipe();
-    if (hasRx.available) {
+    if (app.radio.available()) {
       const incoming = app.radio.read();
-      app.payload = incoming;
-      const data = incoming.readFloatLE(0);
-      console.log(
-        `Received ${incoming.length} bytes on pipe ${hasRx.pipe}: ${data}`,
-      );
+      count += 1;
+      console.log(`Received: ${incoming.toString()} = ${count}`);
       timeout = Date.now() + (duration || 6) * 1000;
     }
   }
@@ -129,12 +181,16 @@ export async function setRole(app: AppState): Promise<boolean> {
   if (input.length > 1) {
     param = Number(input[1]);
   }
+  let size = null;
+  if (input.length > 2) {
+    size = Number(input[2]);
+  }
   switch (input[0].charAt(0).toLowerCase()) {
     case "t":
-      await master(app, param);
+      await master(app, param, size);
       return true;
     case "r":
-      slave(app, param);
+      slave(app, param, size);
       return true;
     default:
       console.log(`'${input[0].charAt(0)}' is an unrecognized input`);

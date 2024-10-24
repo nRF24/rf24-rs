@@ -32,7 +32,7 @@ export async function setup(): Promise<AppState> {
   //   - `<b>` is the CSN pin (must be unique for each device on the same SPI bus)
   const CSN_PIN = 0; // aka CE0 for SPI bus 0 (/dev/spidev0.0)
 
-  // create a radio object for the specified hard ware config:
+  // create a radio object for the specified hardware config:
   const radio = new RF24(CE_PIN, CSN_PIN, {
     devGpioChip: DEV_GPIO_CHIP,
   });
@@ -72,24 +72,24 @@ export async function setup(): Promise<AppState> {
  * The transmitting node's behavior.
  * @param count The number of payloads to send
  */
-export async function master(example: AppState, count: number | null) {
-  example.radio.stopListening();
+export async function master(app: AppState, count: number | null) {
+  app.radio.stopListening();
   // we'll use a DataView object to store our string and number into a bytearray buffer
   const outgoing = Buffer.from("Hello \0.");
   for (let i = 0; i < (count || 5); i++) {
-    outgoing.writeUint8(example.counter, 7);
+    outgoing.writeUint8(app.counter, 7);
     const start = process.hrtime.bigint();
-    const result = example.radio.send(outgoing);
+    const result = app.radio.send(outgoing);
     const end = process.hrtime.bigint();
     if (result) {
       const elapsed = (end - start) / BigInt(1000);
       process.stdout.write(
         `Transmission successful! Time to Transmit: ${elapsed} us. Sent: ` +
-          `${outgoing.subarray(0, 6).toString()}${example.counter} `,
+          `${outgoing.subarray(0, 6).toString()}${app.counter} `,
       );
-      example.counter += 1;
-      if (example.radio.available()) {
-        const incoming = example.radio.read();
+      app.counter += 1;
+      if (app.radio.available()) {
+        const incoming = app.radio.read();
         const counter = incoming.readUint8(7);
         console.log(
           ` Received: ${incoming.subarray(0, 6).toString()}${counter}`,
@@ -108,36 +108,36 @@ export async function master(example: AppState, count: number | null) {
  * The receiving node's behavior.
  * @param duration The timeout duration (in seconds) to listen after receiving a payload.
  */
-export function slave(example: AppState, duration: number | null) {
-  example.radio.startListening();
+export function slave(app: AppState, duration: number | null) {
+  app.radio.startListening();
   // we'll use a DataView object to store our string and number into a bytearray buffer
   const outgoing = Buffer.from("World \0.");
-  outgoing.writeUint8(example.counter, 7);
-  example.radio.writeAckPayload(1, outgoing);
+  outgoing.writeUint8(app.counter, 7);
+  app.radio.writeAckPayload(1, outgoing);
   let timeout = Date.now() + (duration || 6) * 1000;
   while (Date.now() < timeout) {
-    const hasRx = example.radio.availablePipe();
+    const hasRx = app.radio.availablePipe();
     if (hasRx.available) {
-      const incoming = example.radio.read();
+      const incoming = app.radio.read();
       const counter = incoming.readUint8(7);
       console.log(
         `Received ${incoming.length} bytes on pipe ${hasRx.pipe}: ` +
           `${incoming.subarray(0, 6).toString()}${counter} Sent: ` +
-          `${outgoing.subarray(0, 6).toString()}${example.counter}`,
+          `${outgoing.subarray(0, 6).toString()}${app.counter}`,
       );
-      example.counter = counter;
+      app.counter = counter;
       outgoing.writeUint8(counter + 1, 7);
-      example.radio.writeAckPayload(1, outgoing);
+      app.radio.writeAckPayload(1, outgoing);
       timeout = Date.now() + (duration || 6) * 1000;
     }
   }
-  example.radio.stopListening(); // flushes TX FIFO when ACK payloads are enabled
+  app.radio.stopListening(); // flushes TX FIFO when ACK payloads are enabled
 }
 
 /**
  * This function prompts the user and performs the specified role for the radio.
  */
-export async function setRole(example: AppState): Promise<boolean> {
+export async function setRole(app: AppState): Promise<boolean> {
   const prompt =
     "*** Enter 'T' to transmit\n" +
     "*** Enter 'R' to receive\n" +
@@ -149,25 +149,25 @@ export async function setRole(example: AppState): Promise<boolean> {
   }
   switch (input[0].charAt(0).toLowerCase()) {
     case "t":
-      await master(example, param);
+      await master(app, param);
       return true;
     case "r":
-      slave(example, param);
+      slave(app, param);
       return true;
     default:
       console.log(`'${input[0].charAt(0)}' is an unrecognized input`);
       return true;
     case "q":
-      example.radio.powerDown();
+      app.radio.powerDown();
       return false;
   }
 }
 
 export async function main() {
-  const example = await setup();
-  while (await setRole(example));
+  const app = await setup();
+  while (await setRole(app));
   io.close();
-  example.radio.powerDown();
+  app.radio.powerDown();
 }
 
 main();

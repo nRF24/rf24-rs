@@ -10,7 +10,7 @@ const io = readline.createInterface({
 
 type AppState = {
   radio: RF24;
-  payload: Buffer;
+  counter: number;
 };
 
 console.log(module.filename);
@@ -63,14 +63,13 @@ export async function setup(): Promise<AppState> {
   radio.setPaLevel(PaLevel.Low); // PaLevel.Max is default
 
   // To save time during transmission, we'll set the payload size to be only what
-  // we need. A 32-bit float value occupies 4 bytes in memory (using little-endian).
-  const payloadLength = 4;
+  // we need.
+  //
+  // we only need 1 unsigned byte (for payload ID) + 7 more bytes for the payload message
+  const payloadLength = 8;
   radio.setPayloadLength(payloadLength);
-  // we'll use a DataView object to store our float number into a bytearray buffer
-  const payload = Buffer.alloc(payloadLength);
-  payload.writeFloatLE(0.0, 0);
 
-  return { radio: radio, payload: payload };
+  return { radio: radio, counter: 0 };
 }
 
 /**
@@ -79,14 +78,38 @@ export async function setup(): Promise<AppState> {
  */
 export async function master(app: AppState, count: number | null) {
   app.radio.stopListening();
+  // we'll use a DataView object to store our string and number into a bytearray buffer
+  const outgoing = Buffer.from("Hello \0.");
   for (let i = 0; i < (count || 5); i++) {
+    outgoing.writeUint8(app.counter, 7);
     const start = process.hrtime.bigint();
-    const result = app.radio.send(app.payload);
-    const end = process.hrtime.bigint();
-    if (result) {
+    if (app.radio.send(outgoing)) {
+      let gotResponse = false;
+      app.radio.startListening();
+      const responseTimeout = Date.now() + 200; // wait at most 200 milliseconds
+      while (Date.now() < responseTimeout) {
+        if (app.radio.available()) {
+          gotResponse = true;
+          break;
+        }
+      }
+      app.radio.stopListening();
+      const end = process.hrtime.bigint();
       const elapsed = (end - start) / BigInt(1000);
-      console.log(`Transmission successful! Time to Transmit: ${elapsed} us`);
-      app.payload.writeFloatLE(app.payload.readFloatLE(0) + 0.01, 0);
+      process.stdout.write(
+        `Transmission successful! Time to Transmit: ${elapsed} us. Sent: ` +
+          `${outgoing.subarray(0, 6).toString()}${app.counter} `,
+      );
+      app.counter += 1;
+      if (gotResponse) {
+        const incoming = app.radio.read();
+        const counter = incoming.readUint8(7);
+        console.log(
+          `Received: ${incoming.subarray(0, 6).toString()}${counter}`,
+        );
+      } else {
+        console.log("Received no response");
+      }
     } else {
       console.log("Transmission failed or timed out!");
     }
@@ -100,20 +123,47 @@ export async function master(app: AppState, count: number | null) {
  */
 export function slave(app: AppState, duration: number | null) {
   app.radio.startListening();
+  // we'll use a DataView object to store our string and number into a bytearray buffer
+  const outgoing = Buffer.from("World \0.");
   let timeout = Date.now() + (duration || 6) * 1000;
   while (Date.now() < timeout) {
     const hasRx = app.radio.availablePipe();
     if (hasRx.available) {
       const incoming = app.radio.read();
-      app.payload = incoming;
-      const data = incoming.readFloatLE(0);
-      console.log(
-        `Received ${incoming.length} bytes on pipe ${hasRx.pipe}: ${data}`,
+      app.counter = incoming.readUint8(7);
+      outgoing.writeUint8(app.counter, 7);
+      app.radio.stopListening();
+      app.radio.write(outgoing);
+      let responseResult = false;
+      const responseTimeout = Date.now() + 150; // try to respond for 150 milliseconds
+      while (Date.now() < responseTimeout) {
+        app.radio.update();
+        const flags = app.radio.getStatusFlags();
+        if (flags.txDs) {
+          responseResult = true;
+          break;
+        }
+        if (flags.txDf) {
+          app.radio.rewrite();
+        }
+      }
+      app.radio.startListening();
+      process.stdout.write(
+        `Received ${incoming.length} bytes on pipe ${hasRx.pipe}: ` +
+          `${incoming.subarray(0, 6).toString()}${app.counter} `,
       );
+      if (responseResult) {
+        console.log(
+          `Sent: ${outgoing.subarray(0, 6).toString()}${app.counter}`,
+        );
+      } else {
+        app.radio.flushTx();
+        console.log("Response failed");
+      }
       timeout = Date.now() + (duration || 6) * 1000;
     }
   }
-  app.radio.stopListening();
+  app.radio.stopListening(); // flushes TX FIFO when ACK payloads are enabled
 }
 
 /**

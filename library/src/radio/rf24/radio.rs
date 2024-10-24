@@ -240,6 +240,10 @@ where
     }
 
     fn resend(&mut self) -> Result<bool, Self::RadioErrorType> {
+        if self.is_listening() {
+            // if in RX  mode, prevent infinite loop below
+            return Ok(false);
+        }
         self.rewrite()?;
         self._delay_impl.delay_ns(10000);
         // now block until a tx_ds or tx_df event occurs

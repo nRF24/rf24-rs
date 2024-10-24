@@ -13,6 +13,16 @@ type AppState = {
   payload: Buffer;
 };
 
+// declare the addresses for all transmitting nRF24L01 nodes
+const addresses = [
+  Buffer.from([0x78, 0x78, 0x78, 0x78, 0x78]),
+  Buffer.from([0xf1, 0xb6, 0xb5, 0xb4, 0xb3]),
+  Buffer.from([0xcd, 0xb6, 0xb5, 0xb4, 0xb3]),
+  Buffer.from([0xa3, 0xb6, 0xb5, 0xb4, 0xb3]),
+  Buffer.from([0x0f, 0xb6, 0xb5, 0xb4, 0xb3]),
+  Buffer.from([0x05, 0xb6, 0xb5, 0xb4, 0xb3]),
+];
+
 console.log(module.filename);
 
 export async function setup(): Promise<AppState> {
@@ -40,53 +50,63 @@ export async function setup(): Promise<AppState> {
   // initialize the nRF24L01 on the spi bus
   radio.begin();
 
-  // For this example, we will use different addresses
-  // An address needs to be a buffer object (bytearray)
-  const address = [Buffer.from("1Node"), Buffer.from("2Node")];
-
-  // to use different addresses on a pair of radios, we need a variable to
-  // uniquely identify which address this radio will use to transmit
-  // 0 uses address[0] to transmit, 1 uses address[1] to transmit
-  const radioNumber = Number(
-    (await io.question(
-      "Which radio is this? Enter '1' or '0' (default is '0') ",
-    )) == "1",
-  );
-  console.log(`radioNumber is ${radioNumber}`);
-  //set TX address of RX node into the TX pipe
-  radio.openTxPipe(address[radioNumber]); // always uses pipe 0
-  // set RX address of TX node into an RX pipe
-  radio.openRxPipe(1, address[1 - radioNumber]); // using pipe 1
-
   // set the Power Amplifier level to -12 dBm since this test example is
   // usually run with nRF24L01 transceivers in close proximity of each other
   radio.setPaLevel(PaLevel.Low); // PaLevel.Max is default
 
   // To save time during transmission, we'll set the payload size to be only what
-  // we need. A 32-bit float value occupies 4 bytes in memory (using little-endian).
-  const payloadLength = 4;
+  // we need. A 32-bit integer value occupies 4 bytes in memory (using little-endian).
+  // We'll be transmitting 2 integers for each payload.
+  const payloadLength = 8;
   radio.setPayloadLength(payloadLength);
   // we'll use a DataView object to store our float number into a bytearray buffer
   const payload = Buffer.alloc(payloadLength);
-  payload.writeFloatLE(0.0, 0);
+  payload.writeInt32LE(0, 0);
+  payload.writeInt32LE(0, 4);
 
   return { radio: radio, payload: payload };
 }
 
 /**
  * The transmitting node's behavior.
+ * @param nodeNumber The ID number for this node as a transmitter
  * @param count The number of payloads to send
  */
-export async function master(app: AppState, count: number | null) {
+export async function master(
+  app: AppState,
+  nodeNumber: number | null,
+  count: number | null,
+) {
   app.radio.stopListening();
+  // clamp node ID to radio's number of pipes for this example
+  const id = Math.max(Math.min(nodeNumber || 0, 5), 0);
+
+  // According to the datasheet, the auto-retry features's delay value should
+  // be "skewed" to allow the RX node to receive 1 transmission at a time.
+  // So, use varying delay between retry attempts and 15 (at most) retry attempts
+  const delay = ((id * 3) % 12) + 3;
+  const retryCount = 15;
+  app.radio.setAutoRetries(delay, retryCount); // max value is 15 for both args
+
+  // set the TX address to the address of the base station.
+  app.radio.openTxPipe(addresses[id]);
+
+  if (app.payload.readInt32LE(0) != id) {
+    // if node ID has changed since last call to master() (or setup())
+    app.payload.writeInt32LE(id, 0); // set this node's ID in offset 0
+    app.payload.writeInt32LE(0, 4); // reset payload count
+  }
+
   for (let i = 0; i < (count || 5); i++) {
+    const counter = app.payload.readInt32LE(4);
+    // set payload's unique ID
+    app.payload.writeInt32LE(counter < 0xffff ? counter + 1 : 0, 4);
     const start = process.hrtime.bigint();
     const result = app.radio.send(app.payload);
     const end = process.hrtime.bigint();
     if (result) {
       const elapsed = (end - start) / BigInt(1000);
       console.log(`Transmission successful! Time to Transmit: ${elapsed} us`);
-      app.payload.writeFloatLE(app.payload.readFloatLE(0) + 0.01, 0);
     } else {
       console.log("Transmission failed or timed out!");
     }
@@ -99,6 +119,11 @@ export async function master(app: AppState, count: number | null) {
  * @param duration The timeout duration (in seconds) to listen after receiving a payload.
  */
 export function slave(app: AppState, duration: number | null) {
+  // write the addresses to all pipes.
+  for (let pipe = 0; pipe < addresses.length; pipe++) {
+    app.radio.openRxPipe(pipe, addresses[pipe]);
+  }
+
   app.radio.startListening();
   let timeout = Date.now() + (duration || 6) * 1000;
   while (Date.now() < timeout) {
@@ -106,9 +131,11 @@ export function slave(app: AppState, duration: number | null) {
     if (hasRx.available) {
       const incoming = app.radio.read();
       app.payload = incoming;
-      const data = incoming.readFloatLE(0);
+      const nodeId = incoming.readInt32LE(0);
+      const payloadId = incoming.readInt32LE(4);
       console.log(
-        `Received ${incoming.length} bytes on pipe ${hasRx.pipe}: ${data}`,
+        `Received ${incoming.length} bytes on pipe ${hasRx.pipe} from node `,
+        `${nodeId}: payload ${payloadId}`,
       );
       timeout = Date.now() + (duration || 6) * 1000;
     }
@@ -121,17 +148,22 @@ export function slave(app: AppState, duration: number | null) {
  */
 export async function setRole(app: AppState): Promise<boolean> {
   const prompt =
-    "*** Enter 'T' to transmit\n" +
-    "*** Enter 'R' to receive\n" +
-    "*** Enter 'Q' to quit\n";
+    "*** Enter 'R' for receiver role.\n" +
+    "*** Enter 'T' for transmitter role.\n" +
+    "    Use 'T n' to transmit as node n; n must be in range [0, 5].\n" +
+    "*** Enter 'Q' to quit example.\n";
   const input = (await io.question(prompt)).split(" ");
   let param: number | null = null;
   if (input.length > 1) {
     param = Number(input[1]);
   }
+  let masterCount: number | null = null;
+  if (input.length > 2) {
+    masterCount = Number(input[2]);
+  }
   switch (input[0].charAt(0).toLowerCase()) {
     case "t":
-      await master(app, param);
+      await master(app, param, masterCount);
       return true;
     case "r":
       slave(app, param);

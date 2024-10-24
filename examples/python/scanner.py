@@ -29,7 +29,7 @@ DEV_GPIO_CHIP = 4 if Path("/dev/gpiochip4").exists() else 0
 #   - `<b>` is the CSN pin (must be unique for each device on the same SPI bus)
 CSN_PIN = 0  # aka CE0 for SPI bus 0 (/dev/spidev0.0)
 
-# create a radio object for the specified hard ware config:
+# create a radio object for the specified hardware config:
 radio = RF24(CE_PIN, CSN_PIN, dev_gpio_chip=DEV_GPIO_CHIP)
 
 # initialize the nRF24L01 on the spi bus

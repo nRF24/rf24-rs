@@ -31,7 +31,7 @@ DEV_GPIO_CHIP = 4 if Path("/dev/gpiochip4").exists() else 0
 #   - `<b>` is the CSN pin (must be unique for each device on the same SPI bus)
 CSN_PIN = 0  # aka CE0 for SPI bus 0 (/dev/spidev0.0)
 
-# create a radio object for the specified hard ware config:
+# create a radio object for the specified hardware config:
 radio = RF24(CE_PIN, CSN_PIN, dev_gpio_chip=DEV_GPIO_CHIP)
 
 # For this example, we will use different addresses
@@ -61,7 +61,7 @@ radio.open_tx_pipe(address[radio_number])  # always uses pipe 0
 radio.open_rx_pipe(1, address[not radio_number])  # using pipe 1
 
 # To save time during transmission, we'll set the payload size to be only what
-# we need. A float value occupies 4 bytes in memory using struct.calcsize()
+# we need.
 # "<b" means a little endian unsigned byte
 # we also need an addition 7 bytes for the payload message
 radio.payload_length = struct.calcsize("<b") + 7
@@ -146,11 +146,11 @@ def slave(timeout: int = 6):
             while time.monotonic_ns() < response_timeout:
                 radio.update()
                 flags: StatusFlags = radio.get_status_flags()
-                if flags.tx_df:
-                    radio.rewrite()
                 if flags.tx_ds:
                     response_result = True
                     break
+                if flags.tx_df:
+                    radio.rewrite()
             radio.listen = True  # set radio back into RX mode
             # print the payload received and the response's payload
             print(
@@ -161,6 +161,7 @@ def slave(timeout: int = 6):
             if response_result:
                 print(f"Sent: {buffer[:6].decode('utf-8')}{payload[0]}")
             else:
+                radio.flush_tx()
                 print("Response failed or timed out")
             start_timer = time.monotonic()  # reset the timeout timer
 
