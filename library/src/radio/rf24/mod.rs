@@ -31,7 +31,7 @@ pub enum Nrf24Error<SPI, DO> {
 
 /// This struct implements the [`Esb*` traits](mod@crate::radio::prelude)
 /// for the nRF24L01 transceiver.
-/// 
+///
 /// Additionally, there are some functions implemented that are specific to the nRF24L01.
 pub struct RF24<SPI, DO, DELAY> {
     // private attributes

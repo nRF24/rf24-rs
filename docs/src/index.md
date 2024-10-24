@@ -3,6 +3,10 @@
     include-markdown  "../../README.md"
 %}
 
-## Docs.rs
+## API Docs
 
-The API documentation is hosted at [docs.rs](https://docs.rs/).
+The Rust API documentation is hosted at [docs.rs](https://docs.rs/rf24).
+
+Here, you will find the API for FFI (Foreign Function Interface) bindings:
+
+- [Node.js bindings](node-api/README.md)

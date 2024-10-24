@@ -8,8 +8,18 @@ version: 2
 build:
   os: ubuntu-22.04
   tools:
-    # rust: latest
+    nodejs: latest
+    rust: latest
     python: latest
+  jobs:
+    post_create_environment:
+      - corepack enable
+      - corepack prepare --activate yarn@1.22.22+sha512.a6b2f7906b721bba3d67d4aff083df04dad64c399707841b7acf00f6b133b7ac24255f2652fa22ae3534329dc6180534e98d17432037ff6fd140556e2bb3137e
+      - asdf reshim nodejs
+    pre_build:
+      - yarn install
+      - yarn build:debug
+      - yarn docs
 
 mkdocs:
   configuration: docs/mkdocs.yml
@@ -20,3 +30,5 @@ mkdocs:
 python:
   install:
     - requirements: docs/requirements.txt
+    - method: pip
+      path: '.'

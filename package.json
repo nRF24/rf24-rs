@@ -2,9 +2,11 @@
     "private": true,
     "workspaces": [
         "bindings/node",
+        "docs",
         "examples/node"
     ],
     "scripts": {
+        "docs": "cd docs && yarn build",
         "examples-build": "cd examples/node && yarn build",
         "examples-lint": "cd examples/node && yarn lint",
         "artifacts": "cd bindings/node && yarn artifacts",

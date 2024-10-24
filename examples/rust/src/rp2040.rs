@@ -20,7 +20,7 @@ impl BoardHardware<'_> {
 
         let ce = peri.PIN_9;
         let ce_pin = Output::new(ce, Level::Low);
-        
+
         let clk = peri.PIN_10;
         let mosi = peri.PIN_11;
         let miso = peri.PIN_12;

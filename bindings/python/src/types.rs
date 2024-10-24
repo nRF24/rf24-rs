@@ -1,11 +1,15 @@
 use pyo3::prelude::*;
 
-#[cfg(target_os = "linux")]
-use rf24::{CrcLength, DataRate, FifoState, PaLevel, StatusFlags};
-
-#[pyclass(name = "StatusFlags", frozen, get_all, module = "rf24_py")]
+/// The radio's status flags that correspond to interrupt events.
+///
+/// See:
+///     - [`RF24.get_status_flags()`][rf24_py.RF24.get_status_flags]
+///     - [`RF24.set_status_flags()`][rf24_py.RF24.set_status_flags]
+///     - [`RF24.clear_status_flags()`][rf24_py.RF24.clear_status_flags]
+///     - [`RF24.update()`][rf24_py.RF24.update]
+#[pyclass(frozen, get_all, module = "rf24_py")]
 #[derive(Default, Clone)]
-pub struct PyStatusFlags {
+pub struct StatusFlags {
     /// A flag to describe if RX Data Ready to read.
     pub rx_dr: bool,
     /// A flag to describe if TX Data Sent.
@@ -15,7 +19,7 @@ pub struct PyStatusFlags {
 }
 
 #[pymethods]
-impl PyStatusFlags {
+impl StatusFlags {
     #[new]
     #[pyo3(signature = (rx_dr = false, tx_ds = false, tx_df = false))]
     fn new(rx_dr: bool, tx_ds: bool, tx_df: bool) -> Self {
@@ -35,16 +39,16 @@ impl PyStatusFlags {
 }
 
 #[cfg(target_os = "linux")]
-impl PyStatusFlags {
-    pub fn into_inner(self) -> StatusFlags {
-        StatusFlags {
+impl StatusFlags {
+    pub fn into_inner(self) -> rf24::StatusFlags {
+        rf24::StatusFlags {
             rx_dr: self.rx_dr,
             tx_ds: self.tx_ds,
             tx_df: self.tx_df,
         }
     }
 
-    pub fn from_inner(other: StatusFlags) -> Self {
+    pub fn from_inner(other: rf24::StatusFlags) -> Self {
         Self {
             rx_dr: other.rx_dr,
             tx_ds: other.tx_ds,
@@ -55,73 +59,81 @@ impl PyStatusFlags {
 
 /// Power Amplifier level. The units dBm (decibel-milliwatts or dB<sub>mW</sub>)
 /// represents a logarithmic signal loss.
-#[pyclass(name = "PaLevel", eq, eq_int, module = "rf24_py")]
+///
+/// Attributes:
+///     Min:
+///         | nRF24L01 | Si24R1 with<br>LNA Enabled | Si24R1 with<br>LNA Disabled |
+///         | :-------:|:--------------------------:|:---------------------------:|
+///         | -18 dBm | -6 dBm | -12 dBm |
+///     Low:
+///         | nRF24L01 | Si24R1 with<br>LNA Enabled | Si24R1 with<br>LNA Disabled |
+///         | :-------:|:--------------------------:|:---------------------------:|
+///         | -12 dBm | 0 dBm | -4 dBm |
+///     High:
+///         | nRF24L01 | Si24R1 with<br>LNA Enabled | Si24R1 with<br>LNA Disabled |
+///         | :-------:|:--------------------------:|:---------------------------:|
+///         | -6 dBm | 3 dBm | 1 dBm |
+///     Max:
+///         | nRF24L01 | Si24R1 with<br>LNA Enabled | Si24R1 with<br>LNA Disabled |
+///         | :-------:|:--------------------------:|:---------------------------:|
+///         | 0 dBm | 7 dBm | 4 dBm |
+#[pyclass(eq, eq_int, module = "rf24_py")]
 #[derive(Clone, Copy, Debug, PartialEq)]
-pub enum PyPaLevel {
-    /// | nRF24L01 | Si24R1 with<br>LNA Enabled | Si24R1 with<br>LNA Disabled |
-    /// | :-------:|:--------------------------:|:---------------------------:|
-    /// | -18 dBm | -6 dBm | -12 dBm |
+pub enum PaLevel {
     Min,
-    /// | nRF24L01 | Si24R1 with<br>LNA Enabled | Si24R1 with<br>LNA Disabled |
-    /// | :-------:|:--------------------------:|:---------------------------:|
-    /// | -12 dBm | 0 dBm | -4 dBm |
     Low,
-    /// | nRF24L01 | Si24R1 with<br>LNA Enabled | Si24R1 with<br>LNA Disabled |
-    /// | :-------:|:--------------------------:|:---------------------------:|
-    /// | -6 dBm | 3 dBm | 1 dBm |
     High,
-    /// | nRF24L01 | Si24R1 with<br>LNA Enabled | Si24R1 with<br>LNA Disabled |
-    /// | :-------:|:--------------------------:|:---------------------------:|
-    /// | 0 dBm | 7 dBm | 4 dBm |
     Max,
 }
 
 #[cfg(target_os = "linux")]
-impl PyPaLevel {
-    pub fn into_inner(self) -> PaLevel {
+impl PaLevel {
+    pub fn into_inner(self) -> rf24::PaLevel {
         match self {
-            PyPaLevel::Min => PaLevel::Min,
-            PyPaLevel::Low => PaLevel::Low,
-            PyPaLevel::High => PaLevel::High,
-            PyPaLevel::Max => PaLevel::Max,
+            PaLevel::Min => rf24::PaLevel::Min,
+            PaLevel::Low => rf24::PaLevel::Low,
+            PaLevel::High => rf24::PaLevel::High,
+            PaLevel::Max => rf24::PaLevel::Max,
         }
     }
-    pub fn from_inner(other: PaLevel) -> PyPaLevel {
+    pub fn from_inner(other: rf24::PaLevel) -> PaLevel {
         match other {
-            PaLevel::Min => PyPaLevel::Min,
-            PaLevel::Low => PyPaLevel::Low,
-            PaLevel::High => PyPaLevel::High,
-            PaLevel::Max => PyPaLevel::Max,
+            rf24::PaLevel::Min => PaLevel::Min,
+            rf24::PaLevel::Low => PaLevel::Low,
+            rf24::PaLevel::High => PaLevel::High,
+            rf24::PaLevel::Max => PaLevel::Max,
         }
     }
 }
 
-/// How fast data moves through the air. Units are in bits per second (bps).
-#[pyclass(name = "DataRate", eq, eq_int, module = "rf24_py")]
+#[pyclass(eq, eq_int, module = "rf24_py")]
 #[derive(Clone, Copy, Debug, PartialEq)]
-pub enum PyDataRate {
-    /// represents 1 Mbps
+pub enum DataRate {
     Mbps1,
-    /// represents 2 Mbps
     Mbps2,
-    /// represents 250 Kbps
     Kbps250,
 }
 
+/// How fast data moves through the air. Units are in bits per second (bps).
+///
+/// Attributes:
+///     Mbps1: Represents 1 Mbps
+///     Mbps2: Represents 2 Mbps
+///     Kbps250: Represents 250 Kbps
 #[cfg(target_os = "linux")]
-impl PyDataRate {
-    pub fn into_inner(self) -> DataRate {
+impl DataRate {
+    pub fn into_inner(self) -> rf24::DataRate {
         match self {
-            PyDataRate::Mbps1 => DataRate::Mbps1,
-            PyDataRate::Mbps2 => DataRate::Mbps2,
-            PyDataRate::Kbps250 => DataRate::Kbps250,
+            DataRate::Mbps1 => rf24::DataRate::Mbps1,
+            DataRate::Mbps2 => rf24::DataRate::Mbps2,
+            DataRate::Kbps250 => rf24::DataRate::Kbps250,
         }
     }
-    pub fn from_inner(other: DataRate) -> PyDataRate {
+    pub fn from_inner(other: rf24::DataRate) -> DataRate {
         match other {
-            DataRate::Mbps1 => PyDataRate::Mbps1,
-            DataRate::Mbps2 => PyDataRate::Mbps2,
-            DataRate::Kbps250 => PyDataRate::Kbps250,
+            rf24::DataRate::Mbps1 => DataRate::Mbps1,
+            rf24::DataRate::Mbps2 => DataRate::Mbps2,
+            rf24::DataRate::Kbps250 => DataRate::Kbps250,
         }
     }
 }
@@ -129,61 +141,68 @@ impl PyDataRate {
 /// The length of a CRC checksum that is used (if any).
 ///
 /// Cyclical Redundancy Checking (CRC) is commonly used to ensure data integrity.
+///
+/// Attributes:
+///     Disabled: Represents no CRC checksum is used.
+///     Bit8: Represents CRC 8 bit checksum is used.
+///     Bit16: Represents CRC 16 bit checksum is used.
 #[pyclass(name = "CrcLength", eq, eq_int, module = "rf24_py")]
 #[derive(Clone, Copy, Debug, PartialEq)]
-pub enum PyCrcLength {
-    /// represents no CRC checksum is used
+pub enum CrcLength {
     Disabled,
-    /// represents CRC 8 bit checksum is used
     Bit8,
-    /// represents CRC 16 bit checksum is used
     Bit16,
 }
 
 #[cfg(target_os = "linux")]
-impl PyCrcLength {
-    pub fn into_inner(self) -> CrcLength {
+impl CrcLength {
+    pub fn into_inner(self) -> rf24::CrcLength {
         match self {
-            PyCrcLength::Disabled => CrcLength::Disabled,
-            PyCrcLength::Bit8 => CrcLength::Bit8,
-            PyCrcLength::Bit16 => CrcLength::Bit16,
+            CrcLength::Disabled => rf24::CrcLength::Disabled,
+            CrcLength::Bit8 => rf24::CrcLength::Bit8,
+            CrcLength::Bit16 => rf24::CrcLength::Bit16,
         }
     }
-    pub fn from_inner(other: CrcLength) -> PyCrcLength {
+    pub fn from_inner(other: rf24::CrcLength) -> CrcLength {
         match other {
-            CrcLength::Disabled => PyCrcLength::Disabled,
-            CrcLength::Bit8 => PyCrcLength::Bit8,
-            CrcLength::Bit16 => PyCrcLength::Bit16,
+            rf24::CrcLength::Disabled => CrcLength::Disabled,
+            rf24::CrcLength::Bit8 => CrcLength::Bit8,
+            rf24::CrcLength::Bit16 => CrcLength::Bit16,
         }
     }
 }
 
-/// The possible states of a FIFO.
-#[pyclass(name = "FifoState", eq, eq_int, module = "rf24_py")]
+/// Enumerations to describe the possible states of a FIFO.
+///
+/// See also:
+///     - [`RF24.get_fifo_state()`][rf24_py.RF24.get_fifo_state]
+///
+/// Attributes:
+///     Full: Represent the state of a FIFO when it is full.
+///     Empty: Represent the state of a FIFO when it is empty.
+///     Occupied: Represent the state of a FIFO when it is not full but not empty either.
+#[pyclass(eq, eq_int, module = "rf24_py")]
 #[derive(Clone, Copy, Debug, PartialEq)]
-pub enum PyFifoState {
-    /// Represent the state of a FIFO when it is full.
+pub enum FifoState {
     Full,
-    /// Represent the state of a FIFO when it is empty.
     Empty,
-    /// Represent the state of a FIFO when it is not full but not empty either.
     Occupied,
 }
 
 #[cfg(target_os = "linux")]
-impl PyFifoState {
-    pub fn into_inner(self) -> FifoState {
+impl FifoState {
+    pub fn into_inner(self) -> rf24::FifoState {
         match self {
-            PyFifoState::Full => FifoState::Full,
-            PyFifoState::Empty => FifoState::Empty,
-            PyFifoState::Occupied => FifoState::Occupied,
+            FifoState::Full => rf24::FifoState::Full,
+            FifoState::Empty => rf24::FifoState::Empty,
+            FifoState::Occupied => rf24::FifoState::Occupied,
         }
     }
-    pub fn from_inner(other: FifoState) -> PyFifoState {
+    pub fn from_inner(other: rf24::FifoState) -> FifoState {
         match other {
-            FifoState::Full => PyFifoState::Full,
-            FifoState::Empty => PyFifoState::Empty,
-            FifoState::Occupied => PyFifoState::Occupied,
+            rf24::FifoState::Full => FifoState::Full,
+            rf24::FifoState::Empty => FifoState::Empty,
+            rf24::FifoState::Occupied => FifoState::Occupied,
         }
     }
 }

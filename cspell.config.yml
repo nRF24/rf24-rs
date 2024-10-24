@@ -3,16 +3,20 @@ words:
   - aarch
   - androideabi
   - armv
+  - autorefs
   - bindgen
   - bytearray
   - calcsize
   - Cdev
+  - codecov
+  - corepack
   - datasheet
   - defmt
   - Doherty
   - DYNPD
   - eabi
   - endl
+  - endlineno
   - fontawesome
   - gnueabihf
   - gpio
@@ -21,9 +25,11 @@ words:
   - inlinehilite
   - Kbps
   - linenums
+  - maturin
   - Mbps
   - milliwatts
   - mkdocs
+  - mkdocstrings
   - mosi
   - msvc
   - musleabihf
@@ -33,6 +39,7 @@ words:
   - pymethods
   - pymodule
   - repr
+  - reshim
   - RETR
   - riscv
   - rustc
@@ -41,3 +48,4 @@ words:
   - struct
   - superfences
   - tasklist
+  - twemoji

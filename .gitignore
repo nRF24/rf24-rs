@@ -350,6 +350,3 @@ Cargo.lock
 # coverage output
 coverage.json
 lcov.info
-
-# supplemental docs build
-docs/site/

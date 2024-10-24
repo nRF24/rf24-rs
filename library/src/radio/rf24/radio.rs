@@ -136,6 +136,10 @@ where
     /// This function calls [`RF24::flush_tx()`] upon entry, but it does not
     /// deactivate the radio's CE pin upon exit.
     fn send(&mut self, buf: &[u8], ask_no_ack: bool) -> Result<bool, Self::RadioErrorType> {
+        if self.is_listening() {
+            // check if in RX mode to prevent an infinite below
+            return Ok(false);
+        }
         self._ce_pin.set_low().map_err(Nrf24Error::Gpo)?;
         // this function only handles 1 payload at a time
         self.flush_tx()?; // flush the TX FIFO to ensure we are sending the given buf

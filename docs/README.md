@@ -6,6 +6,13 @@ To build these docs install mkdocs and relevant plugins:
 
 ```shell
 pip install -r docs/requirements.txt
+yarn install
+```
+
+Generate the Node.js binding's API docs:
+
+```shell
+yarn docs
 ```
 
 Then build and view the docs using:

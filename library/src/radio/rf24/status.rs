@@ -1,8 +1,8 @@
 use embedded_hal::{delay::DelayNs, digital::OutputPin, spi::SpiDevice};
 
 use crate::{
-    types::StatusFlags,
     radio::{prelude::EsbStatus, Nrf24Error, RF24},
+    types::StatusFlags,
 };
 
 use super::{commands, mnemonics, registers};
@@ -69,10 +69,10 @@ where
 #[cfg(test)]
 mod test {
     extern crate std;
-    use crate::types::StatusFlags;
     use crate::radio::prelude::EsbStatus;
     use crate::radio::rf24::commands;
     use crate::spi_test_expects;
+    use crate::types::StatusFlags;
 
     use super::{registers, RF24};
     use embedded_hal_mock::eh1::delay::NoopDelay;

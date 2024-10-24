@@ -4,10 +4,10 @@ pub use rf24::{Nrf24Error, RF24};
 
 /// This module defines the generic traits that may
 /// need to imported to use radio implementations.
-/// 
+///
 /// Since rustc only compiles objects that are used,
 /// it is convenient to import these traits with the `*` syntax.
-/// 
+///
 /// ```
 /// use rf24::radio::prelude::*;
 /// ```
@@ -446,11 +446,10 @@ pub mod prelude {
     }
 
     /// A trait to represent manipulation of an ESB capable transceiver.
-    /// 
+    ///
     /// Although the name is rather generic, this trait describes the
     /// behavior of a radio's rudimentary roles (RX and TX).
-    pub trait EsbRadio
-    {
+    pub trait EsbRadio {
         type RadioErrorType;
 
         /// Initialize the radio's hardware
