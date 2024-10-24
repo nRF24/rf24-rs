@@ -59,30 +59,34 @@ radio.open_rx_pipe(1, address[not radio_number])  # using pipe 1
 # radio.print_details()
 
 
-def make_buffer(buf_iter: int, size: int = 32):
+def make_payloads(size: int = 32) -> list[bytes]:
     """return a list of payloads"""
     # we'll use `size` for the number of payloads in the list and the
     # payloads' length
-    # prefix payload with a sequential letter to indicate which
-    # payloads were lost (if any)
-    buff = bytes([buf_iter + (65 if 0 <= buf_iter < 26 else 71)])
-    for j in range(size - 1):
-        char = bool(j >= (size - 1) / 2 + abs((size - 1) / 2 - buf_iter))
-        char |= bool(j < (size - 1) / 2 - abs((size - 1) / 2 - buf_iter))
-        buff += bytes([char + 48])
-    return buff
+    stream = []
+    for i in range(size):
+        # prefix payload with a sequential letter to indicate which
+        # payloads were lost (if any)
+        buff = bytes([i + (65 if 0 <= i < 26 else 71)])
+        for j in range(size - 1):
+            char = bool(j >= (size - 1) / 2 + abs((size - 1) / 2 - i))
+            char |= bool(j < (size - 1) / 2 - abs((size - 1) / 2 - i))
+            buff += bytes([char + 48])
+        stream.append(buff)
+    return stream
 
 
 def master(count: int = 1, size: int = 32):
     """Uses all 3 levels of the TX FIFO `RF24.writeFast()`"""
-    if size < 6:
-        print("setting size to 6;", size, "is not allowed for this test.")
-        size = 6
+    # minimum number of payloads in stream should be at least 6 for this example
+    size = max(min(size, 32), 6)
 
     # save on transmission time by setting the radio to only transmit the
-    #  number of bytes we need to transmit
+    # number of bytes we need to transmit
     radio.payload_length = size  # the default is the maximum 32 bytes
 
+    # create a stream
+    stream = make_payloads(size)
     radio.listen = False  # ensures the nRF24L01 is in TX mode
     for cnt in range(count):  # transmit the same payloads this many times
         radio.flush_tx()  # clear the TX FIFO so we can use all 3 levels
@@ -90,16 +94,16 @@ def master(count: int = 1, size: int = 32):
         buf_iter = 0  # iterator of payloads for the while loop
         failures = 0  # keep track of manual retries
         start_timer = time.monotonic() * 1000  # start timer
-        while buf_iter < size:  # cycle through all the payloads
-            buf = make_buffer(buf_iter, size)  # make a payload
-            while not radio.write(buf):
+        for buf_index in range(size):  # cycle through all payloads in stream
+            while not radio.write(stream[buf_iter]):
                 # upload to TX FIFO failed because TX FIFO is full.
                 # check for transmission errors
                 radio.update()
                 flags: StatusFlags = radio.get_status_flags()
-                if flags.tx_df:  # reception failed
-                    failures += 1  # increment manual retries
-                    radio.rewrite()  # resets the tx_df flag and reuses payload in TX FIFO
+                if flags.tx_df:  # transmission failed
+                    failures += 1  # increment manual retry count
+                    # rewrite() resets the tx_df flag and reuses top level of TX FIFO
+                    radio.rewrite()
                     if failures > 99:
                         break
                 if failures > 99 and buf_iter < 7 and cnt < 2:
