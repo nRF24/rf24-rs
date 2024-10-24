@@ -1,5 +1,5 @@
 <!-- markdownlint-disable MD041 -->
-[![build and test CI][build-ci-badge]][build-ci-runs] [![codecov][codecov-badge]][codecov-project]
+[![Python builds][python-ci-badge]][python-ci] [![Node.js Builds][node-js-ci-badge]][node-js-ci] [![Tests][test-ci-badge]][test-ci] [![codecov][codecov-badge]][codecov-project] [![Docs][docs-ci-badge]][docs-ci] [![Examples][examples-ci-badge]][examples-ci]
 
 # rf24-rs
 
@@ -38,8 +38,16 @@ but they all seem unmaintained or designed to be application-specific. There's e
 a [crate to use the nRF5x chips' ESB support][crate-esb], but this too seems lacking
 maintainers' attention.
 
-[build-ci-badge]: https://github.com/nRF24/rf24-rs/actions/workflows/tests.yml/badge.svg
-[build-ci-runs]: https://github.com/nRF24/rf24-rs/actions/workflows/tests.yml
+[python-ci-badge]: https://github.com/nRF24/rf24-rs/actions/workflows/python-packaging.yml/badge.svg
+[python-ci]: https://github.com/nRF24/rf24-rs/actions/workflows/python-packaging.yml
+[node-js-ci-badge]: https://github.com/nRF24/rf24-rs/actions/workflows/node-packaging.yml/badge.svg
+[node-js-ci]: https://github.com/nRF24/rf24-rs/actions/workflows/node-packaging.yml
+[docs-ci-badge]: https://github.com/nRF24/rf24-rs/actions/workflows/docs.yml/badge.svg
+[docs-ci]: https://github.com/nRF24/rf24-rs/actions/workflows/docs.yml
+[examples-ci-badge]: https://github.com/nRF24/rf24-rs/actions/workflows/examples.yml/badge.svg
+[examples-ci]: https://github.com/nRF24/rf24-rs/actions/workflows/examples.yml
+[test-ci-badge]: https://github.com/nRF24/rf24-rs/actions/workflows/tests.yml/badge.svg
+[test-ci]: https://github.com/nRF24/rf24-rs/actions/workflows/tests.yml
 [codecov-badge]: https://codecov.io/gh/nRF24/rf24-rs/graph/badge.svg?token=BMQ97Y5RVP
 [codecov-project]: https://codecov.io/gh/nRF24/rf24-rs
 [embedded-rs]: https://docs.rust-embedded.org/book/
