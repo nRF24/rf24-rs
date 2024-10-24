@@ -134,10 +134,6 @@ impl RF24 {
     }
 
     /// Put the radio into active RX mode.
-    ///
-    /// Warning:
-    ///     Do not call [`RF24.send()`][rf24_py.RF24.send] while in active RX mode
-    ///     because (internally in rust) that _will_ cause an infinite loop.
     pub fn start_listening(&mut self) -> PyResult<()> {
         self.inner
             .start_listening()
@@ -147,6 +143,10 @@ impl RF24 {
     /// Deactivates active RX mode and puts the radio into an inactive TX mode.
     ///
     /// The datasheet recommends idling the radio in an inactive TX mode.
+    ///
+    /// Note:
+    ///     This function will also flush the TX FIFO when ACK payloads are enabled
+    ///     (via [`RF24.allow_ack_payloads()`][rf24_py.RF24.allow_ack_payloads]).
     pub fn stop_listening(&mut self) -> PyResult<()> {
         self.inner
             .stop_listening()
@@ -333,9 +333,9 @@ impl RF24 {
 
     /// Enable or disable the auto-ack feature for all pipes.
     ///
-    /// > [!NOTE]
-    /// > This feature requires CRC to be enabled.
-    /// > See [`RF24.crc_length`][rf24_py.RF24.crc_length] for more detail.
+    /// Note:
+    ///     This feature requires CRC to be enabled.
+    ///     See [`RF24.crc_length`][rf24_py.RF24.crc_length] for more detail.
     ///
     /// Parameters:
     ///     enable: Pass true to enable the auto-ack feature for all pipes.
@@ -346,6 +346,10 @@ impl RF24 {
     }
 
     /// Enable or disable the auto-ack feature for a specified `pipe`.
+    ///
+    /// Note:
+    ///     This feature requires CRC to be enabled.
+    ///     See [`RF24.crc_length`][rf24_py.RF24.crc_length] for more detail.
     ///
     /// Parameters:
     ///     enable: Pass true to enable the auto-ack feature for the specified `pipe`.
@@ -381,7 +385,7 @@ impl RF24 {
     ///
     /// Returns:
     ///     A boolean value that describes if the payload was successfully uploaded
-    ///     to the TX FIFO. Remember, the TX FIFO only has 3 levels ("slots").
+    ///         to the TX FIFO. Remember, the TX FIFO only has 3 levels ("slots").
     pub fn write_ack_payload(&mut self, pipe: u8, buf: &[u8]) -> PyResult<bool> {
         self.inner
             .write_ack_payload(pipe, buf)
@@ -408,7 +412,7 @@ impl RF24 {
             .map_err(|e| PyRuntimeError::new_err(format!("{e:?}")))
     }
 
-    /// Set the channel (frequency) that the radio uses to transmit and receive.
+    /// Set/get the channel (frequency) that the radio uses to transmit and receive.
     ///
     /// The channel must be in range [0, 125], otherwise this
     /// function does nothing. This value can be roughly translated into frequency
@@ -551,7 +555,7 @@ impl RF24 {
     /// Enable or disable the dynamically sized payloads feature.
     ///
     /// Parameters:
-    ///     enable: If set to `true`, the statically sized payloads (set via
+    ///     enable: If set to `true`, the statically sized payload length (set via
     ///         [`RF24.payload_length`][rf24_py.RF24.payload_length]) are not
     ///         used.
     pub fn set_dynamic_payloads(&mut self, enable: bool) -> PyResult<()> {
@@ -573,13 +577,13 @@ impl RF24 {
 
     /// Open a specific pipe for receiving from the given address.
     ///
-    /// It is highly recommended to avoid using pip 0 to receive because it is also
+    /// It is highly recommended to avoid using pipe 0 to receive because it is also
     /// used to transmit automatic acknowledgements.
     ///
-    /// > [!NOTE]
-    /// > Only pipes 0 and 1 actually use up to 5 bytes of the given address.
-    /// > Pipes 2 - 5 only use the first byte of the given address and last 4
-    /// > bytes of the address set to pipe 1.
+    /// Note:
+    ///     Only pipes 0 and 1 actually use up to 5 bytes of the given address.
+    ///     Pipes 2 - 5 only use the first byte of the given address and last 4
+    ///     bytes of the address set to pipe 1.
     ///
     /// Parameters:
     ///     pipe: The pipe number to receive data. This must be in range [0, 5],
@@ -683,7 +687,9 @@ impl RF24 {
 
     /// Configure the IRQ pin to reflect the specified [`StatusFlags`][rf24_py.StatusFlags].
     ///
-    /// If no parameter value is given, then all flags are are reflected by the IRQ pin.
+    /// Other Parameters:
+    ///     flags: If this value is `None`, then all flags are reflected by the IRQ pin.
+    ///
     #[pyo3(signature = (flags = None))]
     pub fn set_status_flags(&mut self, flags: Option<StatusFlags>) -> PyResult<()> {
         let flags = flags.map(|f| f.into_inner());
@@ -694,7 +700,8 @@ impl RF24 {
 
     /// Reset the specified [`StatusFlags`][rf24_py.StatusFlags].
     ///
-    /// If no parameter value is given, then all flags are reset.
+    /// Other Parameters:
+    ///     flags: If this value is `None`, then all flags are reset.
     #[pyo3(signature = (flags = None))]
     pub fn clear_status_flags(&mut self, flags: Option<StatusFlags>) -> PyResult<()> {
         let flags = flags.map(|f| f.into_inner());
@@ -714,12 +721,12 @@ impl RF24 {
 
     /// Get the current state of the [`StatusFlags`][rf24_py.StatusFlags].
     ///
-    /// > [!NOTE]
-    /// > This function simply returns the value of the flags that was cached
-    /// > from the last SPI transaction. It does not actually update the values
-    /// > (from the radio) before returning them.
-    /// >
-    /// > Use [`RF24.update`][rf24_py.RF24.update] to update them first.
+    /// Note:
+    ///     This function simply returns the value of the flags that was cached
+    ///     from the last SPI transaction. It does not actually update the values
+    ///     (from the radio) before returning them.
+    ///
+    ///     Use [`RF24.update()`][rf24_py.RF24.update] to update them first.
     pub fn get_status_flags(&mut self) -> StatusFlags {
         let mut flags = rf24::StatusFlags::default();
         self.inner.get_status_flags(&mut flags);

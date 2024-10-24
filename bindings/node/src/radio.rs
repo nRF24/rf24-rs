@@ -131,10 +131,6 @@ impl RF24 {
 
     /// Put the radio into active RX mode.
     ///
-    /// > [!WARNING]
-    /// > Do not call {@link RF24.send} while in active RX mode because (internally in rust)
-    /// > that _will_ cause an infinite loop.
-    ///
     /// @group Basic
     #[napi]
     pub fn start_listening(&mut self) -> Result<()> {
@@ -146,6 +142,10 @@ impl RF24 {
     /// Deactivates active RX mode and puts the radio into an inactive TX mode.
     ///
     /// The datasheet recommends idling the radio in an inactive TX mode.
+    ///
+    /// > [!NOTE]
+    /// > This function will also flush the TX FIFO when ACK payloads are enabled
+    /// > (via {@link RF24.allowAckPayloads | `RF24.allowAckPayloads()`}).
     ///
     /// @group Basic
     #[napi]
@@ -185,7 +185,7 @@ impl RF24 {
     /// @param buf - The buffer of bytes to load into the TX FIFO.
     ///
     /// @returns A Boolean that describes if the given `buf` was successfully loaded
-    /// into the TX FIFO.
+    /// into the TX FIFO. Remember, the TX FIFO has only 3 levels ("slots").
     ///
     /// @group Advanced
     #[napi]
@@ -622,7 +622,7 @@ impl RF24 {
 
     /// Enable or disable the dynamically sized payloads feature.
     ///
-    /// @param enable - If set to `true`, the statically sized payloads (set via
+    /// @param enable - If set to `true`, the statically sized payload length (set via
     /// {@link RF24.setPayloadLength | `RF24.setPayloadLength()`}) are not used.
     ///
     /// @group Configuration
@@ -649,7 +649,7 @@ impl RF24 {
 
     /// Open a specific pipe for receiving from the given address.
     ///
-    /// It is highly recommended to avoid using pip 0 to receive because it is also
+    /// It is highly recommended to avoid using pipe 0 to receive because it is also
     /// used to transmit automatic acknowledgements.
     ///
     /// > [!NOTE]
@@ -762,7 +762,7 @@ impl RF24 {
 
     /// Configure the IRQ pin to reflect the specified {@link StatusFlags | `StatusFlags`}.
     ///
-    /// If no parameter value is given, then all flags are are reflected by the IRQ pin.
+    /// @param flags - If no value is given, then all flags are reflected by the IRQ pin.
     ///
     /// @group Configuration
     #[napi]
@@ -779,7 +779,7 @@ impl RF24 {
 
     /// Reset the specified {@link StatusFlags | `StatusFlags`}.
     ///
-    /// If no parameter value is given, then all flags are reset.
+    /// @param flags - If no value is given, then all flags are reset.
     ///
     /// @group Advanced
     #[napi]
@@ -796,7 +796,7 @@ impl RF24 {
 
     /// Update the cached value of Status flags.
     ///
-    /// Use {@link RF24.getStatusFlags | `RF24.getStatusFlags`} to get the updated values.
+    /// Use {@link RF24.getStatusFlags | `RF24.getStatusFlags()`} to get the updated values.
     ///
     /// @group Advanced
     #[napi]

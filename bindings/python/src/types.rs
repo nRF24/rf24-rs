@@ -106,6 +106,12 @@ impl PaLevel {
     }
 }
 
+/// How fast data moves through the air. Units are in bits per second (bps).
+///
+/// Attributes:
+///     Mbps1: Represents 1 Mbps
+///     Mbps2: Represents 2 Mbps
+///     Kbps250: Represents 250 Kbps
 #[pyclass(eq, eq_int, module = "rf24_py")]
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub enum DataRate {
@@ -114,12 +120,6 @@ pub enum DataRate {
     Kbps250,
 }
 
-/// How fast data moves through the air. Units are in bits per second (bps).
-///
-/// Attributes:
-///     Mbps1: Represents 1 Mbps
-///     Mbps2: Represents 2 Mbps
-///     Kbps250: Represents 250 Kbps
 #[cfg(target_os = "linux")]
 impl DataRate {
     pub fn into_inner(self) -> rf24::DataRate {

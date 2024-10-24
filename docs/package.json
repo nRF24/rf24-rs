@@ -8,6 +8,6 @@
     },
     "license": "MIT",
     "scripts": {
-        "build": "npx typedoc ../bindings/node/index.d.ts --out ./src/node-api --json node-api.json"
+        "build": "npx typedoc ../bindings/node/index.d.ts --out ./src/node-api"
     }
 }
