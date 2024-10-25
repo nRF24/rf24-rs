@@ -536,6 +536,7 @@ mod test {
         let pin_expectations = [
             PinTransaction::set(PinState::Low),
             PinTransaction::set(PinState::High),
+            PinTransaction::set(PinState::Low),
         ];
         let mut pin_mock = PinMock::new(&pin_expectations);
 
@@ -549,7 +550,7 @@ mod test {
         }
 
         let spi_expectations = spi_test_expects![
-            // flush_tx() of artifact ACK payloads
+            // flush_tx()
             (vec![commands::FLUSH_TX], vec![0xEu8]),
             // clear_status_flags()
             (
@@ -563,11 +564,25 @@ mod test {
             (buf.to_vec(), vec![0u8; 33]),
             // spoof a tx_ds event from a NOP write
             (vec![commands::NOP], vec![0xE | mnemonics::MASK_TX_DS]),
+            // flush_tx()
+            (vec![commands::FLUSH_TX], vec![0xEu8]),
+            // clear_status_flags()
+            (
+                vec![
+                    registers::STATUS | commands::W_REGISTER,
+                    mnemonics::MASK_MAX_RT | mnemonics::MASK_RX_DR | mnemonics::MASK_TX_DS,
+                ],
+                vec![0xFu8, 0u8],
+            ),
         ];
         let mut spi_mock = SpiMock::new(&spi_expectations);
         let mut radio = RF24::new(pin_mock.clone(), spi_mock.clone(), delay_mock);
         let payload = [0x55; 8];
         assert!(radio.send(&payload, false).unwrap());
+        // again using simulated full TX FIFO
+        assert!(!radio.send(&payload, false).unwrap());
+        radio._config_reg |= 1; // simulate RX mode
+        assert!(!radio.send(&payload, false).unwrap());
         spi_mock.done();
         pin_mock.done();
     }
@@ -651,6 +666,8 @@ mod test {
         let mut spi_mock = SpiMock::new(&spi_expectations);
         let mut radio = RF24::new(pin_mock.clone(), spi_mock.clone(), delay_mock);
         assert!(radio.resend().unwrap());
+        radio._config_reg |= 1; // simulate RX mode
+        assert!(!radio.resend().unwrap());
         spi_mock.done();
         pin_mock.done();
     }

@@ -187,3 +187,107 @@ impl Display for StatusFlags {
         )
     }
 }
+
+#[cfg(test)]
+mod test {
+    use crate::StatusFlags;
+
+    use super::{CrcLength, DataRate, FifoState, PaLevel};
+    extern crate std;
+    use std::{format, string::String};
+
+    fn display_crc(param: CrcLength, expected: String) -> bool {
+        format!("{param}") == expected
+    }
+
+    #[test]
+    fn crc_8bit() {
+        assert!(display_crc(CrcLength::Bit8, String::from("8 bit")));
+    }
+
+    #[test]
+    fn crc_16bit() {
+        assert!(display_crc(CrcLength::Bit16, String::from("16 bit")));
+    }
+
+    #[test]
+    fn crc_disable() {
+        assert!(display_crc(CrcLength::Disabled, String::from("disabled")));
+    }
+
+    fn display_fifo_state(param: FifoState, expected: String) -> bool {
+        format!("{param}") == expected
+    }
+
+    #[test]
+    fn fifo_state_empty() {
+        assert!(display_fifo_state(FifoState::Empty, String::from("Empty")));
+    }
+
+    #[test]
+    fn fifo_state_full() {
+        assert!(display_fifo_state(FifoState::Full, String::from("Full")));
+    }
+
+    #[test]
+    fn fifo_state_occupied() {
+        assert!(display_fifo_state(
+            FifoState::Occupied,
+            String::from("Occupied")
+        ));
+    }
+
+    fn display_data_rate(param: DataRate, expected: String) -> bool {
+        format!("{param}") == expected
+    }
+
+    #[test]
+    fn data_rate_1mbps() {
+        assert!(display_data_rate(DataRate::Mbps1, String::from("1 Mbps")));
+    }
+
+    #[test]
+    fn data_rate_2mbps() {
+        assert!(display_data_rate(DataRate::Mbps2, String::from("2 Mbps")));
+    }
+
+    #[test]
+    fn data_rate_250kbps() {
+        assert!(display_data_rate(
+            DataRate::Kbps250,
+            String::from("250 Kbps")
+        ));
+    }
+
+    fn display_pa_level(param: PaLevel, expected: String) -> bool {
+        format!("{param}") == expected
+    }
+
+    #[test]
+    fn pa_level_min() {
+        assert!(display_pa_level(PaLevel::Min, String::from("Min")));
+    }
+
+    #[test]
+    fn pa_level_low() {
+        assert!(display_pa_level(PaLevel::Low, String::from("Low")));
+    }
+
+    #[test]
+    fn pa_level_high() {
+        assert!(display_pa_level(PaLevel::High, String::from("High")));
+    }
+
+    #[test]
+    fn pa_level_max() {
+        assert!(display_pa_level(PaLevel::Max, String::from("Max")));
+    }
+
+    #[test]
+    fn display_flags() {
+        assert_eq!(
+            format!("{}", StatusFlags::default()),
+            String::from("StatusFlags rx_dr: false, tx_ds: false, tx_df: false")
+        );
+    }
+}
