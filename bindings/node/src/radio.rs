@@ -525,14 +525,14 @@ impl RF24 {
     /// @group Basic
     #[napi]
     pub fn available_pipe(&mut self) -> Result<AvailablePipe> {
-        let mut pipe = Some(0u8);
+        let mut pipe = 15;
         let result = self
             .inner
             .available_pipe(&mut pipe)
             .map_err(|e| Error::new(Status::GenericFailure, format!("{e:?}")))?;
         Ok(AvailablePipe {
             available: result,
-            pipe: pipe.expect("`pipe` should be a number"),
+            pipe,
         })
     }
 

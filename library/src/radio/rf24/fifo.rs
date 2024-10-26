@@ -14,18 +14,16 @@ where
     type FifoErrorType = Nrf24Error<SPI::Error, DO::Error>;
 
     fn available(&mut self) -> Result<bool, Self::FifoErrorType> {
-        self.available_pipe(&mut None)
+        self.spi_read(1, registers::FIFO_STATUS)?;
+        Ok(self._buf[1] & 1 == 0)
     }
 
-    fn available_pipe(&mut self, pipe: &mut Option<u8>) -> Result<bool, Self::FifoErrorType> {
-        self.spi_read(1, registers::FIFO_STATUS)?;
-        if self._buf[1] & 1 == 0 {
+    fn available_pipe(&mut self, pipe: &mut u8) -> Result<bool, Self::FifoErrorType> {
+        if self.available()? {
             // RX FIFO is not empty
-            // get last used pipe (if pipe != None)
-            if let Some(rx_pipe) = pipe {
-                self.spi_read(1, registers::STATUS)?;
-                *rx_pipe = &self._buf[1].clone() >> 1 & 7;
-            }
+            // get last used pipe
+            self.spi_read(0, commands::NOP)?;
+            *pipe = &self._status >> 1 & 7;
             return Ok(true);
         }
         Ok(false)
@@ -59,6 +57,7 @@ where
 mod test {
     extern crate std;
     use crate::radio::prelude::EsbFifo;
+    use crate::radio::rf24::commands;
     use crate::{spi_test_expects, FifoState};
 
     use super::{registers, RF24};
@@ -100,16 +99,20 @@ mod test {
         let delay_mock = NoopDelay::new();
 
         let spi_expectations = spi_test_expects![
-            // read FIFO register value
-            (vec![registers::FIFO_STATUS, 0u8], vec![0xEu8, 2u8]),
+            // read FIFO register value, but with empty RX FIFO_STATUS
+            (vec![registers::FIFO_STATUS, 0u8], vec![0xEu8, 1u8]),
+            // do it again, but with occupied RX FIFO
+            (vec![registers::FIFO_STATUS, 1u8], vec![0xEu8, 2u8]),
             // read STATUS register value
-            (vec![registers::STATUS, 2u8], vec![0xEu8, 0xEu8]),
+            (vec![commands::NOP], vec![0xEu8]),
         ];
         let mut spi_mock = SpiMock::new(&spi_expectations);
         let mut radio = RF24::new(pin_mock.clone(), spi_mock.clone(), delay_mock);
-        let mut pipe = Some(9);
-        radio.available_pipe(&mut pipe).unwrap();
-        assert_eq!(pipe, Some(7));
+        let mut pipe = 9;
+        assert!(!radio.available_pipe(&mut pipe).unwrap());
+        assert_eq!(pipe, 9);
+        assert!(radio.available_pipe(&mut pipe).unwrap());
+        assert_eq!(pipe, 7);
         spi_mock.done();
         pin_mock.done();
     }

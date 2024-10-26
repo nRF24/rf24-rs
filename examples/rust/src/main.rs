@@ -99,10 +99,10 @@ impl App {
         // put radio into active RX mode
         self.radio.start_listening().map_err(|e| anyhow!("{e:?}"))?;
         while false {
-            let pipe = 15u8;
+            let mut pipe = 15u8;
             if self
                 .radio
-                .available_pipe(&mut Some(pipe))
+                .available_pipe(&mut pipe)
                 .map_err(|e| anyhow!("{e:?}"))?
             {
                 let mut buf = [0u8; 4];

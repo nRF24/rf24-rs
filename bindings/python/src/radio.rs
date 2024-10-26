@@ -481,12 +481,12 @@ impl RF24 {
     /// Similar to [`RF24.available()`][rf24_py.RF24.available] but also returns the
     /// pipe that received the next available payload.
     pub fn available_pipe(&mut self) -> PyResult<(bool, u8)> {
-        let mut pipe = Some(0u8);
+        let mut pipe = 15;
         let result = self
             .inner
             .available_pipe(&mut pipe)
             .map_err(|e| PyRuntimeError::new_err(format!("{e:?}")))?;
-        Ok((result, pipe.expect("`pipe` should be a number")))
+        Ok((result, pipe))
     }
 
     /// Discard all 3 layers in the radio's RX FIFO.

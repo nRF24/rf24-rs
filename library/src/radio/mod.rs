@@ -154,17 +154,17 @@ pub mod prelude {
         /// Use [`EsbFifo::available_pipe()`] to get information about the pipe that received the data.
         fn available(&mut self) -> Result<bool, Self::FifoErrorType>;
 
-        /// This is similar to [`EsbFifo::available()`] except that if the `pipe` parameter is given
-        /// a mutable [`Some`] value, then the pipe number that received the data is stored to it.
+        /// This is similar to [`EsbFifo::available()`] except the `pipe` parameter is given
+        /// a mutable [`u8`] value, and the pipe number that received the data is stored to it.
         ///
         /// If there is no data ready to [`EsbRadio::read()`] in the RX FIFO, then the `pipe` parameter's
         /// value is untouched.
         ///
         /// ```ignore
-        /// let mut pipe = Some(9 as u8); // using an invalid pipe number
-        /// if radio.available_pipe(&pipe).is_ok_and(|rv| rv) {
+        /// let mut pipe = 9; // using an invalid pipe number
+        /// if radio.available_pipe(&mut pipe).is_ok_and(|rv| rv) {
         ///     // `pipe` should now be set to a valid pipe number
-        ///     print!("A Payload was received on pipe {}", pipe.unwrap());
+        ///     print!("A Payload was received on pipe {pipe}");
         /// }
         /// ```
         ///
@@ -178,7 +178,7 @@ pub mod prelude {
         /// before calling this function.
         ///
         /// </div>
-        fn available_pipe(&mut self, pipe: &mut Option<u8>) -> Result<bool, Self::FifoErrorType>;
+        fn available_pipe(&mut self, pipe: &mut u8) -> Result<bool, Self::FifoErrorType>;
     }
 
     /// A trait to represent manipulation of payload lengths (static or dynamic)
