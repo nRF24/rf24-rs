@@ -69,7 +69,7 @@ class App:
 
     def tx(self, count: int = 5):
         """Transmits an incrementing float every second"""
-        self.radio.listen = False  # ensures the nRF24L01 is in TX mode
+        self.radio.as_tx()  # ensures the nRF24L01 is in TX mode
 
         while count:
             # use struct.pack() to pack your data into a usable payload
@@ -93,7 +93,7 @@ class App:
     def rx(self, timeout: int = 6):
         """Polls the radio and prints the received value. This method expires
         after 6 seconds of no received transmission."""
-        self.radio.listen = True  # put radio into RX mode and power up
+        self.radio.as_rx()  # put radio into RX mode and power up
 
         start = time.monotonic()
         while (time.monotonic() - start) < timeout:
@@ -113,7 +113,7 @@ class App:
                 start = time.monotonic()  # reset the timeout timer
 
         # recommended behavior is to keep in TX mode while idle
-        self.radio.listen = False  # put the nRF24L01 is in TX mode
+        self.radio.as_tx()  # put the nRF24L01 is in TX mode
 
     def set_role(self):
         """Set the role using stdin stream. Timeout arg for slave() can be

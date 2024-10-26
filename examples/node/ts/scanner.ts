@@ -93,10 +93,10 @@ export class App {
     const timeout = Date.now() + (duration || 30) * 1000;
     while (Date.now() < timeout) {
       this.radio.setChannel(channel);
-      this.radio.startListening();
+      this.radio.asRx();
       await timer.setTimeout(0.13); // needs to be at least 130 microseconds
       const rpd = this.radio.rpd;
-      this.radio.stopListening();
+      this.radio.asTx();
       const foundSignal = this.radio.available();
 
       caches[channel] += Number(foundSignal || rpd || this.radio.rpd);
@@ -138,9 +138,9 @@ export class App {
    */
   noise(duration?: number) {
     const timeout = Date.now() + (duration || 10) * 1000;
-    this.radio.startListening();
+    this.radio.asRx();
     while (
-      this.radio.isListening ||
+      this.radio.isRx ||
       this.radio.getFifoState(false) != FifoState.Empty
     ) {
       const payload = this.radio.read();
@@ -149,8 +149,8 @@ export class App {
         hexArray.push(payload[i].toString(16).padStart(2, "0"));
       }
       console.log(hexArray.join(" "));
-      if (Date.now() > timeout && this.radio.isListening) {
-        this.radio.stopListening();
+      if (Date.now() > timeout && this.radio.isRx) {
+        this.radio.asTx();
       }
     }
   }

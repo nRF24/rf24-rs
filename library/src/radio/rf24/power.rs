@@ -12,7 +12,7 @@ where
 {
     type PowerErrorType = Nrf24Error<SPI::Error, DO::Error>;
 
-    /// After calling [`EsbRadio::start_listening()`](fn@crate::radio::prelude::EsbRadio::start_listening),
+    /// After calling [`EsbRadio::as_rx()`](fn@crate::radio::prelude::EsbRadio::as_rx),
     /// a non-PA/LNA radio will consume about
     /// 13.5mA at [`PaLevel::MAX`](type@crate::types::PaLevel::Max).
     /// During active transmission (including RX role when transmitting an auto-ACK

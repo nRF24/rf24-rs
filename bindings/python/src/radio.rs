@@ -114,29 +114,15 @@ impl RF24 {
             .map_err(|e| PyRuntimeError::new_err(format!("{e:?}")))
     }
 
-    /// Controls the radio's primary role (RX or TX).
-    ///
-    /// See also:
-    ///     - [`RF24.start_listening()`][rf24_py.RF24.start_listening]
-    ///     - [`RF24.stop_listening()`][rf24_py.RF24.stop_listening]
-    #[setter]
-    pub fn set_listen(&mut self, enable: bool) -> PyResult<()> {
-        if enable {
-            self.start_listening()
-        } else {
-            self.stop_listening()
-        }
-    }
-
     #[getter]
-    pub fn get_listen(&self) -> bool {
-        self.inner.is_listening()
+    pub fn is_rx(&self) -> bool {
+        self.inner.is_rx()
     }
 
     /// Put the radio into active RX mode.
-    pub fn start_listening(&mut self) -> PyResult<()> {
+    pub fn as_rx(&mut self) -> PyResult<()> {
         self.inner
-            .start_listening()
+            .as_rx()
             .map_err(|e| PyRuntimeError::new_err(format!("{e:?}")))
     }
 
@@ -147,9 +133,9 @@ impl RF24 {
     /// Note:
     ///     This function will also flush the TX FIFO when ACK payloads are enabled
     ///     (via [`RF24.allow_ack_payloads()`][rf24_py.RF24.allow_ack_payloads]).
-    pub fn stop_listening(&mut self) -> PyResult<()> {
+    pub fn as_tx(&mut self) -> PyResult<()> {
         self.inner
-            .stop_listening()
+            .as_tx()
             .map_err(|e| PyRuntimeError::new_err(format!("{e:?}")))
     }
 

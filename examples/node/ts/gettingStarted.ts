@@ -68,7 +68,7 @@ export class App {
    * @param count The number of payloads to send
    */
   async tx(count?: number) {
-    this.radio.stopListening();
+    this.radio.asTx();
     for (let i = 0; i < (count || 5); ++i) {
       const start = process.hrtime.bigint();
       const result = this.radio.send(this.payload);
@@ -89,7 +89,7 @@ export class App {
    * @param duration The timeout duration (in seconds) to listen after receiving a payload.
    */
   rx(duration?: number) {
-    this.radio.startListening();
+    this.radio.asRx();
     let timeout = Date.now() + (duration || 6) * 1000;
     while (Date.now() < timeout) {
       const hasRx = this.radio.availablePipe();
@@ -103,7 +103,7 @@ export class App {
         timeout = Date.now() + (duration || 6) * 1000;
       }
     }
-    this.radio.stopListening();
+    this.radio.asTx();
   }
 
   /**

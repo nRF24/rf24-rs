@@ -136,7 +136,7 @@ class App:
         (supposedly making RX node unresponsive)
         4. intentionally fail transmit on the fourth
         """
-        self.radio.listen = False  # put radio in TX mode
+        self.radio.as_tx()  # put radio in TX mode
 
         # on data ready test
         print("\nConfiguring IRQ pin to only ignore 'on data sent' event")
@@ -191,7 +191,7 @@ class App:
         self.radio.write_ack_payload(1, self.ack_payloads[0])
         self.radio.write_ack_payload(1, self.ack_payloads[1])
         self.radio.write_ack_payload(1, self.ack_payloads[2])
-        self.radio.listen = True  # start listening & clear irq_dr flag
+        self.radio.as_rx()  # start listening & clear irq_dr flag
         end_timer = time.monotonic() + timeout  # set end time
         while (
             self.radio.get_fifo_state(False) != FifoState.Full
@@ -200,7 +200,7 @@ class App:
             # if RX FIFO is not full and timeout is not reached, then keep waiting
             pass
         time.sleep(0.5)  # wait for last ACK payload to transmit
-        self.radio.listen = False  # put radio in TX mode & discard any ACK payloads
+        self.radio.as_tx()  # put radio in TX mode & discard any ACK payloads
         if self.radio.available():  # if RX FIFO is not empty (timeout did not occur)
             # all 3 payloads received were 5 bytes each, and RX FIFO is full
             # so, fetching 15 bytes from the RX FIFO also flushes RX FIFO

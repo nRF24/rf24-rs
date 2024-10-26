@@ -96,7 +96,7 @@ where
         }
     }
 
-    fn start_listening(&mut self) -> Result<(), Self::RadioErrorType> {
+    fn as_rx(&mut self) -> Result<(), Self::RadioErrorType> {
         self._config_reg |= 1;
         self.spi_write_byte(registers::CONFIG, self._config_reg)?;
         self.clear_status_flags(None)?;
@@ -111,7 +111,7 @@ where
         Ok(())
     }
 
-    fn stop_listening(&mut self) -> Result<(), Self::RadioErrorType> {
+    fn as_tx(&mut self) -> Result<(), Self::RadioErrorType> {
         self._ce_pin.set_low().map_err(Nrf24Error::Gpo)?;
 
         self._delay_impl.delay_ns(self._tx_delay * 1000);
@@ -127,7 +127,7 @@ where
         self.spi_write_byte(registers::EN_RXADDR, out)
     }
 
-    fn is_listening(&self) -> bool {
+    fn is_rx(&self) -> bool {
         (self._config_reg & 1) == 1
     }
 
@@ -136,7 +136,7 @@ where
     /// This function calls [`RF24::flush_tx()`] upon entry, but it does not
     /// deactivate the radio's CE pin upon exit.
     fn send(&mut self, buf: &[u8], ask_no_ack: bool) -> Result<bool, Self::RadioErrorType> {
-        if self.is_listening() {
+        if self.is_rx() {
             // check if in RX mode to prevent an infinite below
             return Ok(false);
         }
@@ -240,7 +240,7 @@ where
     }
 
     fn resend(&mut self) -> Result<bool, Self::RadioErrorType> {
-        if self.is_listening() {
+        if self.is_rx() {
             // if in RX  mode, prevent infinite loop below
             return Ok(false);
         }
@@ -403,7 +403,7 @@ mod test {
     }
 
     #[test]
-    pub fn start_listening() {
+    pub fn as_rx() {
         // Create pin
         let pin_expectations = [PinTransaction::set(PinState::High)];
         let mut pin_mock = PinMock::new(&pin_expectations);
@@ -431,13 +431,13 @@ mod test {
         ];
         let mut spi_mock = SpiMock::new(&spi_expectations);
         let mut radio = RF24::new(pin_mock.clone(), spi_mock.clone(), delay_mock);
-        radio.start_listening().unwrap();
+        radio.as_rx().unwrap();
         spi_mock.done();
         pin_mock.done();
     }
 
     #[test]
-    pub fn start_listening_open_pipe0() {
+    pub fn as_rx_open_pipe0() {
         // Create pin
         let pin_expectations = [PinTransaction::set(PinState::High)];
         let mut pin_mock = PinMock::new(&pin_expectations);
@@ -477,13 +477,13 @@ mod test {
         let mut radio = RF24::new(pin_mock.clone(), spi_mock.clone(), delay_mock);
         let address = [0x55u8; 5];
         radio.open_rx_pipe(0, &address).unwrap();
-        radio.start_listening().unwrap();
+        radio.as_rx().unwrap();
         spi_mock.done();
         pin_mock.done();
     }
 
     #[test]
-    pub fn stop_listening() {
+    pub fn as_tx() {
         // Create pin
         let pin_expectations = [PinTransaction::set(PinState::Low)];
         let mut pin_mock = PinMock::new(&pin_expectations);
@@ -525,7 +525,7 @@ mod test {
         let mut spi_mock = SpiMock::new(&spi_expectations);
         let mut radio = RF24::new(pin_mock.clone(), spi_mock.clone(), delay_mock);
         radio.allow_ack_payloads(true).unwrap();
-        radio.stop_listening().unwrap();
+        radio.as_tx().unwrap();
         spi_mock.done();
         pin_mock.done();
     }

@@ -24,7 +24,7 @@ where
 
             // If this is pipe 0, cache the address.  This is needed because
             // open_writing_pipe() will overwrite the pipe 0 address, so
-            // start_listening() will have to restore it.
+            // as_rx() will have to restore it.
             if pipe == 0 {
                 let mut cached_addr = self._pipe0_rx_addr.unwrap_or_default();
                 cached_addr[..width].copy_from_slice(&address[..width]);

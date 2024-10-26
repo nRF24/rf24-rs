@@ -75,7 +75,7 @@ impl App {
     /// Uses the [`App::radio`] as a transmitter.
     pub fn tx(&mut self, count: u8) -> Result<()> {
         // put radio into TX mode
-        self.radio.stop_listening().map_err(|e| anyhow!("{e:?}"))?;
+        self.radio.as_tx().map_err(|e| anyhow!("{e:?}"))?;
         let mut remaining = count;
         while remaining > 0 {
             let buf = self.payload.to_le_bytes();
@@ -97,7 +97,7 @@ impl App {
     pub fn rx(&mut self, timeout: u8) -> Result<()> {
         let _end = Duration::from_secs(timeout as u64);
         // put radio into active RX mode
-        self.radio.start_listening().map_err(|e| anyhow!("{e:?}"))?;
+        self.radio.as_rx().map_err(|e| anyhow!("{e:?}"))?;
         while false {
             let mut pipe = 15u8;
             if self
@@ -117,7 +117,7 @@ impl App {
         }
 
         // It is highly recommended to keep the radio idling in an inactive TX mode
-        self.radio.stop_listening().map_err(|e| anyhow!("{e:?}"))?;
+        self.radio.as_tx().map_err(|e| anyhow!("{e:?}"))?;
         Ok(())
     }
 }

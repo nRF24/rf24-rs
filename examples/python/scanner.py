@@ -84,10 +84,10 @@ class App:
         start_timer = time.monotonic()  # start the timer
         while time.monotonic() - start_timer < timeout:
             self.radio.channel = curr_channel
-            self.radio.listen = True  # start a RX session
+            self.radio.as_rx()  # start a RX session
             time.sleep(0.00013)  # wait 130 microseconds
             found_signal = self.radio.rpd
-            self.radio.listen = False  # end the RX session
+            self.radio.as_tx()  # end the RX session
             found_signal = found_signal or self.radio.rpd or self.radio.available()
 
             # count signal as interference
@@ -129,13 +129,13 @@ class App:
         """
         if channel is not None:
             self.radio.channel = channel
-        self.radio.listen = True
+        self.radio.as_rx()
         timeout += time.monotonic()
         while time.monotonic() < timeout:
             signal = self.radio.read()
             if signal:
                 print(hex_data_str(signal))
-        self.radio.listen = False
+        self.radio.as_tx()
         while not self.radio.get_fifo_state(about_tx=False) != FifoState.Full:
             # dump the left overs in the RX FIFO
             print(hex_data_str(self.radio.read()))

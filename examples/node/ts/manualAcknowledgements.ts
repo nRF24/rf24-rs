@@ -69,7 +69,7 @@ export class App {
    * @param count The number of payloads to send
    */
   async tx(count?: number) {
-    this.radio.stopListening();
+    this.radio.asTx();
     // we'll use a DataView object to store our string and number into a bytearray buffer
     // For compatibility with C/C++ driven nodes, we'll use a C-string (null-terminated)
     // "\0" is a null terminator; "." is byte (counter) place holder in the buffer
@@ -81,7 +81,7 @@ export class App {
         console.log("Transmission failed or timed out!");
       } else {
         let gotResponse = false;
-        this.radio.startListening();
+        this.radio.asRx();
         const responseTimeout = Date.now() + 200; // wait at most 200 milliseconds
         while (Date.now() < responseTimeout) {
           if (this.radio.available()) {
@@ -89,7 +89,7 @@ export class App {
             break;
           }
         }
-        this.radio.stopListening();
+        this.radio.asTx();
         const end = process.hrtime.bigint();
         process.stdout.write(
           `Transmission successful! Sent: ` +
@@ -117,7 +117,7 @@ export class App {
    * @param duration The timeout duration (in seconds) to listen after receiving a payload.
    */
   rx(duration?: number) {
-    this.radio.startListening();
+    this.radio.asRx();
     // we'll use a DataView object to store our string and number into a bytearray buffer
     // For compatibility with C/C++ driven nodes, we'll use a C-string (null-terminated)
     // "\0" is a null terminator; "." is byte (counter) place holder in the buffer
@@ -129,7 +129,7 @@ export class App {
         const incoming = this.radio.read();
         this.counter = incoming.readUint8(7);
         outgoing.writeUint8(this.counter, 7); // replaces "." in buffer
-        this.radio.stopListening();
+        this.radio.asTx();
         this.radio.write(outgoing);
         let responseResult = false;
         const responseTimeout = Date.now() + 150; // try to respond for 150 milliseconds
@@ -144,7 +144,7 @@ export class App {
             this.radio.rewrite();
           }
         }
-        this.radio.startListening();
+        this.radio.asRx();
         process.stdout.write(
           `Received ${incoming.length} bytes on pipe ${hasRx.pipe}: ` +
             `${incoming.subarray(0, 6).toString()}${this.counter} `,
@@ -160,7 +160,7 @@ export class App {
         timeout = Date.now() + (duration || 6) * 1000;
       }
     }
-    this.radio.stopListening(); // flushes TX FIFO when ACK payloads are enabled
+    this.radio.asTx(); // flushes TX FIFO when ACK payloads are enabled
   }
 
   /**

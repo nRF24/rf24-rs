@@ -66,7 +66,7 @@ export class App {
    * @param count The number of payloads to send
    */
   async tx(nodeNumber?: number, count?: number) {
-    this.radio.stopListening();
+    this.radio.asTx();
     // clamp node ID to radio's number of pipes for this example
     const id = Math.max(Math.min(nodeNumber || 0, 5), 0);
 
@@ -113,7 +113,7 @@ export class App {
       this.radio.openRxPipe(pipe, this.addresses[pipe]);
     }
 
-    this.radio.startListening();
+    this.radio.asRx();
     let timeout = Date.now() + (duration || 6) * 1000;
     while (Date.now() < timeout) {
       const hasRx = this.radio.availablePipe();
@@ -129,7 +129,7 @@ export class App {
         timeout = Date.now() + (duration || 6) * 1000;
       }
     }
-    this.radio.stopListening();
+    this.radio.asTx();
   }
 
   /**

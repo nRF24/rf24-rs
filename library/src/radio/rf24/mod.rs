@@ -144,7 +144,7 @@ where
         level: PaLevel,
         channel: u8,
     ) -> Result<(), Nrf24Error<SPI::Error, DO::Error>> {
-        self.stop_listening()?;
+        self.as_tx()?;
         self.spi_read(1, registers::RF_SETUP)?;
         self.spi_write_byte(registers::RF_SETUP, self._buf[1] | 0x90)?;
         if self._is_plus_variant {
@@ -256,7 +256,7 @@ mod test {
         address[0] = registers::TX_ADDR | commands::W_REGISTER;
 
         let spi_expectations = spi_test_expects![
-            // stop_listening()
+            // as_tx()
             // clear PRIM_RX flag
             (
                 vec![registers::CONFIG | commands::W_REGISTER, 0u8],

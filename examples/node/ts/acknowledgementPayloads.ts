@@ -65,7 +65,7 @@ export class App {
    * @param count The number of payloads to send
    */
   async tx(count?: number) {
-    this.radio.stopListening();
+    this.radio.asTx();
     // we'll use a DataView object to store our string and number into a bytearray buffer
     const outgoing = Buffer.from("Hello \0.");
     for (let i = 0; i < (count || 5); i++) {
@@ -101,7 +101,7 @@ export class App {
    * @param duration The timeout duration (in seconds) to listen after receiving a payload.
    */
   rx(duration?: number) {
-    this.radio.startListening();
+    this.radio.asRx();
     // we'll use a DataView object to store our string and number into a bytearray buffer
     const outgoing = Buffer.from("World \0.");
     outgoing.writeUint8(this.counter, 7);
@@ -123,7 +123,7 @@ export class App {
         timeout = Date.now() + (duration || 6) * 1000;
       }
     }
-    this.radio.stopListening(); // flushes TX FIFO when ACK payloads are enabled
+    this.radio.asTx(); // flushes TX FIFO when ACK payloads are enabled
   }
 
   /**

@@ -140,8 +140,8 @@ def init_radio():
     radio.address_length = 2
     for pipe, address in enumerate(noise_address):
         radio.open_rx_pipe(pipe, address)
-    radio.listen = True
-    radio.listen = False
+    radio.as_rx()
+    radio.as_tx()
     radio.flush_rx()
 
 
@@ -197,10 +197,10 @@ def get_user_input() -> Tuple[int, int]:
 def scan_channel(channel: int) -> bool:
     """Scan a specified channel and report if a signal was detected."""
     radio.channel = channel
-    radio.listen = True
+    radio.as_rx()
     time.sleep(0.00013)
     found_signal = radio.rpd
-    radio.listen = False
+    radio.as_tx()
     if found_signal or radio.rpd or radio.available():
         radio.flush_rx()
         return True

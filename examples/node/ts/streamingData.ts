@@ -80,7 +80,7 @@ export class App {
     // number of bytes we need to transmit
     this.radio.setPayloadLength(payloadSize); // default is the maximum 32 bytes
 
-    this.radio.stopListening(); // put radio into TX mode
+    this.radio.asTx(); // put radio into TX mode
     for (let cnt = 0; cnt < (count || 1); cnt++) {
       // for each stream
 
@@ -125,7 +125,7 @@ export class App {
         `Transmission took ${end - start} ms with ${failures} failures detected`,
       );
     }
-    this.radio.stopListening(); // ensure radio exits active TX mode
+    this.radio.asTx(); // ensure radio exits active TX mode
   }
 
   /**
@@ -136,7 +136,7 @@ export class App {
   rx(duration?: number, size?: number) {
     this.radio.setPayloadLength(Math.max(Math.min(size || 32, 32), 6));
     let count = 0;
-    this.radio.startListening();
+    this.radio.asRx();
     let timeout = Date.now() + (duration || 6) * 1000;
     while (Date.now() < timeout) {
       if (this.radio.available()) {
@@ -146,7 +146,7 @@ export class App {
         timeout = Date.now() + (duration || 6) * 1000;
       }
     }
-    this.radio.stopListening();
+    this.radio.asTx();
   }
 
   /**

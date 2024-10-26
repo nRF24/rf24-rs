@@ -75,7 +75,7 @@ class App:
             ((node_number * 3) % 12) + 3, 15
         )  # max value is 15 for both args
 
-        self.radio.listen = False
+        self.radio.as_tx()
         # set the TX address to the address of the base station.
         self.radio.open_tx_pipe(self.addresses[node_number])
         counter = 0
@@ -103,7 +103,7 @@ class App:
         # write the addresses to all pipes.
         for pipe, addr in enumerate(self.addresses):
             self.radio.open_rx_pipe(pipe, addr)
-        self.radio.listen = True  # put base station into RX mode
+        self.radio.as_rx()  # put base station into RX mode
         start_timer = time.monotonic()  # start timer
         while time.monotonic() - start_timer < timeout:
             has_payload, pipe_number = self.radio.available_pipe()
@@ -117,7 +117,7 @@ class App:
                     f"PayloadID: {payload_id}",
                 )
                 start_timer = time.monotonic()  # reset timer with every payload
-        self.radio.listen = False
+        self.radio.as_tx()
 
     def set_role(self):
         """Set the role using stdin stream. Timeout arg for slave() can be

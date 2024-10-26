@@ -24,7 +24,7 @@ pub mod prelude {
         /// If the specified `pipe` is not in range [0, 5], then this function does nothing.
         ///
         /// Up to 6 pipes can be open for reading at once.  Open all the required
-        /// reading pipes, and then call [`EsbRadio::start_listening()`].
+        /// reading pipes, and then call [`EsbRadio::as_rx()`].
         ///
         /// ### About pipe addresses
         /// Pipes 0 and 1 will store a full 5-byte address. Pipes 2-5 will technically
@@ -45,7 +45,7 @@ pub mod prelude {
         ///
         /// If the pipe 0 is opened for receiving by this function, the `address`
         /// passed to this function (for pipe 0) will be restored at every call to
-        /// [`EsbRadio::start_listening()`].
+        /// [`EsbRadio::as_rx()`].
         /// This address restoration is implemented because of the underlying necessary
         /// functionality of [`EsbPipe::open_tx_pipe()`].
         ///
@@ -138,7 +138,7 @@ pub mod prelude {
 
         /// Flush the radio's TX FIFO.
         ///
-        /// This function is automatically called by [`EsbRadio::stop_listening()`]
+        /// This function is automatically called by [`EsbRadio::as_tx()`]
         /// if ACK payloads are enabled.
         fn flush_tx(&mut self) -> Result<(), Self::FifoErrorType>;
 
@@ -261,7 +261,7 @@ pub mod prelude {
         ///
         /// It is important to discard any non-ACK payloads in the TX FIFO (using
         /// [`EsbFifo::flush_tx()`]) before writing the first ACK payload into the TX FIFO.
-        /// This function can be used before and after calling [`EsbRadio::start_listening()`].
+        /// This function can be used before and after calling [`EsbRadio::as_rx()`].
         ///
         /// <div class="warning">
         ///
@@ -398,7 +398,7 @@ pub mod prelude {
         /// ```ignore
         /// radio.power_up(Some(0)).unwrap();
         /// // ... do something else for 5 milliseconds
-        /// radio.start_listening().unwrap();
+        /// radio.as_rx().unwrap();
         /// ```
         fn power_up(&mut self, delay: Option<u32>) -> Result<(), Self::PowerErrorType>;
 
@@ -456,13 +456,13 @@ pub mod prelude {
         fn init(&mut self) -> Result<(), Self::RadioErrorType>;
 
         /// Put the radio into RX role
-        fn start_listening(&mut self) -> Result<(), Self::RadioErrorType>;
+        fn as_rx(&mut self) -> Result<(), Self::RadioErrorType>;
 
         /// Put the radio into TX role
-        fn stop_listening(&mut self) -> Result<(), Self::RadioErrorType>;
+        fn as_tx(&mut self) -> Result<(), Self::RadioErrorType>;
 
         /// Is the radio in RX mode?
-        fn is_listening(&self) -> bool;
+        fn is_rx(&self) -> bool;
 
         /// Blocking write.
         ///

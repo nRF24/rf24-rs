@@ -125,17 +125,17 @@ impl RF24 {
     ///
     /// @group Basic
     #[napi(getter)]
-    pub fn is_listening(&self) -> bool {
-        self.inner.is_listening()
+    pub fn is_rx(&self) -> bool {
+        self.inner.is_rx()
     }
 
     /// Put the radio into active RX mode.
     ///
     /// @group Basic
     #[napi]
-    pub fn start_listening(&mut self) -> Result<()> {
+    pub fn as_rx(&mut self) -> Result<()> {
         self.inner
-            .start_listening()
+            .as_rx()
             .map_err(|e| Error::new(Status::GenericFailure, format!("{e:?}")))
     }
 
@@ -149,9 +149,9 @@ impl RF24 {
     ///
     /// @group Basic
     #[napi]
-    pub fn stop_listening(&mut self) -> Result<()> {
+    pub fn as_tx(&mut self) -> Result<()> {
         self.inner
-            .stop_listening()
+            .as_tx()
             .map_err(|e| Error::new(Status::GenericFailure, format!("{e:?}")))
     }
 
@@ -548,6 +548,10 @@ impl RF24 {
 
     /// Discard all 3 levels of the radio's TX FIFO.
     ///
+    /// This is automatically called by {@link RF24.asTx | `RF24.asTx()`}
+    /// when ACK payloads are enabled (via
+    /// {@link RF24.allowAckPayloads | `RF24.allowAckPayloads()`}).
+    ///
     /// @group Advanced
     #[napi]
     pub fn flush_tx(&mut self) -> Result<()> {
@@ -726,7 +730,7 @@ impl RF24 {
 
     /// Is the radio powered up?
     ///
-    /// Use {@link RF24.isListening | `RF24.isListening`} to determine if
+    /// Use {@link RF24.isRx | `RF24.isRx`} to determine if
     /// the radio is in RX or TX mode.
     ///
     /// @group Configuration

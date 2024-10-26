@@ -74,7 +74,7 @@ class App:
 
     def tx(self, count: int = 5):
         """Transmits a message and an incrementing integer every second"""
-        self.radio.listen = False  # ensures the nRF24L01 is in TX mode
+        self.radio.as_tx()  # ensures the nRF24L01 is in TX mode
 
         while count:  # only transmit `count` packets
             # use struct.pack() to pack your data into a usable payload
@@ -86,7 +86,7 @@ class App:
             if not result:
                 print("Transmission failed or timed out")
             else:
-                self.radio.listen = True
+                self.radio.as_rx()
                 got_response = False
                 timeout = time.monotonic() * 1000 + 200  # use 200 ms timeout
                 while time.monotonic() * 1000 < timeout:
@@ -94,7 +94,7 @@ class App:
                         got_response = True
                         break
                 end_timer = time.monotonic_ns()  # end timer
-                self.radio.listen = False
+                self.radio.as_tx()
                 print(
                     "Transmission successful. Sent: ",
                     f"{buffer[:6].decode('utf-8')}{self.counter}.",
@@ -122,7 +122,7 @@ class App:
     def rx(self, timeout: int = 6):
         """Polls the radio and prints the received value. This method expires
         after 6 seconds of no received transmission"""
-        self.radio.listen = True  # put radio into RX mode and power up
+        self.radio.as_rx()  # put radio into RX mode and power up
 
         start_timer = time.monotonic()  # start a timer to detect timeout
         while (time.monotonic() - start_timer) < timeout:
@@ -138,7 +138,7 @@ class App:
                 # NOTE b"\x00" byte is a c-string's NULL terminating 0
                 buffer = b"World \x00" + bytes([self.counter])
 
-                self.radio.listen = False  # set radio to TX mode
+                self.radio.as_tx()  # set radio to TX mode
                 self.radio.write(buffer)  # load payload into radio's RX buffer
                 # keep retrying to send response for 150 milliseconds
                 response_timeout = time.monotonic_ns() + 150000000
@@ -151,7 +151,7 @@ class App:
                         break
                     if flags.tx_df:
                         self.radio.rewrite()
-                self.radio.listen = True  # set radio back into RX mode
+                self.radio.as_rx()  # set radio back into RX mode
 
                 # print the payload received and the response's payload
                 print(
@@ -167,7 +167,7 @@ class App:
                 start_timer = time.monotonic()  # reset the timeout timer
 
         # recommended behavior is to keep in TX mode while idle
-        self.radio.listen = False  # put the nRF24L01 into inactive TX mode
+        self.radio.as_tx()  # put the nRF24L01 into inactive TX mode
 
     def set_role(self):
         """Set the role using stdin stream. Timeout arg for slave() can be

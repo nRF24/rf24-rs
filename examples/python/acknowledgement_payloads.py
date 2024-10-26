@@ -70,7 +70,7 @@ class App:
 
     def tx(self, count: int = 5):  # count = 5 will only transmit 5 packets
         """Transmits a payload every second and prints the ACK payload"""
-        self.radio.listen = False  # put radio in TX mode
+        self.radio.as_tx()  # put radio in TX mode
 
         while count:
             # construct a payload to send
@@ -104,7 +104,7 @@ class App:
 
     def rx(self, timeout: int = 6):
         """Prints the received value and sends an ACK payload"""
-        self.radio.listen = True  # put radio into RX mode, power it up
+        self.radio.as_rx()  # put radio into RX mode, power it up
 
         # setup the first transmission's ACK payload
         buffer = b"World \x00" + bytes([self.counter])
@@ -131,7 +131,7 @@ class App:
                 self.radio.write_ack_payload(1, buffer)  # load ACK for next response
 
         # recommended behavior is to keep in TX mode while idle
-        self.radio.listen = False  # put radio in TX mode & flush unused ACK payloads
+        self.radio.as_tx()  # put radio in TX mode & flush unused ACK payloads
 
     def set_role(self):
         """Set the role using stdin stream. Timeout arg for slave() can be

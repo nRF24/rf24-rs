@@ -85,7 +85,7 @@ class App:
         # create a stream
         stream = make_payloads(size)
 
-        self.radio.listen = False  # ensures the nRF24L01 is in TX mode
+        self.radio.as_tx()  # ensures the nRF24L01 is in TX mode
         for cnt in range(count):  # transmit the same payloads this many times
             self.radio.flush_tx()  # clear the TX FIFO so we can use all 3 levels
             # NOTE the write_only parameter does not initiate sending
@@ -125,7 +125,7 @@ class App:
                 f"Transmission took {end_timer - start_timer} ms with",
                 f"{failures} failures detected.",
             )
-        self.radio.listen = False  # ensure radio exits active TX mode
+        self.radio.as_tx()  # ensure radio exits active TX mode
 
     def rx(self, timeout: int = 5, size: int = 32):
         """Stops listening after a `timeout` with no response"""
@@ -134,7 +134,7 @@ class App:
         #  number of bytes we need to transmit
         self.radio.payload_length = size  # the default is the maximum 32 bytes
 
-        self.radio.start_listening()  # put radio into RX mode and power up
+        self.radio.as_rx()  # put radio into RX mode and power up
         count = 0  # keep track of the number of received payloads
         start_timer = time.monotonic()  # start timer
         while time.monotonic() < start_timer + timeout:
@@ -146,7 +146,7 @@ class App:
                 start_timer = time.monotonic()  # reset timer on every RX payload
 
         # recommended behavior is to keep in TX mode while idle
-        self.radio.listen = False  # put the nRF24L01 is in TX mode
+        self.radio.as_tx()  # put the nRF24L01 is in TX mode
 
     def set_role(self):
         """Set the role using stdin stream. Timeout arg for slave() can be
