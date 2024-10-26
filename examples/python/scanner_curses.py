@@ -72,10 +72,10 @@ class ChannelHistory:
 stored = [ChannelHistory() for _ in range(TOTAL_CHANNELS)]
 
 
-class ProgressBar:  # pylint: disable=too-few-public-methods
+class ProgressBar:
     """This represents a progress bar using a curses window object."""
 
-    def __init__(  # pylint: disable=too-many-arguments,invalid-name
+    def __init__(
         self,
         x: int,
         y: int,

@@ -1,12 +1,17 @@
 version: "0.2"
 words:
   - aarch
+  - addch
+  - addstr
   - androideabi
   - armv
+  - attroff
+  - attron
   - autorefs
   - bindgen
   - bytearray
   - calcsize
+  - cbreak
   - Cdev
   - codecov
   - corepack
@@ -17,11 +22,13 @@ words:
   - eabi
   - endl
   - endlineno
+  - endwin
   - fontawesome
   - gnueabihf
   - gpio
   - gpiochip
   - gpiod
+  - HLINE
   - inlinehilite
   - Kbps
   - linenums
@@ -34,6 +41,8 @@ words:
   - msvc
   - musleabihf
   - napi
+  - nocbreak
+  - noecho
   - pyclass
   - pymdownx
   - pymethods

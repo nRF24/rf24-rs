@@ -17,7 +17,7 @@ use rf24_rs_examples::rp2040::BoardHardware;
 /// A struct to drive our example app
 struct App {
     /// Any platform-specific functionality is abstracted into this object.
-    #[allow(dead_code)]
+    #[allow(dead_code, reason = "keep board's peripheral objects alive")]
     board: BoardHardware,
     /// Our instantiated RF24 object.
     radio: RF24<SpiImpl, DigitalOutImpl, DelayImpl>,
@@ -60,12 +60,12 @@ impl App {
             .set_payload_length(4)
             .map_err(|e| anyhow!("{e:?}"))?;
 
-        static ADDRESS: [&[u8; 5]; 2] = [b"1Node", b"2Node"];
+        let address = [b"1Node", b"2Node"];
         self.radio
-            .open_rx_pipe(1, ADDRESS[0])
+            .open_rx_pipe(1, address[0])
             .map_err(|e| anyhow!("{e:?}"))?;
         self.radio
-            .open_tx_pipe(ADDRESS[1])
+            .open_tx_pipe(address[1])
             .map_err(|e| anyhow!("{e:?}"))?;
         Ok(())
     }
@@ -73,7 +73,7 @@ impl App {
     /// The TX role.
     ///
     /// Uses the [`App::radio`] as a transmitter.
-    pub fn master(&mut self, count: u8) -> Result<()> {
+    pub fn tx(&mut self, count: u8) -> Result<()> {
         // put radio into TX mode
         self.radio.stop_listening().map_err(|e| anyhow!("{e:?}"))?;
         let mut remaining = count;
@@ -94,7 +94,7 @@ impl App {
     /// The RX role.
     ///
     /// Uses the [`App::radio`] as a receiver.
-    pub fn slave(&mut self, timeout: u8) -> Result<()> {
+    pub fn rx(&mut self, timeout: u8) -> Result<()> {
         let _end = Duration::from_secs(timeout as u64);
         // put radio into active RX mode
         self.radio.start_listening().map_err(|e| anyhow!("{e:?}"))?;
@@ -126,9 +126,9 @@ fn main() -> Result<()> {
     let mut app = App::new()?;
     app.setup()?;
     if option_env!("ROLE").unwrap_or_default() == "master" {
-        app.master(5)?;
+        app.tx(5)?;
     } else {
-        app.slave(6)?;
+        app.rx(6)?;
     }
     Ok(())
 }
