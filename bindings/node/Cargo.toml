@@ -1,7 +1,10 @@
 [package]
-edition = "2021"
 name = "rf24_node"
-version = "0.0.0"
+version.workspace = true
+repository.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license-file.workspace = true
 
 [lib]
 crate-type = ["cdylib"]
@@ -16,4 +19,4 @@ napi-build = "2.0.1"
 
 [target.'cfg(target_os = "linux")'.dependencies]
 linux-embedded-hal = "0.4.0"
-rf24-rs = { path = "../../library", features = ["std"] }
+rf24-rs = { path = "../../crates/rf24-rs", features = ["std"] }

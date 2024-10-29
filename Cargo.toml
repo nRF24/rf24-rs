@@ -1,6 +1,6 @@
 [workspace]
-members = ["library", "examples/rust", "bindings/python", "bindings/node"]
-default-members = ["library"]
+members = ["crates/rf24-rs", "examples/rust", "bindings/python", "bindings/node"]
+default-members = ["crates/rf24-rs"]
 resolver = "2"
 
 [workspace.package]

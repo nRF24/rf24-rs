@@ -22,11 +22,11 @@ where
     DO: OutputPin,
     DELAY: DelayNs,
 {
-    type LoggingErrorType = Nrf24Error<SPI::Error, DO::Error>;
+    type DetailsErrorType = Nrf24Error<SPI::Error, DO::Error>;
 
     #[cfg(feature = "defmt")]
     #[cfg(target_os = "none")]
-    fn print_details(&mut self) -> Result<(), Self::LoggingErrorType> {
+    fn print_details(&mut self) -> Result<(), Self::DetailsErrorType> {
         defmt::println!("Is a plus variant_________{=bool}", self.is_plus_variant());
 
         let channel = self.get_channel()?;
@@ -89,19 +89,19 @@ where
         self.get_status_flags(&mut flags);
         defmt::println!(
             "IRQ on Data Ready_________{=bool}",
-            self._config_reg & mnemonics::MASK_RX_DR > 0
+            (self._config_reg & mnemonics::MASK_RX_DR) == 0
         );
         defmt::println!("    Data Ready triggered__{=bool}", flags.rx_dr);
         defmt::println!(
-            "IRQ on Data Fail__________{=bool}",
-            self._config_reg & mnemonics::MASK_MAX_RT > 0
-        );
-        defmt::println!("    Data Failed triggered_{=bool}", flags.tx_df);
-        defmt::println!(
             "IRQ on Data Sent__________{=bool}",
-            self._config_reg & mnemonics::MASK_TX_DS > 0
+            (self._config_reg & mnemonics::MASK_TX_DS) == 0
         );
         defmt::println!("    Data Sent triggered___{=bool}", flags.tx_ds);
+        defmt::println!(
+            "IRQ on Data Fail__________{=bool}",
+            (self._config_reg & mnemonics::MASK_MAX_RT) == 0
+        );
+        defmt::println!("    Data Fail triggered___{=bool}", flags.tx_df);
 
         let fifo = self.get_fifo_state(true)?;
         defmt::println!("TX FIFO___________________{}", fifo);
@@ -118,26 +118,61 @@ where
 
         self.spi_read(1, registers::EN_AA)?;
         defmt::println!("Auto Acknowledgment_______0b{=0..8}", self._buf[1]);
-
+        let rx = defmt::intern!("R");
+        let tx = defmt::intern!("T");
         defmt::println!(
-            "Primary Mode______________{}X",
-            if self._config_reg & 1 > 0 { "R" } else { "T" }
+            "Primary Mode______________{=istr}X",
+            if self._config_reg & 1 > 0 { rx } else { tx }
         );
         defmt::println!(
             "Powered Up________________{=bool}",
             self._config_reg & 2 > 0
         );
+
+        // print pipe addresses
+        self.spi_read(5, registers::TX_ADDR)?;
+        let mut address = [0u8; 4];
+        address.copy_from_slice(&self._buf[2..6]);
+        address.reverse();
+        defmt::println!(
+            "TX address_____________{=[u8; 4]:#08X}{=u8:02X}",
+            address,
+            self._buf[1]
+        );
+        self.spi_read(1, registers::EN_RXADDR)?;
+        let open_pipes = self._buf[1];
+        let opened = defmt::intern!(" open ");
+        let closed = defmt::intern!("closed");
+        for pipe in 0..=5 {
+            self.spi_read(if pipe < 2 { 5 } else { 1 }, registers::RX_ADDR_P0 + pipe)?;
+            if pipe < 2 {
+                address.copy_from_slice(&self._buf[2..6]);
+                address.reverse();
+            }
+            defmt::println!(
+                "Pipe {=u8} ({=istr}) bound to {=[u8; 4]:#08X}{=u8:02X}",
+                pipe,
+                if (open_pipes & (1u8 << pipe)) > 0 {
+                    opened
+                } else {
+                    closed
+                },
+                // reverse the bytes read to represent how memory is stored
+                address,
+                self._buf[1],
+            );
+        }
         Ok(())
     }
 
     #[cfg(not(any(feature = "defmt", feature = "std")))]
-    fn print_details(&mut self) -> Result<(), Self::LoggingErrorType> {
+    fn print_details(&mut self) -> Result<(), Self::DetailsErrorType> {
         Ok(())
     }
 
     #[cfg(not(target_os = "none"))]
     #[cfg(feature = "std")]
-    fn print_details(&mut self) -> Result<(), Self::LoggingErrorType> {
+    fn print_details(&mut self) -> Result<(), Self::DetailsErrorType> {
         std::println!("Is a plus variant_________{}", self.is_plus_variant());
 
         let channel = self.get_channel()?;
@@ -190,19 +225,19 @@ where
         self.get_status_flags(&mut flags);
         std::println!(
             "IRQ on Data Ready_________{}",
-            self._config_reg & mnemonics::MASK_RX_DR > 0
+            (self._config_reg & mnemonics::MASK_RX_DR) == 0
         );
         std::println!("    Data Ready triggered__{}", flags.rx_dr);
         std::println!(
-            "IRQ on Data Fail__________{}",
-            self._config_reg & mnemonics::MASK_MAX_RT > 0
-        );
-        std::println!("    Data Failed triggered_{}", flags.tx_df);
-        std::println!(
             "IRQ on Data Sent__________{}",
-            self._config_reg & mnemonics::MASK_TX_DS > 0
+            (self._config_reg & mnemonics::MASK_TX_DS) == 0
         );
         std::println!("    Data Sent triggered___{}", flags.tx_ds);
+        std::println!(
+            "IRQ on Data Fail__________{}",
+            (self._config_reg & mnemonics::MASK_MAX_RT) == 0
+        );
+        std::println!("    Data Fail triggered___{}", flags.tx_df);
 
         let fifo = self.get_fifo_state(true)?;
         std::println!("TX FIFO___________________{}", fifo);
@@ -225,6 +260,35 @@ where
             if self._config_reg & 1 > 0 { "R" } else { "T" }
         );
         std::println!("Powered Up________________{}", self._config_reg & 2 > 0);
+
+        // print pipe addresses
+        self.spi_read(5, registers::TX_ADDR)?;
+        let mut address = [0u8; 4];
+        address.copy_from_slice(&self._buf[2..6]);
+        std::println!(
+            "TX address_____________{:#08X}{:02X}",
+            u32::from_le_bytes(address),
+            self._buf[1]
+        );
+        self.spi_read(1, registers::EN_RXADDR)?;
+        let open_pipes = self._buf[1];
+        for pipe in 0..=5 {
+            self.spi_read(if pipe < 2 { 5 } else { 1 }, registers::RX_ADDR_P0 + pipe)?;
+            if pipe < 2 {
+                address.copy_from_slice(&self._buf[2..6]);
+            }
+            std::println!(
+                "Pipe {pipe} ({}) bound to {:#08X}{:02X}",
+                if (open_pipes & (1u8 << pipe)) > 0 {
+                    " open "
+                } else {
+                    "closed"
+                },
+                // reverse the bytes read to represent how memory is stored
+                u32::from_le_bytes(address),
+                self._buf[1],
+            );
+        }
         Ok(())
     }
 }

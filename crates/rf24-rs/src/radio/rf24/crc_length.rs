@@ -13,8 +13,7 @@ where
     type CrcLengthErrorType = Nrf24Error<SPI::Error, DO::Error>;
 
     fn get_crc_length(&mut self) -> Result<CrcLength, Self::CrcLengthErrorType> {
-        let result = self.spi_read(1, registers::CONFIG);
-        result?;
+        self.spi_read(1, registers::CONFIG)?;
         let crc_bin = (self._buf[1] & (3 << 2)) >> 2;
         match crc_bin {
             0 => Ok(CrcLength::Disabled),

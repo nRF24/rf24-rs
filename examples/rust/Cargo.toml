@@ -2,9 +2,10 @@
 name = "rf24-rs-examples"
 version.workspace = true
 edition.workspace = true
+rust-version.workspace = true
 
 [dependencies]
-rf24-rs = {path = "../../library"}
+rf24-rs = {path = "../../crates/rf24-rs"}
 embedded-hal = "1.0.0"
 anyhow = {version = "1.0.89", default-features = false }
 linux-embedded-hal = {version = "0.4.0", optional = true}

@@ -13,8 +13,7 @@ where
     type DataRateErrorType = Nrf24Error<SPI::Error, DO::Error>;
 
     fn get_data_rate(&mut self) -> Result<DataRate, Self::DataRateErrorType> {
-        let result = self.spi_read(1, registers::RF_SETUP);
-        result?;
+        self.spi_read(1, registers::RF_SETUP)?;
         let da_bin = self._buf[1] >> 3 & 5;
         match da_bin {
             0 => Ok(DataRate::Mbps1),

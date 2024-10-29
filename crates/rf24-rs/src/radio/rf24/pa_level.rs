@@ -13,8 +13,7 @@ where
     type PaLevelErrorType = Nrf24Error<SPI::Error, DO::Error>;
 
     fn get_pa_level(&mut self) -> Result<PaLevel, Self::PaLevelErrorType> {
-        let result = self.spi_read(1, registers::RF_SETUP);
-        result?;
+        self.spi_read(1, registers::RF_SETUP)?;
         let pa_bin = self._buf[1] >> 1 & 3;
         match pa_bin {
             0 => Ok(PaLevel::Min),

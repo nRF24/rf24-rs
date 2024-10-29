@@ -27,6 +27,11 @@ pub enum Nrf24Error<SPI, DO> {
     Gpo(DO),
     /// Represents a corruption of binary data (as it was transferred over the SPI bus' MISO)
     BinaryCorruption,
+    /// An Error used to prevent an infinite loop in [`RF24::send()`].
+    ///
+    /// This only occurs when user code neglected to call [`RF24::as_tx()`] at least once
+    /// before calling [`RF24::send()`].
+    NotAsTxError,
 }
 
 /// This struct implements the [`Esb*` traits](mod@crate::radio::prelude)

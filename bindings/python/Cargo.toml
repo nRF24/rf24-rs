@@ -17,4 +17,4 @@ pyo3 = {version = "0.22.5", features = ["extension-module"]}
 
 [target.'cfg(target_os = "linux")'.dependencies]
 linux-embedded-hal = "0.4.0"
-rf24-rs = { path = "../../library", features = ["std"]}
+rf24-rs = { path = "../../crates/rf24-rs", features = ["std"]}

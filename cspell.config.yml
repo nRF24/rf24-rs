@@ -30,6 +30,7 @@ words:
   - gpiod
   - HLINE
   - inlinehilite
+  - istr
   - Kbps
   - linenums
   - maturin

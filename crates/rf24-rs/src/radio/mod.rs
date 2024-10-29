@@ -19,7 +19,7 @@ pub mod prelude {
     pub trait EsbPipe {
         type PipeErrorType;
 
-        /// Open a specified `pipe` for receiving data when radio is in RX role.
+        /// Open a specified `pipe` for receiving data when radio is in RX mode.
         ///
         /// If the specified `pipe` is not in range [0, 5], then this function does nothing.
         ///
@@ -58,14 +58,17 @@ pub mod prelude {
         /// to understand how to avoid using malformed addresses.
         fn open_rx_pipe(&mut self, pipe: u8, address: &[u8]) -> Result<(), Self::PipeErrorType>;
 
-        /// Set an address to pipe 0 for transmitting when radio is in TX role.
+        /// Set an address to pipe 0 for transmitting when radio is in TX mode.
         ///
         fn open_tx_pipe(&mut self, address: &[u8]) -> Result<(), Self::PipeErrorType>;
 
-        /// Close a specified pipe from receiving data when radio is in RX role.
+        /// Close a specified pipe from receiving data when radio is in RX mode.
         fn close_rx_pipe(&mut self, pipe: u8) -> Result<(), Self::PipeErrorType>;
 
         /// Set the address length (applies to all pipes).
+        ///
+        /// If the specified length is clamped to the range [2, 5].
+        /// Any value outside that range defaults to 5.
         fn set_address_length(&mut self, length: u8) -> Result<(), Self::PipeErrorType>;
 
         /// Get the currently configured address length (applied to all pipes).
@@ -101,6 +104,8 @@ pub mod prelude {
         /// IRQ pin ignore the corresponding event.
         /// By default, all events are enabled and will trigger the IRQ pin,
         /// a behavior equivalent to `set_status_flags(None)`.
+        ///
+        /// Pass [`None`] to enable all flags.
         fn set_status_flags(
             &mut self,
             flags: Option<StatusFlags>,
@@ -208,7 +213,7 @@ pub mod prelude {
         ///
         /// ```ignore
         /// radio.set_dynamic_payloads(true).unwrap();
-        /// // ... then after or during RX role:
+        /// // ... then after or during RX mode:
         /// if radio.available().unwrap() {
         ///     let length = radio.get_dynamic_payload_length().unwrap();
         ///     let mut payload = [0; 32];
@@ -226,7 +231,8 @@ pub mod prelude {
 
         /// Get the dynamic length of the next available payload in the RX FIFO.
         ///
-        /// This returns `0` when dynamic payloads are disabled.
+        /// This returns `0` when dynamic payloads are disabled (via
+        /// [`EsbPayloadLength::set_dynamic_payloads()`]).
         fn get_dynamic_payload_length(&mut self) -> Result<u8, Self::PayloadLengthErrorType>;
     }
 
@@ -261,17 +267,17 @@ pub mod prelude {
         ///
         /// It is important to discard any non-ACK payloads in the TX FIFO (using
         /// [`EsbFifo::flush_tx()`]) before writing the first ACK payload into the TX FIFO.
-        /// This function can be used before and after calling [`EsbRadio::as_rx()`].
+        /// This function can be used before and/or after calling [`EsbRadio::as_rx()`].
         ///
         /// <div class="warning">
         ///
         /// The payload must be loaded into the radio's TX FIFO _before_ the incoming
         /// payload is received.
         ///
-        /// Remember, the TX FIFO stack can store only 3 payloads,
+        /// Remember, the TX FIFO can only store a maximum of 3 payloads,
         /// and there are typically more pipes than TX FIFO occupancy.
         /// Expected behavior is better assured when the ACK payloads are only used
-        /// for 1 pipe
+        /// for 1 pipe.
         ///
         /// </div>
         ///
@@ -335,14 +341,17 @@ pub mod prelude {
         /// Set the number of retry attempts and delay between retry attempts when
         /// transmitting a payload.
         ///
-        /// The radio is waiting for an acknowledgement (ACK) packet during the delay between retry attempts.
+        /// When the auto-ack feature is enabled (via [`EsbAutoAck::set_auto_ack()`]),
+        /// the radio waits for an acknowledgement (ACK) packet during the `delay` between retry
+        /// attempts (`count`).
         ///
         /// Both parameters are clamped to range [0, 15].
         /// - `delay`: How long to wait between each retry, in multiples of
-        ///   250 us. The minimum of 0 means 250 us, and the maximum of 15 means
-        ///   4000 us. The default value of 5 means 1500us (5 * 250 + 250).
+        ///   250 us (microseconds). The minimum value of 0 means 250 us, and
+        ///   the maximum valueof 15 means 4000 us.
+        ///   The default value of 5 means 1500us (`5 * 250 + 250`).
         /// - `count`: How many retries before giving up. The default/maximum is 15. Use
-        ///   0 to disable the auto-retry feature all together.
+        ///   0 to disable the auto-retry feature.
         ///
         /// Disabling the auto-retry feature on a transmitter still uses the
         /// auto-ack feature (if enabled), except it will not retry to transmit if
@@ -354,7 +363,9 @@ pub mod prelude {
         ///
         /// This only needs to called once before using the `ask_no_ack` parameter in
         /// [`EsbRadio::send()`] and [`EsbRadio::write()`]. Enabling this feature will basically
-        /// allow disabling the auto-ack feature on a per-payload basis.
+        /// allow disabling the auto-ack feature on a per-payload basis. Such behavior would be
+        /// desirable when transmitting to multiple radios that are setup to receive data from the
+        /// same address.
         fn allow_ask_no_ack(&mut self, enable: bool) -> Result<(), Self::AutoAckErrorType>;
     }
 
@@ -394,7 +405,7 @@ pub mod prelude {
         /// will wait for the specified number of microseconds. If `delay` is a [`None`]
         /// value, this function will wait for 5 milliseconds.
         ///
-        /// To perform other tasks will the radio is powering up:
+        /// To perform other tasks while the radio is powering up:
         /// ```ignore
         /// radio.power_up(Some(0)).unwrap();
         /// // ... do something else for 5 milliseconds
@@ -436,35 +447,44 @@ pub mod prelude {
     /// A trait to represent debug output
     /// for an ESB capable transceiver.
     pub trait EsbDetails {
-        type LoggingErrorType;
+        type DetailsErrorType;
 
-        /// print details about radio's current configuration.
+        /// Print details about radio's current configuration.
         ///
         /// This should only be used for debugging development.
-        /// Using in production should be limited due to increase in compile size.
-        fn print_details(&mut self) -> Result<(), Self::LoggingErrorType>;
+        /// Using this in production should be limited due to a significant increase in
+        /// compile size.
+        fn print_details(&mut self) -> Result<(), Self::DetailsErrorType>;
     }
 
     /// A trait to represent manipulation of an ESB capable transceiver.
     ///
     /// Although the name is rather generic, this trait describes the
-    /// behavior of a radio's rudimentary roles (RX and TX).
+    /// behavior of a radio's rudimentary modes (RX and TX).
     pub trait EsbRadio {
         type RadioErrorType;
 
         /// Initialize the radio's hardware
         fn init(&mut self) -> Result<(), Self::RadioErrorType>;
 
-        /// Put the radio into RX role
+        /// Put the radio into active RX mode.
+        ///
+        /// Conventionally, this should be called after setting the RX addresses via
+        /// [`EsbPipe::open_rx_pipe()`]
         fn as_rx(&mut self) -> Result<(), Self::RadioErrorType>;
 
-        /// Put the radio into TX role
+        /// Put the radio into inactive TX mode.
+        ///
+        /// This must be called at least once before calling [`EsbRadio::send()`] or
+        /// [`EsbRadio::write()`].
+        /// Conventionally, this should be called after setting the TX address via
+        /// [`EsbPipe::open_tx_pipe()`].
         fn as_tx(&mut self) -> Result<(), Self::RadioErrorType>;
 
         /// Is the radio in RX mode?
         fn is_rx(&self) -> bool;
 
-        /// Blocking write.
+        /// Blocking function to transmit a given payload.
         ///
         /// This transmits a payload (given by `buf`) and returns a bool describing if
         /// the transmission was successful or not.
@@ -473,25 +493,30 @@ pub mod prelude {
         /// detail about how the radio processes data in the TX FIFO.
         fn send(&mut self, buf: &[u8], ask_no_ack: bool) -> Result<bool, Self::RadioErrorType>;
 
-        /// Non-blocking write.
+        /// Non-blocking function to prepare radio for transmitting payload(s).
         ///
-        /// This function does not wait for the radio to complete the transmission.
-        /// Instead it simply writes the given `buf` into the radio's TX FIFO.
+        /// This is a helper function to [`EsbRadio::send()`].
+        ///
+        /// Unlike [`EsbRadio::send()`], this function does not wait for the radio to complete
+        /// the transmission. Instead it simply writes the given `buf` into the radio's TX FIFO.
         /// If the TX FIFO is already full, this function just calls
-        /// [`EsbStatus::clear_status_flags()`] and returns `false`.
+        /// [`EsbStatus::clear_status_flags()`] (only for `tx_df` and `tx_ds` flags) and returns
+        /// `false`.
         ///
         /// If `ask_no_ack` is true, then the transmitted payload will not use the auto-ack
-        /// feature. This parameter is different from auto-ack because it controls the
-        /// auto-ack feature for only this payload, whereas the auto-ack feature controls
-        /// ACK packets for all payloads. If [`EsbAutoAck::allow_ask_no_ack()`] is not called
-        /// at least once prior to asserting this parameter, then it has no effect.
+        /// feature. This parameter is different from [`EsbAutoAck::set_auto_ack()`] because it
+        /// controls the auto-ack feature for only the given payload (`buf`), whereas
+        /// [`EsbAutoAck::set_auto_ack()`] controls ACK packets for _all_ payloads.
+        /// If [`EsbAutoAck::allow_ask_no_ack()`] is not passed `true` at least once before passing
+        /// `true` to this parameter, then this parameter has no effect.
         ///
         /// This function's `start_tx` parameter determines if the radio should enter active
-        /// TX mode. This function does not deactivate TX mode.
+        /// TX mode. This function does not exit active TX mode.
         ///
-        /// If the radio's remains in TX mode after successfully transmitting a payload,
-        /// then any subsequent payloads in the TX FIFO will automatically be processed.
-        /// Set the `start_tx` parameter `false` to prevent entering TX mode.
+        /// The radio remains in active TX mode while there are payloads available in the TX FIFO.
+        /// Set the `start_tx` parameter `false` to prevent entering active TX mode. If the radio
+        /// is already in active TX mode (because it is processing payloads in the TX FIFO), then
+        /// this parameter has no effect.
         fn write(
             &mut self,
             buf: &[u8],
@@ -499,8 +524,34 @@ pub mod prelude {
             start_tx: bool,
         ) -> Result<bool, Self::RadioErrorType>;
 
+        /// Similar to [`EsbRadio::send()`] but specifically for failed transmissions.
+        ///
+        /// Remember, any failed transmission's payload will remain in the TX FIFO.
+        ///
+        /// This will reuse the payload in the top level of the radio's TX FIFO.
+        /// If successfully transmitted, this returns `true`, otherwise it returns `false`.
+        ///
+        /// Unlike [`EsbRadio::rewrite()`], this function will only make one attempt to
+        /// resend the failed payload.
         fn resend(&mut self) -> Result<bool, Self::RadioErrorType>;
 
+        /// Similar to [`EsbRadio::write()`] but specifically for failed transmissions.
+        ///
+        /// Remember, any failed transmission's payload will remain in the TX FIFO.
+        ///
+        /// This is a non-blocking helper to [`EsbRadio::resend()`].
+        /// This will put the radio in an active TX mode and reuse the payload in the top level
+        /// of the radio's TX FIFO.
+        ///
+        /// The reused payload will be continuously retransmitted until one of the following
+        /// conditions occurs:
+        ///
+        /// - The retransmission fails.
+        /// - A new payload is written to the radio's TX FIFO (via [`EsbRadio::write()`] or
+        ///   [`EsbRadio::send()`])
+        /// - The radio's TX FIFO is flushed (via [`EsbFifo::flush_tx()`]).
+        /// - The radio's CE pin is set to inactive LOW. This can be done directly on the pin or by calling
+        ///   [`EsbRadio::as_tx()`].
         fn rewrite(&mut self) -> Result<(), Self::RadioErrorType>;
 
         /// Get the Auto-Retry Count (ARC) about the previous transmission.

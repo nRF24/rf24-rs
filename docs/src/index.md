@@ -5,7 +5,7 @@
 
 ## API Docs
 
-The Rust API documentation is hosted at [docs.rs](https://docs.rs/rf24).
+The Rust API documentation is hosted at [docs.rs/rf24](https://docs.rs/rf24).
 
 Here, you will find the API for FFI (Foreign Function Interface) bindings:
 
