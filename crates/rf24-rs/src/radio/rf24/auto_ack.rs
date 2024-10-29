@@ -122,7 +122,16 @@ mod test {
                 vec![registers::DYNPD | commands::W_REGISTER, 3u8],
                 vec![0xEu8, 0u8],
             ),
-            // write_ack_payload()
+            // read FEATURE register
+            (
+                vec![registers::FEATURE, 0u8],
+                vec![0xEu8, mnemonics::EN_ACK_PAY | mnemonics::EN_DPL]
+            ),
+            (
+                vec![registers::DYNPD | commands::W_REGISTER, 0x3Fu8],
+                vec![0xEu8, 0u8],
+            ),
+            // write_ack_payload() and also marks TX FIFO as full
             (ack_buf.to_vec(), vec![0u8; 3]),
             // read dynamic payload length invalid value
             (vec![commands::R_RX_PL_WID, 0u8], vec![0xEu8, 0xFFu8]),
@@ -139,22 +148,39 @@ mod test {
             // set EN_AA register with pipe 0 disabled
             (
                 vec![registers::EN_AA | commands::W_REGISTER, 0x3Eu8],
-                vec![0xEu8, 0x3Fu8],
+                vec![0xEu8, 0u8],
+            ),
+            // read EN_AA register value
+            (vec![registers::EN_AA, 0u8], vec![0u8, 0x3Eu8]),
+            // set EN_AA register with pipe 0 disabled
+            (
+                vec![registers::EN_AA | commands::W_REGISTER, 0x3Cu8],
+                vec![0xEu8, 0u8],
             ),
         ];
         let mut spi_mock = SpiMock::new(&spi_expectations);
         let mut radio = RF24::new(pin_mock.clone(), spi_mock.clone(), delay_mock);
         radio.allow_ack_payloads(true).unwrap();
-        let buf = [0x55; 2];
-        assert!(!radio.write_ack_payload(9, &buf).unwrap());
-        assert!(radio.write_ack_payload(2, &buf).unwrap());
+        // do again for region coverage (should result in Ok non-op)
+        radio.allow_ack_payloads(true).unwrap();
+        // explicitly enable dynamic payloads (again) for region coverage
+        radio.set_dynamic_payloads(true).unwrap();
+        let buf = &ack_buf[1..3];
+        // write ACK payload to invalid pipe (results in Ok non-op)
+        assert!(!radio.write_ack_payload(9, buf).unwrap());
+        // write ACK payload to valid pipe (test will also mark TX FIFO as full)
+        assert!(radio.write_ack_payload(2, buf).unwrap());
         assert_eq!(
             radio.get_dynamic_payload_length(),
             Err(Nrf24Error::BinaryCorruption)
         );
         assert_eq!(radio.get_dynamic_payload_length().unwrap(), 32u8);
+        // disable invalid pipe number (results in Ok non-op)
         radio.set_auto_ack_pipe(false, 9).unwrap();
+        // disable auto-ack on pipe 0 (also disables allow_ack_payloads)
         radio.set_auto_ack_pipe(false, 0).unwrap();
+        // disable pipe 1 for region coverage
+        radio.set_auto_ack_pipe(false, 1).unwrap();
         spi_mock.done();
         pin_mock.done();
     }
@@ -210,6 +236,34 @@ mod test {
         spi_mock.done();
         pin_mock.done();
     }
+
+    /* #[test]
+    fn set_auto_ack_pipe() {
+        // Create pin
+        let pin_expectations = [];
+        let mut pin_mock = PinMock::new(&pin_expectations);
+
+        // create delay fn
+        let delay_mock = NoopDelay::new();
+
+        let spi_expectations = spi_test_expects![
+            // read EN_AA register value
+            (
+                vec![registers::EN_AA, 0x3Fu8],
+                vec![0xEu8, 0u8],
+            ),
+            // write EN_AA register value
+            (
+                vec![registers::EN_AA | commands::W_REGISTER, 0x3Eu8],
+                vec![0xEu8, 0u8],
+            ),
+        ];
+        let mut spi_mock = SpiMock::new(&spi_expectations);
+        let mut radio = RF24::new(pin_mock.clone(), spi_mock.clone(), delay_mock);
+        radio.set_auto_ack_pipe(false, 0).unwrap();
+        spi_mock.done();
+        pin_mock.done();
+    } */
 
     #[test]
     pub fn allow_ask_no_ack() {

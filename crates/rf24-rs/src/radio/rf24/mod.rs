@@ -157,13 +157,11 @@ where
             self.set_auto_retries(0, 0)?;
             let buf = [0xFF; 32];
 
-            // use write_register() instead of openWritingPipe() to bypass
+            // use spi_write_buf() instead of open_tx_pipe() to bypass
             // truncation of the address with the current RF24::addr_width value
             self.spi_write_buf(registers::TX_ADDR, &buf[..5])?;
             self.flush_tx()?; // so we can write to top level
 
-            // use write_register() instead of write_payload() to bypass
-            // truncation of the payload with the current RF24::payload_size value
             self.spi_write_buf(commands::W_TX_PAYLOAD, &buf)?;
 
             self.set_crc_length(CrcLength::Disabled)?;
@@ -241,15 +239,20 @@ mod test {
         pin_mock.done();
     }
 
-    #[test]
-    pub fn start_carrier_wave() {
+    pub fn start_carrier_wave_parametrized(is_plus_variant: bool) {
         // Create pin
-        let pin_expectations = [
+        let mut pin_expectations = [
             PinTransaction::set(PinState::Low),
             PinTransaction::set(PinState::High),
-            PinTransaction::set(PinState::Low),
-            PinTransaction::set(PinState::High),
-        ];
+        ]
+        .to_vec();
+        if is_plus_variant {
+            pin_expectations.extend([
+                PinTransaction::set(PinState::Low),
+                PinTransaction::set(PinState::High),
+            ]);
+        }
+
         let mut pin_mock = PinMock::new(&pin_expectations);
 
         // create delay fn
@@ -260,7 +263,7 @@ mod test {
         let mut address = [0xFFu8; 6];
         address[0] = registers::TX_ADDR | commands::W_REGISTER;
 
-        let spi_expectations = spi_test_expects![
+        let mut spi_expectations = spi_test_expects![
             // as_tx()
             // clear PRIM_RX flag
             (
@@ -279,28 +282,35 @@ mod test {
                 vec![registers::RF_SETUP | commands::W_REGISTER, 0x90u8],
                 vec![0xEu8, 0u8],
             ),
-            // disable auto-ack
-            (
-                vec![registers::EN_AA | commands::W_REGISTER, 0u8],
-                vec![0xEu8, 0u8],
-            ),
-            // disable auto-retries
-            (
-                vec![registers::SETUP_RETR | commands::W_REGISTER, 0u8],
-                vec![0xEu8, 0u8],
-            ),
-            // set TX address
-            (address.to_vec(), vec![0u8; 6]),
-            // flush_tx()
-            (vec![commands::FLUSH_TX], vec![0xEu8]),
-            // set TX payload
-            (buf.to_vec(), vec![0u8; 33]),
-            // set_crc_length(disabled)
-            (vec![registers::CONFIG, 0u8], vec![0xEu8, 0xCu8]),
-            (
-                vec![registers::CONFIG | commands::W_REGISTER, 0u8],
-                vec![0xEu8, 0u8],
-            ),
+        ]
+        .to_vec();
+        if is_plus_variant {
+            spi_expectations.extend(spi_test_expects![
+                // disable auto-ack
+                (
+                    vec![registers::EN_AA | commands::W_REGISTER, 0u8],
+                    vec![0xEu8, 0u8],
+                ),
+                // disable auto-retries
+                (
+                    vec![registers::SETUP_RETR | commands::W_REGISTER, 0u8],
+                    vec![0xEu8, 0u8],
+                ),
+                // set TX address
+                (address.to_vec(), vec![0u8; 6]),
+                // flush_tx()
+                (vec![commands::FLUSH_TX], vec![0xEu8]),
+                // set TX payload
+                (buf.to_vec(), vec![0u8; 33]),
+                // set_crc_length(disabled)
+                (vec![registers::CONFIG, 0u8], vec![0xEu8, 0xCu8]),
+                (
+                    vec![registers::CONFIG | commands::W_REGISTER, 0u8],
+                    vec![0xEu8, 0u8],
+                ),
+            ]);
+        }
+        spi_expectations.extend(spi_test_expects![
             // set_pa_level()
             // set special flags in RF_SETUP register value
             (vec![registers::RF_SETUP, 0u8], vec![0xEu8, 0x91u8]),
@@ -313,22 +323,38 @@ mod test {
                 vec![registers::RF_CH | commands::W_REGISTER, 125u8],
                 vec![0xEu8, 0u8],
             ),
-            // clear the tx_df and tx_ds events
-            (
-                vec![
-                    registers::STATUS | commands::W_REGISTER,
-                    mnemonics::MASK_MAX_RT | mnemonics::MASK_TX_DS,
-                ],
-                vec![0xEu8, 0u8],
-            ),
-            // assert the REUSE_TX_PL flag
-            (vec![commands::REUSE_TX_PL], vec![0xEu8]),
-        ];
+        ]);
+        if is_plus_variant {
+            spi_expectations.extend(spi_test_expects![
+                // clear the tx_df and tx_ds events
+                (
+                    vec![
+                        registers::STATUS | commands::W_REGISTER,
+                        mnemonics::MASK_MAX_RT | mnemonics::MASK_TX_DS,
+                    ],
+                    vec![0xEu8, 0u8],
+                ),
+                // assert the REUSE_TX_PL flag
+                (vec![commands::REUSE_TX_PL], vec![0xEu8]),
+            ]);
+        }
+
         let mut spi_mock = SpiMock::new(&spi_expectations);
         let mut radio = RF24::new(pin_mock.clone(), spi_mock.clone(), delay_mock);
+        radio._is_plus_variant = is_plus_variant;
         radio.start_carrier_wave(crate::PaLevel::Max, 0xFF).unwrap();
         spi_mock.done();
         pin_mock.done();
+    }
+
+    #[test]
+    fn start_carrier_wave_plus_variant() {
+        start_carrier_wave_parametrized(true);
+    }
+
+    #[test]
+    fn start_carrier_wave_non_plus_variant() {
+        start_carrier_wave_parametrized(false);
     }
 
     #[test]

@@ -171,28 +171,32 @@ where
             // check if in RX mode to prevent improper radio usage
             return Err(Self::RadioErrorType::NotAsTxError);
         }
-        self.clear_status_flags(None)?;
+        self.clear_status_flags(Some(StatusFlags {
+            rx_dr: false,
+            tx_ds: true,
+            tx_df: true,
+        }))?;
         if self._status & 1 == 1 {
             // TX FIFO is full already
             return Ok(false);
         }
-        let mut buf_len = buf.len().min(32);
+        let mut buf_len = buf.len().min(32) as u8;
         // to avoid resizing the given buf, we'll have to use self._buf directly
         self._buf[0] = if !ask_no_ack {
             commands::W_TX_PAYLOAD
         } else {
             commands::W_TX_PAYLOAD_NO_ACK
         };
-        self._buf[1..(buf_len + 1)].copy_from_slice(&buf[..buf_len]);
+        self._buf[1..(buf_len + 1) as usize].copy_from_slice(&buf[..buf_len as usize]);
         // ensure payload_length setting is respected
-        if !self._dynamic_payloads_enabled && buf_len < self._payload_length as usize {
+        if !self._dynamic_payloads_enabled && buf_len < self._payload_length {
             // pad buf with zeros
-            for i in buf_len..self._payload_length as usize {
-                self._buf[i + 1] = 0;
+            for i in (buf_len + 1)..(self._payload_length + 1) {
+                self._buf[i as usize] = 0;
             }
-            buf_len = self._payload_length as usize;
+            buf_len = self._payload_length;
         }
-        self.spi_transfer(buf_len as u8 + 1)?;
+        self.spi_transfer(buf_len + 1)?;
         if start_tx {
             self._ce_pin.set_high().map_err(Nrf24Error::Gpo)?;
         }
@@ -218,13 +222,12 @@ where
     ///   The nRF24L01 will repeatedly use the last byte from the last
     ///   payload even when [`RF24::read()`] is called with an empty RX FIFO.
     fn read(&mut self, buf: &mut [u8], len: Option<u8>) -> Result<u8, Self::RadioErrorType> {
-        let buf_len = (buf.len() as u8)
-            .min(len.unwrap_or(if self._dynamic_payloads_enabled {
+        let buf_len =
+            (buf.len().min(32) as u8).min(len.unwrap_or(if self._dynamic_payloads_enabled {
                 self.get_dynamic_payload_length()?
             } else {
                 self._payload_length
-            }))
-            .min(32);
+            }));
         if buf_len == 0 {
             return Ok(0);
         }
@@ -287,8 +290,7 @@ mod test {
     use embedded_hal_mock::eh1::spi::{Mock as SpiMock, Transaction as SpiTransaction};
     use std::vec;
 
-    #[test]
-    pub fn init() {
+    pub fn init_parametrized(corrupted_binary: bool, is_plus_variant: bool, no_por: bool) {
         // Create pin
         let pin_expectations = [PinTransaction::set(PinState::Low)];
         let mut pin_mock = PinMock::new(&pin_expectations);
@@ -296,7 +298,7 @@ mod test {
         // create delay fn
         let delay_mock = NoopDelay::new();
 
-        let spi_expectations = spi_test_expects![
+        let mut spi_expectations = spi_test_expects![
             // set_auto_retries()
             (
                 vec![registers::SETUP_RETR | commands::W_REGISTER, 0x5Fu8],
@@ -309,20 +311,51 @@ mod test {
             ),
             // we're mocking a non-plus variant here for added coverage
             // read FEATURE register
-            (vec![registers::FEATURE, 0u8], vec![0xEu8, 0u8]),
-            // toggle_features()
-            (vec![commands::ACTIVATE, 0x73u8], vec![0xEu8, 0u8]),
-            // read FEATURE register
-            (vec![registers::FEATURE, 0u8], vec![0xEu8, 7u8]),
-            // toggle_features()
-            (vec![commands::ACTIVATE, 0x73u8], vec![0xEu8, 0u8]),
-            // we're also mocking a non-plus radio that didn't reset on boot,
-            // so lib wil clear the FEATURE register
-            // write FEATURE register
             (
-                vec![registers::FEATURE | commands::W_REGISTER, 0u8],
-                vec![0xEu8, 0u8],
+                vec![registers::FEATURE, 0u8],
+                vec![0xEu8, if no_por { 0x7u8 } else { 0u8 }]
             ),
+            // toggle_features()
+            (vec![commands::ACTIVATE, 0x73u8], vec![0xEu8, 0u8]),
+        ]
+        .to_vec();
+        if is_plus_variant {
+            // mocking a plus variant
+            spi_expectations.extend(spi_test_expects![
+                // read FEATURE register
+                (
+                    vec![registers::FEATURE, 0u8],
+                    vec![0xEu8, if no_por { 0x7u8 } else { 0u8 }]
+                ),
+            ]);
+            if no_por {
+                spi_expectations.extend(spi_test_expects![
+                    // write FEATURE register
+                    (
+                        vec![registers::FEATURE | commands::W_REGISTER, 0u8],
+                        vec![0xEu8, 0u8],
+                    ),
+                ]);
+            }
+        } else {
+            // mocking a non-plus variant
+            spi_expectations.extend(spi_test_expects![
+                // read FEATURE register
+                (vec![registers::FEATURE, 0u8], vec![0xEu8, 7u8]),
+                // toggle_features()
+                (vec![commands::ACTIVATE, 0x73u8], vec![0xEu8, 0u8]),
+                // we're also mocking a non-plus radio that didn't reset on boot,
+                // so lib wil clear the FEATURE register
+                // write FEATURE register
+                (
+                    vec![registers::FEATURE | commands::W_REGISTER, 0u8],
+                    vec![0xEu8, 0u8],
+                ),
+            ]);
+        }
+
+        let config_result = if corrupted_binary { 0xFFu8 } else { 14u8 };
+        spi_expectations.extend(spi_test_expects![
             // disable dynamic payloads
             (
                 vec![registers::DYNPD | commands::W_REGISTER, 0u8],
@@ -393,14 +426,34 @@ mod test {
                 vec![0xEu8, 0u8],
             ),
             // read CONFIG to test for binary corruption on SPI lines
-            (vec![registers::CONFIG, 0u8], vec![0xEu8, 14u8]),
-        ];
+            (vec![registers::CONFIG, 0u8], vec![0xEu8, config_result]),
+        ]);
         let mut spi_mock = SpiMock::new(&spi_expectations);
         let mut radio = RF24::new(pin_mock.clone(), spi_mock.clone(), delay_mock);
-        radio.init().unwrap();
-        assert!(!radio.is_plus_variant());
+        let result = radio.init();
+        if corrupted_binary {
+            assert!(result.is_err());
+        } else {
+            assert!(result.is_ok());
+        }
+        assert_eq!(radio.is_plus_variant(), is_plus_variant);
         spi_mock.done();
         pin_mock.done();
+    }
+
+    #[test]
+    fn init_bin_corrupt_plus_variant() {
+        init_parametrized(true, true, false);
+    }
+
+    #[test]
+    fn init_bin_correct_non_plus_variant() {
+        init_parametrized(false, false, false);
+    }
+
+    #[test]
+    fn init_no_power_on_reset() {
+        init_parametrized(false, true, true);
     }
 
     #[test]
@@ -538,6 +591,7 @@ mod test {
             PinTransaction::set(PinState::Low),
             PinTransaction::set(PinState::High),
             PinTransaction::set(PinState::Low),
+            PinTransaction::set(PinState::Low),
         ];
         let mut pin_mock = PinMock::new(&pin_expectations);
 
@@ -557,7 +611,7 @@ mod test {
             (
                 vec![
                     registers::STATUS | commands::W_REGISTER,
-                    mnemonics::MASK_MAX_RT | mnemonics::MASK_RX_DR | mnemonics::MASK_TX_DS,
+                    mnemonics::MASK_MAX_RT | mnemonics::MASK_TX_DS,
                 ],
                 vec![0xEu8, 0u8],
             ),
@@ -571,10 +625,12 @@ mod test {
             (
                 vec![
                     registers::STATUS | commands::W_REGISTER,
-                    mnemonics::MASK_MAX_RT | mnemonics::MASK_RX_DR | mnemonics::MASK_TX_DS,
+                    mnemonics::MASK_MAX_RT | mnemonics::MASK_TX_DS,
                 ],
                 vec![0xFu8, 0u8],
             ),
+            // flush_tx()
+            (vec![commands::FLUSH_TX], vec![0xEu8]),
         ];
         let mut spi_mock = SpiMock::new(&spi_expectations);
         let mut radio = RF24::new(pin_mock.clone(), spi_mock.clone(), delay_mock);
@@ -583,7 +639,55 @@ mod test {
         // again using simulated full TX FIFO
         assert!(!radio.send(&payload, false).unwrap());
         radio._config_reg |= 1; // simulate RX mode
-        assert!(!radio.send(&payload, false).unwrap());
+        assert!(radio.send(&payload, false).is_err());
+        spi_mock.done();
+        pin_mock.done();
+    }
+
+    #[test]
+    fn ask_no_ack() {
+        // Create pin
+        let pin_expectations = [];
+        let mut pin_mock = PinMock::new(&pin_expectations);
+
+        // create delay fn
+        let delay_mock = NoopDelay::new();
+
+        let mut buf = [0u8; 33];
+        buf[0] = commands::W_TX_PAYLOAD_NO_ACK;
+        let payload = [0x55; 8];
+        buf[1..9].copy_from_slice(&payload);
+        let mut dyn_buf = [0x55; 9];
+        dyn_buf[0] = commands::W_TX_PAYLOAD_NO_ACK;
+
+        let spi_expectations = spi_test_expects![
+            // clear_status_flags()
+            (
+                vec![
+                    registers::STATUS | commands::W_REGISTER,
+                    mnemonics::MASK_MAX_RT | mnemonics::MASK_TX_DS,
+                ],
+                vec![0xEu8, 0u8],
+            ),
+            // write payload
+            (buf.to_vec(), vec![0u8; 33]),
+            // clear_status_flags()
+            (
+                vec![
+                    registers::STATUS | commands::W_REGISTER,
+                    mnemonics::MASK_MAX_RT | mnemonics::MASK_TX_DS,
+                ],
+                vec![0xEu8, 0u8],
+            ),
+            // write dynamically sized payload
+            (dyn_buf.to_vec(), vec![0u8; 9]),
+        ];
+        let mut spi_mock = SpiMock::new(&spi_expectations);
+        let mut radio = RF24::new(pin_mock.clone(), spi_mock.clone(), delay_mock);
+        assert!(radio.write(&payload, true, false).unwrap());
+        // upload a dynamically sized payload
+        radio._dynamic_payloads_enabled = true;
+        assert!(radio.write(&payload, true, false).unwrap());
         spi_mock.done();
         pin_mock.done();
     }
@@ -631,6 +735,7 @@ mod test {
         let mut payload = [0u8; 32];
         assert_eq!(32u8, radio.read(&mut payload, None).unwrap());
         assert_eq!(payload, [0x55u8; 32]);
+        assert_eq!(0u8, radio.read(&mut payload, Some(0)).unwrap());
         radio._dynamic_payloads_enabled = true;
         assert_eq!(32u8, radio.read(&mut payload, None).unwrap());
         assert_eq!(payload, [0xAA; 32]);

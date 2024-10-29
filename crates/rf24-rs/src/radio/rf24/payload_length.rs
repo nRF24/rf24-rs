@@ -72,7 +72,7 @@ mod test {
     use embedded_hal_mock::eh1::spi::{Mock as SpiMock, Transaction as SpiTransaction};
     use std::vec;
 
-    // dynamic payloads are already tested in EsbAutoAck trait as
+    // NOTE: dynamic payloads are already tested in EsbAutoAck trait as
     // these features' behaviors are interdependent.
 
     #[test]

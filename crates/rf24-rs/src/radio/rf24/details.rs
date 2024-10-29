@@ -292,3 +292,30 @@ where
         Ok(())
     }
 }
+
+#[cfg(test)]
+mod test {
+    use crate::radio::prelude::EsbDetails;
+    use crate::radio::RF24;
+    use embedded_hal_mock::eh1::delay::NoopDelay;
+    use embedded_hal_mock::eh1::digital::Mock as PinMock;
+    use embedded_hal_mock::eh1::spi::Mock as SpiMock;
+
+    #[test]
+    fn print_nothing() {
+        // Create pin
+        let pin_expectations = [];
+        let mut pin_mock = PinMock::new(&pin_expectations);
+
+        // create delay fn
+        let delay_mock = NoopDelay::new();
+
+        // create spi device
+        let spi_expectations = [];
+        let mut spi_mock = SpiMock::new(&spi_expectations);
+        let mut radio = RF24::new(pin_mock.clone(), spi_mock.clone(), delay_mock);
+        assert!(radio.print_details().is_ok());
+        pin_mock.done();
+        spi_mock.done();
+    }
+}
