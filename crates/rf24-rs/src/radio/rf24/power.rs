@@ -37,8 +37,8 @@ where
         self.spi_write_byte(registers::CONFIG, self._config_reg)?;
 
         // For nRF24L01+ to go from power down mode to TX or RX mode it must first pass through stand-by mode.
-        // There must be a delay of Tpd2stby (see Table 16.) after the nRF24L01+ leaves power down mode before
-        // the CEis set high. - Tpd2stby can be up to 5ms per the 1.0 datasheet
+        // There must be a delay of Tpd2standby (see Table 16.) after the nRF24L01+ leaves power down mode before
+        // the CE is set high. Tpd2standby can be up to 5ms per the 1.0 datasheet
         if delay.is_some_and(|val| val > 0) || delay.is_none() {
             self._delay_impl.delay_ns(delay.unwrap_or(5000000));
         }
@@ -47,7 +47,7 @@ where
 
     /// Is the radio powered up?
     fn is_powered(&self) -> bool {
-        (self._config_reg & 2) != 2
+        (self._config_reg & 2) > 0
     }
 }
 
@@ -110,6 +110,7 @@ mod test {
         let mut spi_mock = SpiMock::new(&spi_expectations);
         let mut radio = RF24::new(pin_mock.clone(), spi_mock.clone(), delay_mock);
         radio.power_up(Some(0)).unwrap();
+        assert!(radio.is_powered());
         spi_mock.done();
         pin_mock.done();
     }
@@ -126,7 +127,8 @@ mod test {
         let spi_expectations = vec![];
         let mut spi_mock = SpiMock::new(&spi_expectations);
         let radio = RF24::new(pin_mock.clone(), spi_mock.clone(), delay_mock);
-        assert!(radio.is_powered());
+        // without calling `RF24::init()`, the lib _assumes_ the radio is powered down.
+        assert!(!radio.is_powered());
         spi_mock.done();
         pin_mock.done();
     }

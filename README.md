@@ -22,12 +22,13 @@ This includes but is not limited to Linux on RPi. Other points of interest:
 
 Here is the intended roadmap:
 
-- [x] implement driver for the nRF24L01 (OTA compatible with other RF24 library)
+- [x] implement driver for the nRF24L01 (OTA compatible with RF24 library)
 
     This should be HAL-agnostic in terms of MCU. It would also be nice to
     reimplement the same API (using [rust's `trait` feature][rust-traits])
     for use on nRF5x radios.
 
+- [ ] implement a fake BLE API for the nRF24L01 (see [#4](https://github.com/nRF24/rf24-rs/issues/4))
 - [ ] implement network layers (OTA compatible with RF24Network and RF24Mesh libraries)
 - [ ] implement ESB support for nRF5x MCUs. This might be guarded under [cargo features][cargo-feat].
 

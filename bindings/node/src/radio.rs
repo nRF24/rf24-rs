@@ -1,15 +1,15 @@
 #![cfg(target_os = "linux")]
 
 use crate::types::{
-    AvailablePipe, CrcLength, DataRate, FifoState, HardwareConfig, PaLevel, StatusFlags,
-    WriteConfig,
+    coerce_to_bool, AvailablePipe, CrcLength, DataRate, FifoState, HardwareConfig, PaLevel,
+    StatusFlags, WriteConfig,
 };
 use linux_embedded_hal::{
     gpio_cdev::{chips, LineRequestFlags},
     spidev::{SpiModeFlags, SpidevOptions},
     CdevPin, Delay, SpidevDevice,
 };
-use napi::{bindgen_prelude::Buffer, Error, Result, Status};
+use napi::{bindgen_prelude::Buffer, Error, JsNumber, Result, Status};
 
 use rf24::radio::prelude::*;
 
@@ -168,10 +168,15 @@ impl RF24 {
     ///
     /// @group Basic
     #[napi]
-    pub fn send(&mut self, buf: Buffer, ask_no_ack: Option<bool>) -> Result<bool> {
+    pub fn send(
+        &mut self,
+        buf: Buffer,
+        #[napi(ts_arg_type = "boolean | number")] ask_no_ack: Option<JsNumber>,
+    ) -> Result<bool> {
         let buf = buf.to_vec();
+        let ask_no_ack = coerce_to_bool(ask_no_ack, false)?;
         self.inner
-            .send(&buf, ask_no_ack.unwrap_or_default())
+            .send(&buf, ask_no_ack)
             .map_err(|e| Error::new(Status::GenericFailure, format!("{e:?}")))
     }
 
@@ -330,9 +335,12 @@ impl RF24 {
     ///
     /// @group Configuration
     #[napi]
-    pub fn set_lna(&mut self, enable: bool) -> Result<()> {
+    pub fn set_lna(
+        &mut self,
+        #[napi(ts_arg_type = "boolean | number")] enable: JsNumber,
+    ) -> Result<()> {
         self.inner
-            .set_lna(enable)
+            .set_lna(coerce_to_bool(Some(enable), true)?)
             .map_err(|e| Error::new(Status::GenericFailure, format!("{e:?}")))
     }
 
@@ -345,9 +353,12 @@ impl RF24 {
     ///
     /// @group Configuration
     #[napi]
-    pub fn allow_ack_payloads(&mut self, enable: bool) -> Result<()> {
+    pub fn allow_ack_payloads(
+        &mut self,
+        #[napi(ts_arg_type = "boolean | number")] enable: JsNumber,
+    ) -> Result<()> {
         self.inner
-            .allow_ack_payloads(enable)
+            .allow_ack_payloads(coerce_to_bool(Some(enable), false)?)
             .map_err(|e| Error::new(Status::GenericFailure, format!("{e:?}")))
     }
 
@@ -359,9 +370,12 @@ impl RF24 {
     ///
     /// @group Configuration
     #[napi]
-    pub fn set_auto_ack(&mut self, enable: bool) -> Result<()> {
+    pub fn set_auto_ack(
+        &mut self,
+        #[napi(ts_arg_type = "boolean | number")] enable: JsNumber,
+    ) -> Result<()> {
         self.inner
-            .set_auto_ack(enable)
+            .set_auto_ack(coerce_to_bool(Some(enable), false)?)
             .map_err(|e| Error::new(Status::GenericFailure, format!("{e:?}")))
     }
 
@@ -369,9 +383,9 @@ impl RF24 {
     ///
     /// @group Configuration
     #[napi]
-    pub fn set_auto_ack_pipe(&mut self, enable: bool, pipe: u8) -> Result<()> {
+    pub fn set_auto_ack_pipe(&mut self, enable: JsNumber, pipe: u8) -> Result<()> {
         self.inner
-            .set_auto_ack_pipe(enable, pipe)
+            .set_auto_ack_pipe(coerce_to_bool(Some(enable), false)?, pipe)
             .map_err(|e| Error::new(Status::GenericFailure, format!("{e:?}")))
     }
 
@@ -383,9 +397,12 @@ impl RF24 {
     ///
     /// @group Configuration
     #[napi]
-    pub fn allow_ask_no_ack(&mut self, enable: bool) -> Result<()> {
+    pub fn allow_ask_no_ack(
+        &mut self,
+        #[napi(ts_arg_type = "boolean | number")] enable: JsNumber,
+    ) -> Result<()> {
         self.inner
-            .allow_ask_no_ack(enable)
+            .allow_ask_no_ack(coerce_to_bool(Some(enable), false)?)
             .map_err(|e| Error::new(Status::GenericFailure, format!("{e:?}")))
     }
 
@@ -567,9 +584,12 @@ impl RF24 {
     ///
     /// @group Advanced
     #[napi]
-    pub fn get_fifo_state(&mut self, about_tx: bool) -> Result<FifoState> {
+    pub fn get_fifo_state(
+        &mut self,
+        #[napi(ts_arg_type = "boolean | number")] about_tx: JsNumber,
+    ) -> Result<FifoState> {
         self.inner
-            .get_fifo_state(about_tx)
+            .get_fifo_state(coerce_to_bool(Some(about_tx), false)?)
             .map_err(|e| Error::new(Status::GenericFailure, format!("{e:?}")))
             .map(|e| FifoState::from_inner(e))
     }
@@ -631,9 +651,12 @@ impl RF24 {
     ///
     /// @group Configuration
     #[napi]
-    pub fn set_dynamic_payloads(&mut self, enable: bool) -> Result<()> {
+    pub fn set_dynamic_payloads(
+        &mut self,
+        #[napi(ts_arg_type = "boolean | number")] enable: JsNumber,
+    ) -> Result<()> {
         self.inner
-            .set_dynamic_payloads(enable)
+            .set_dynamic_payloads(coerce_to_bool(Some(enable), false)?)
             .map_err(|e| Error::new(Status::GenericFailure, format!("{e:?}")))
     }
 

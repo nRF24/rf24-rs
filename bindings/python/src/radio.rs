@@ -150,12 +150,12 @@ impl RF24 {
     ///         This has no effect if auto-ack is disabled or
     ///         [RF24.allow_ask_no_ack] is not enabled.
     #[pyo3(
-        signature = (buf, ask_no_ack = false),
-        text_signature = "(buf: bytes | bytearray, ask_no_ack = False) -> bool",
+        signature = (buf, ask_no_ack = 0i32),
+        text_signature = "(buf: bytes | bytearray, ask_no_ack: bool | int = False) -> bool",
     )]
-    pub fn send(&mut self, buf: &[u8], ask_no_ack: bool) -> PyResult<bool> {
+    pub fn send(&mut self, buf: &[u8], ask_no_ack: i32) -> PyResult<bool> {
         self.inner
-            .send(buf, ask_no_ack)
+            .send(buf, ask_no_ack != 0)
             .map_err(|e| PyRuntimeError::new_err(format!("{e:?}")))
     }
 
@@ -180,12 +180,12 @@ impl RF24 {
     /// Returns:
     ///     A Boolean that describes if the given `buf` was successfully loaded into the TX FIFO.
     #[pyo3(
-        signature = (buf, ask_no_ack = false, start_tx = true),
-        text_signature = "(buf: bytes | bytearray, ask_no_ack = False, start_tx = True) -> bool",
+        signature = (buf, ask_no_ack = 0i32, start_tx = 1i32),
+        text_signature = "(buf: bytes | bytearray, ask_no_ack: bool | int = False, start_tx: bool | int = True) -> bool",
     )]
-    pub fn write(&mut self, buf: &[u8], ask_no_ack: bool, start_tx: bool) -> PyResult<bool> {
+    pub fn write(&mut self, buf: &[u8], ask_no_ack: i32, start_tx: i32) -> PyResult<bool> {
         self.inner
-            .write(buf, ask_no_ack, start_tx)
+            .write(buf, ask_no_ack != 0, start_tx != 0)
             .map_err(|e| PyRuntimeError::new_err(format!("{e:?}")))
     }
 
@@ -299,9 +299,9 @@ impl RF24 {
     /// For clone's and module's with a separate PA/LNA circuit (external antenna),
     /// this function may not behave exactly as expected. Consult the radio module's
     /// manufacturer.
-    pub fn set_lna(&mut self, enable: bool) -> PyResult<()> {
+    pub fn set_lna(&mut self, enable: i32) -> PyResult<()> {
         self.inner
-            .set_lna(enable)
+            .set_lna(enable != 0)
             .map_err(|e| PyRuntimeError::new_err(format!("{e:?}")))
     }
 
@@ -311,9 +311,9 @@ impl RF24 {
     /// > This feature requires dynamically sized payloads.
     /// > Use [`RF24.set_dynamic_payloads(True)`][rf24_py.RF24.set_dynamic_payloads]
     /// > to enable dynamically sized payloads.
-    pub fn allow_ack_payloads(&mut self, enable: bool) -> PyResult<()> {
+    pub fn allow_ack_payloads(&mut self, enable: i32) -> PyResult<()> {
         self.inner
-            .allow_ack_payloads(enable)
+            .allow_ack_payloads(enable != 0)
             .map_err(|e| PyRuntimeError::new_err(format!("{e:?}")))
     }
 
@@ -325,9 +325,9 @@ impl RF24 {
     ///
     /// Parameters:
     ///     enable: Pass true to enable the auto-ack feature for all pipes.
-    pub fn set_auto_ack(&mut self, enable: bool) -> PyResult<()> {
+    pub fn set_auto_ack(&mut self, enable: i32) -> PyResult<()> {
         self.inner
-            .set_auto_ack(enable)
+            .set_auto_ack(enable != 0)
             .map_err(|e| PyRuntimeError::new_err(format!("{e:?}")))
     }
 
@@ -340,9 +340,9 @@ impl RF24 {
     /// Parameters:
     ///     enable: Pass true to enable the auto-ack feature for the specified `pipe`.
     ///     pipe: The pipe about which to control the auto-ack feature.
-    pub fn set_auto_ack_pipe(&mut self, enable: bool, pipe: u8) -> PyResult<()> {
+    pub fn set_auto_ack_pipe(&mut self, enable: i32, pipe: u8) -> PyResult<()> {
         self.inner
-            .set_auto_ack_pipe(enable, pipe)
+            .set_auto_ack_pipe(enable != 0, pipe)
             .map_err(|e| PyRuntimeError::new_err(format!("{e:?}")))
     }
 
@@ -352,9 +352,9 @@ impl RF24 {
     ///     enable: Setting this to `true` will allow the `ask_no_ack` parameter to
     ///         take effect. See [`RF24.send()`][rf24_py.RF24.send] and
     ///         [`RF24.write()`][rf24_py.RF24.write] for more detail.
-    pub fn allow_ask_no_ack(&mut self, enable: bool) -> PyResult<()> {
+    pub fn allow_ask_no_ack(&mut self, enable: i32) -> PyResult<()> {
         self.inner
-            .allow_ask_no_ack(enable)
+            .allow_ask_no_ack(enable != 0)
             .map_err(|e| PyRuntimeError::new_err(format!("{e:?}")))
     }
 
@@ -494,9 +494,9 @@ impl RF24 {
     /// Parameters:
     ///     about_tx: True returns data about the TX FIFO.
     ///         False returns data about the RX FIFO.
-    pub fn get_fifo_state(&mut self, about_tx: bool) -> PyResult<FifoState> {
+    pub fn get_fifo_state(&mut self, about_tx: i32) -> PyResult<FifoState> {
         self.inner
-            .get_fifo_state(about_tx)
+            .get_fifo_state(about_tx != 0)
             .map_err(|e| PyRuntimeError::new_err(format!("{e:?}")))
             .map(|e| FifoState::from_inner(e))
     }
@@ -544,9 +544,9 @@ impl RF24 {
     ///     enable: If set to `true`, the statically sized payload length (set via
     ///         [`RF24.payload_length`][rf24_py.RF24.payload_length]) are not
     ///         used.
-    pub fn set_dynamic_payloads(&mut self, enable: bool) -> PyResult<()> {
+    pub fn set_dynamic_payloads(&mut self, enable: i32) -> PyResult<()> {
         self.inner
-            .set_dynamic_payloads(enable)
+            .set_dynamic_payloads(enable != 0)
             .map_err(|e| PyRuntimeError::new_err(format!("{e:?}")))
     }
 
@@ -633,8 +633,8 @@ impl RF24 {
     ///     Setting this attribute to `True` is equivalent to calling
     ///     [`power_up()`][rf24_py.RF24.power_up] (using default delay).
     #[setter]
-    pub fn set_power(&mut self, enable: bool) -> PyResult<()> {
-        if enable {
+    pub fn set_power(&mut self, enable: i32) -> PyResult<()> {
+        if enable != 0 {
             self.power_up(None)
         } else {
             self.power_down()

@@ -8,7 +8,7 @@ use super::{mnemonics, registers};
 use crate::{
     radio::prelude::{
         EsbChannel, EsbCrcLength, EsbDataRate, EsbFifo, EsbPaLevel, EsbPayloadLength, EsbPipe,
-        EsbStatus,
+        EsbPower, EsbStatus,
     },
     StatusFlags,
 };
@@ -124,10 +124,7 @@ where
             "Primary Mode______________{=istr}X",
             if self._config_reg & 1 > 0 { rx } else { tx }
         );
-        defmt::println!(
-            "Powered Up________________{=bool}",
-            self._config_reg & 2 > 0
-        );
+        defmt::println!("Powered Up________________{=bool}", self.is_powered());
 
         // print pipe addresses
         self.spi_read(5, registers::TX_ADDR)?;
@@ -259,7 +256,7 @@ where
             "Primary Mode______________{}X",
             if self._config_reg & 1 > 0 { "R" } else { "T" }
         );
-        std::println!("Powered Up________________{}", self._config_reg & 2 > 0);
+        std::println!("Powered Up________________{}", self.is_powered());
 
         // print pipe addresses
         self.spi_read(5, registers::TX_ADDR)?;

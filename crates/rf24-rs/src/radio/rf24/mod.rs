@@ -65,8 +65,8 @@ where
     /// `spi` bus with the given `ce_pin`.
     ///
     /// The radio's CSN pin (aka Chip Select pin) shall be defined
-    /// when instantiating the [`SpiDevice`] object (passed to the
-    /// `spi` parameter).
+    /// when instantiating the [`SpiDevice`](trait@embedded-hal::spi::SpiDevice)
+    /// object (passed to the `spi` parameter).
     pub fn new(ce_pin: DO, spi: SPI, delay_impl: DELAY) -> RF24<SPI, DO, DELAY> {
         RF24 {
             _status: 0,

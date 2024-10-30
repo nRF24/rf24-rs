@@ -21,12 +21,15 @@ pub struct StatusFlags {
 #[pymethods]
 impl StatusFlags {
     #[new]
-    #[pyo3(signature = (rx_dr = false, tx_ds = false, tx_df = false))]
-    fn new(rx_dr: bool, tx_ds: bool, tx_df: bool) -> Self {
+    #[pyo3(
+        signature = (rx_dr = 0i32, tx_ds = 0i32, tx_df = 0i32),
+        text_signature = "(rx_dr: bool = False, tx_ds: bool = False, tx_df: bool = False) -> StatusFlags",
+    )]
+    fn new(rx_dr: i32, tx_ds: i32, tx_df: i32) -> Self {
         Self {
-            rx_dr,
-            tx_ds,
-            tx_df,
+            rx_dr: rx_dr != 0,
+            tx_ds: tx_ds != 0,
+            tx_df: tx_df != 0,
         }
     }
 

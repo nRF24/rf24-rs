@@ -1,6 +1,6 @@
 # rf24-rs
 
-This is a rust driver library for the nRF24L01 wireless transceivers.
+This crate is a rust driver library for the nRF24L01 wireless transceivers.
 
 See the examples in the repository's [examples/rust](https://github.com/nRF24/rf24-rs/blob/main/examples/rust) folder.
 
