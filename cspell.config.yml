@@ -9,6 +9,7 @@ words:
   - attron
   - autorefs
   - bindgen
+  - bitfield
   - bytearray
   - calcsize
   - cbreak
@@ -54,6 +55,7 @@ words:
   - riscv
   - rustc
   - RXADDR
+  - SCLK
   - Spidev
   - struct
   - superfences

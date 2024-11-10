@@ -1,12 +1,15 @@
 #![cfg(target_os = "linux")]
 use std::borrow::Cow;
 
+use crate::config::RadioConfig;
 use crate::types::{CrcLength, DataRate, FifoState, PaLevel, StatusFlags};
+use embedded_hal::digital::OutputPin;
 use linux_embedded_hal::{
     gpio_cdev::{chips, LineRequestFlags},
     spidev::{SpiModeFlags, SpidevOptions},
     CdevPin, Delay, SpidevDevice,
 };
+
 use pyo3::{
     exceptions::{PyOSError, PyRuntimeError, PyValueError},
     prelude::*,
@@ -105,6 +108,11 @@ impl RF24 {
     /// Initialize the radio on the configured hardware (as specified to
     /// [`RF24`][rf24_py.RF24] constructor).
     ///
+    /// This is the same as [`with_config(RadioConfig())`][rf24_py.RF24.with_config],
+    /// but this function also
+    /// - detects if the radio is a plus variant ([`is_plus_variant`][rf24_py.RF24.is_plus_variant])
+    /// - checks for data corruption across the SPI lines (MOSI, MISO, SCLK)
+    ///
     /// Raises:
     ///     RuntimeError: If a hardware failure caused problems (includes a
     ///         message to describe what problem was detected).
@@ -112,6 +120,35 @@ impl RF24 {
         self.inner
             .init()
             .map_err(|e| PyRuntimeError::new_err(format!("{e:?}")))
+    }
+
+    /// Reconfigure the radio with a specified [`RadioConfig`][rf24_py.RadioConfig].
+    ///
+    /// Warning:
+    ///     It is strongly encouraged to call [`RF24.begin()`][rf24_py.RF24.begin]
+    ///     after constructing the RF24 object.
+    ///
+    ///     Only use this function subsequently to quickly switch between different
+    ///     network settings.
+    pub fn with_config(&mut self, config: &RadioConfig) -> PyResult<()> {
+        self.inner
+            .with_config(&config.into_inner())
+            .map_err(|e| PyRuntimeError::new_err(format!("{e:?}")))
+    }
+
+    /// Set the radio's CE pin HIGH (`True`) or LOW (`False`).
+    ///
+    /// This is only exposed for advanced use of TX FIFO during
+    /// asynchronous TX operations. It is highly encouraged to use
+    /// [`as_rx()`][rf24_py.RF24.as_rx] or [`as_tx()`][rf24_py.RF24.as_tx]
+    /// to ensure proper radio behavior when entering RX or TX mode.
+    pub fn ce_pin(&mut self, value: i32) -> PyResult<()> {
+        if value != 0 {
+            self.inner.ce_pin.set_high()
+        } else {
+            self.inner.ce_pin.set_low()
+        }
+        .map_err(|e| PyRuntimeError::new_err(format!("{e:?}")))
     }
 
     #[getter]
@@ -200,7 +237,7 @@ impl RF24 {
     ///         automatically respects if dynamic payloads are enabled).
     ///
     /// See also:
-    ///     [`RF24.set_dynamic_payloads()`][rf24_py.RF24.set_dynamic_payloads] for dynamically
+    ///     [`RF24.dynamic_payloads`][rf24_py.RF24.dynamic_payloads] for dynamically
     ///     sized payload or [`RF24.payload_length`][rf24_py.RF24.payload_length] for
     ///     statically sized payloads.
     #[pyo3(signature = (len = None))]
@@ -309,12 +346,19 @@ impl RF24 {
     ///
     /// > [!IMPORTANT]
     /// > This feature requires dynamically sized payloads.
-    /// > Use [`RF24.set_dynamic_payloads(True)`][rf24_py.RF24.set_dynamic_payloads]
-    /// > to enable dynamically sized payloads.
-    pub fn allow_ack_payloads(&mut self, enable: i32) -> PyResult<()> {
+    /// > This attribute will enable [`dynamic_payloads`][rf24_py.RF24.dynamic_payloads]
+    /// > automatically when needed. This attribute will not disable
+    /// > [`dynamic_payloads`][rf24_py.RF24.dynamic_payloads].
+    #[setter]
+    pub fn set_ack_payloads(&mut self, enable: i32) -> PyResult<()> {
         self.inner
-            .allow_ack_payloads(enable != 0)
+            .set_ack_payloads(enable != 0)
             .map_err(|e| PyRuntimeError::new_err(format!("{e:?}")))
+    }
+
+    #[getter]
+    pub fn get_ack_payloads(&self) -> bool {
+        self.inner.get_ack_payloads()
     }
 
     /// Enable or disable the auto-ack feature for all pipes.
@@ -400,9 +444,12 @@ impl RF24 {
 
     /// Set/get the channel (frequency) that the radio uses to transmit and receive.
     ///
-    /// The channel must be in range [0, 125], otherwise this
-    /// function does nothing. This value can be roughly translated into frequency
-    /// by adding its value to 2400 (`channel + 2400 = frequency in Hz`).
+    /// This value is clamped to the range [0, 125].
+    ///
+    /// The channel can be roughly translated into a frequency with the formula:
+    /// ```text
+    /// frequency (in Hz) = channel + 2400
+    /// ```
     #[setter]
     pub fn set_channel(&mut self, channel: u8) -> PyResult<()> {
         self.inner
@@ -523,7 +570,7 @@ impl RF24 {
     /// This configuration is not used if dynamic payloads are enabled.
     /// Use [`RF24.get_dynamic_payload_length()`][rf24_py.RF24.get_dynamic_payload_length]
     /// instead if dynamically sized payloads are enabled (via
-    /// [`RF24.set_dynamic_payloads()`][rf24_py.RF24.set_dynamic_payloads]).
+    /// [`RF24.dynamic_payloads`][rf24_py.RF24.dynamic_payloads]).
     #[setter]
     pub fn set_payload_length(&mut self, length: u8) -> PyResult<()> {
         self.inner
@@ -540,20 +587,24 @@ impl RF24 {
 
     /// Enable or disable the dynamically sized payloads feature.
     ///
-    /// Parameters:
-    ///     enable: If set to `true`, the statically sized payload length (set via
-    ///         [`RF24.payload_length`][rf24_py.RF24.payload_length]) are not
-    ///         used.
+    /// If set to `true`, the statically sized payload length (set via
+    /// [`RF24.payload_length`][rf24_py.RF24.payload_length]) are not used.
+    #[setter]
     pub fn set_dynamic_payloads(&mut self, enable: i32) -> PyResult<()> {
         self.inner
             .set_dynamic_payloads(enable != 0)
             .map_err(|e| PyRuntimeError::new_err(format!("{e:?}")))
     }
 
+    #[getter]
+    pub fn get_dynamic_payloads(&self) -> bool {
+        self.inner.get_dynamic_payloads()
+    }
+
     /// Get the length of the next available payload in the RX FIFO.
     ///
     /// If dynamically sized payloads are not enabled (via
-    /// [`RF24.set_dynamic_payloads()`][rf24_py.RF24.set_dynamic_payloads]),
+    /// [`RF24.dynamic_payloads`][rf24_py.RF24.dynamic_payloads]),
     /// then use [`RF24.payload_length`][rf24_py.RF24.payload_length].
     pub fn get_dynamic_payload_length(&mut self) -> PyResult<u8> {
         self.inner
@@ -680,7 +731,7 @@ impl RF24 {
     pub fn set_status_flags(&mut self, flags: Option<StatusFlags>) -> PyResult<()> {
         let flags = flags.map(|f| f.into_inner());
         self.inner
-            .set_status_flags(flags)
+            .set_status_flags(flags.unwrap_or(rf24::StatusFlags::new()))
             .map_err(|e| PyRuntimeError::new_err(format!("{e:?}")))
     }
 
@@ -692,7 +743,7 @@ impl RF24 {
     pub fn clear_status_flags(&mut self, flags: Option<StatusFlags>) -> PyResult<()> {
         let flags = flags.map(|f| f.into_inner());
         self.inner
-            .clear_status_flags(flags)
+            .clear_status_flags(flags.unwrap_or(rf24::StatusFlags::new()))
             .map_err(|e| PyRuntimeError::new_err(format!("{e:?}")))
     }
 

@@ -44,9 +44,8 @@ class App:
 
         # turn off RX features specific to the nRF24L01 module
         self.radio.set_auto_ack(False)
-        self.radio.set_dynamic_payloads(False)
+        self.radio.dynamic_payloads = False
         self.radio.crc_length = CrcLength.Disabled
-        self.radio.set_auto_retries(0, 0)
 
         # use reverse engineering tactics for a better "snapshot"
         self.radio.address_length = 2

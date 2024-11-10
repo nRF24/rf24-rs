@@ -9,7 +9,7 @@ See the examples in the repository's [examples/rust](https://github.com/nRF24/rf
 ## Basic API
 
 - [`RF24::new()`](fn@crate::radio::RF24::new)
-- [`RF24`][rf24-struct]`::`[`init()`](fn@crate::radio::prelude::EsbRadio::init)
+- [`RF24`][rf24-struct]`::`[`init()`](fn@crate::radio::prelude::EsbInit::init)
 - [`RF24`][rf24-struct]`::`[`is_rx()`](fn@crate::radio::prelude::EsbRadio::is_rx)
 - [`RF24`][rf24-struct]`::`[`as_rx()`](fn@crate::radio::prelude::EsbRadio::as_rx)
 - [`RF24`][rf24-struct]`::`[`as_tx()`](fn@crate::radio::prelude::EsbRadio::as_tx)
@@ -49,7 +49,7 @@ See the examples in the repository's [examples/rust](https://github.com/nRF24/rf
 - [`RF24`][rf24-struct]`::`[`set_auto_retries()`](fn@crate::radio::prelude::EsbAutoAck::set_auto_retries)
 - [`RF24`][rf24-struct]`::`[`set_dynamic_payloads()`](fn@crate::radio::prelude::EsbPayloadLength::set_dynamic_payloads)
 - [`RF24`][rf24-struct]`::`[`allow_ask_no_ack()`](fn@crate::radio::prelude::EsbAutoAck::allow_ask_no_ack)
-- [`RF24`][rf24-struct]`::`[`allow_ack_payloads()`](fn@crate::radio::prelude::EsbAutoAck::allow_ack_payloads)
+- [`RF24`][rf24-struct]`::`[`allow_ack_payloads()`](fn@crate::radio::prelude::EsbAutoAck::set_ack_payloads)
 - [`RF24`][rf24-struct]`::`[`set_address_length()`](fn@crate::radio::prelude::EsbPipe::set_address_length)
 - [`RF24`][rf24-struct]`::`[`get_address_length()`](fn@crate::radio::prelude::EsbPipe::get_address_length)
 - [`RF24`][rf24-struct]`::`[`set_payload_length()`](fn@crate::radio::prelude::EsbPayloadLength::set_payload_length)

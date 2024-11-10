@@ -1,4 +1,6 @@
 #[cfg(target_os = "linux")]
+mod config;
+#[cfg(target_os = "linux")]
 mod radio;
 mod types;
 

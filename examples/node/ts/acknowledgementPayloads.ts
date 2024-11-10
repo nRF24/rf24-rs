@@ -52,10 +52,10 @@ export class App {
 
     // set the Power Amplifier level to -12 dBm since this test example is
     // usually run with nRF24L01 transceivers in close proximity of each other
-    this.radio.setPaLevel(PaLevel.Low); // PaLevel.Max is default
+    this.radio.paLevel = PaLevel.Low; // PaLevel.Max is default
 
-    this.radio.allowAckPayloads(true);
-    this.radio.setDynamicPayloads(true);
+    this.radio.ackPayloads = true;
+    this.radio.dynamicPayloads = true;
 
     this.counter = 0;
   }

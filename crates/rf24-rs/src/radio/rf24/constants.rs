@@ -38,6 +38,4 @@ pub mod mnemonics {
     pub const MASK_RX_DR: u8 = 1 << 6;
     pub const MASK_TX_DS: u8 = 1 << 5;
     pub const MASK_MAX_RT: u8 = 1 << 4;
-    pub const EN_DPL: u8 = 1 << 2;
-    pub const EN_ACK_PAY: u8 = 1 << 1;
 }

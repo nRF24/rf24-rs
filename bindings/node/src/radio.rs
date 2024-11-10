@@ -1,14 +1,18 @@
 #![cfg(target_os = "linux")]
 
+use crate::config::RadioConfig;
 use crate::types::{
     coerce_to_bool, AvailablePipe, CrcLength, DataRate, FifoState, HardwareConfig, PaLevel,
     StatusFlags, WriteConfig,
 };
+
+use embedded_hal::digital::OutputPin;
 use linux_embedded_hal::{
     gpio_cdev::{chips, LineRequestFlags},
     spidev::{SpiModeFlags, SpidevOptions},
     CdevPin, Delay, SpidevDevice,
 };
+
 use napi::{bindgen_prelude::Buffer, Error, JsNumber, Result, Status};
 
 use rf24::radio::prelude::*;
@@ -113,12 +117,55 @@ impl RF24 {
     /// @throws A Generic Error if a hardware failure caused problems
     /// (includes a message to describe what problem was detected).
     ///
+    /// This is the same as {@link RF24.withConfig | `withConfig(RadioConfig())`},
+    /// but this function also
+    /// - detects if the radio is a plus variant ({@link RF24.isPlusVariant | `isPlusVariant`})
+    /// - checks for data corruption across the SPI lines (MOSI, MISO, SCLK)
+    ///
     /// @group Basic
     #[napi]
     pub fn begin(&mut self) -> Result<()> {
         self.inner
             .init()
             .map_err(|e| Error::new(Status::GenericFailure, format!("{e:?}")))
+    }
+
+    /// Reconfigure the radio with the specified `config`.
+    ///
+    /// > [!WARNING]
+    /// > It is strongly encouraged to call {@link RF24.begin | `RF24.begin()`}
+    /// > after constructing the RF24 object.
+    /// >
+    /// > Only use this function subsequently to quickly switch between different
+    /// > network settings.
+    ///
+    /// @group Configuration
+    #[napi]
+    pub fn with_config(&mut self, config: &RadioConfig) -> Result<()> {
+        self.inner
+            .with_config(&config.into_inner())
+            .map_err(|e| Error::new(Status::GenericFailure, format!("{e:?}")))
+    }
+
+    /// Set the radio's CE pin HIGH (`true`) or LOW (`false`).
+    ///
+    /// This is only exposed for advanced use of TX FIFO during
+    /// asynchronous TX operations. It is highly encouraged to use
+    /// {@link RF24.asRx | `asRx()`} or {@link RF24.asTx | `asTx()`}
+    /// to ensure proper radio behavior when entering RX or TX mode.
+    ///
+    /// @group Advanced
+    #[napi]
+    pub fn ce_pin(
+        &mut self,
+        #[napi(ts_arg_type = "boolean | number")] value: JsNumber,
+    ) -> Result<()> {
+        if coerce_to_bool(Some(value), false)? {
+            self.inner.ce_pin.set_high()
+        } else {
+            self.inner.ce_pin.set_low()
+        }
+        .map_err(|e| Error::new(Status::GenericFailure, format!("{e:?}")))
     }
 
     /// Is the radio in active RX mode?
@@ -145,7 +192,7 @@ impl RF24 {
     ///
     /// > [!NOTE]
     /// > This function will also flush the TX FIFO when ACK payloads are enabled
-    /// > (via {@link RF24.allowAckPayloads | `RF24.allowAckPayloads()`}).
+    /// > (via {@link RF24.ackPayloads | `RF24.ackPayloads`}).
     ///
     /// @group Basic
     #[napi]
@@ -214,8 +261,8 @@ impl RF24 {
     /// If not specified, then the length of the next available payload is used (which automatically
     /// respects if dynamic payloads are enabled).
     ///
-    /// Use {@link RF24.setDynamicPayloads | `RF24.setDynamicPayloads()`} for dynamically sized
-    /// payload or {@link RF24.setPayloadLength | `RF24.setPayloadLength()`} for statically sized
+    /// Use {@link RF24.dynamicPayloads | `RF24.dynamicPayloads`} for dynamically sized
+    /// payload or {@link RF24.payloadLength | `RF24.payloadLength`} for statically sized
     /// payloads.
     ///
     /// @group Basic
@@ -348,25 +395,32 @@ impl RF24 {
     ///
     /// > [!IMPORTANT]
     /// > This feature requires dynamically sized payloads.
-    /// > Use {@link RF24.setDynamicPayloads | `RF24.setDynamicPayloads(true)`}
-    /// > to enable dynamically sized payloads.
+    /// > This attribute will enable {@link RF24.dynamicPayloads | `dynamicPayloads`}
+    /// > automatically when needed. This attribute will not disable
+    /// > {@link RF24.dynamicPayloads | `dynamicPayloads`}.
     ///
     /// @group Configuration
-    #[napi]
-    pub fn allow_ack_payloads(
+    #[napi(setter, js_name = "ackPayloads")]
+    pub fn set_ack_payloads(
         &mut self,
         #[napi(ts_arg_type = "boolean | number")] enable: JsNumber,
     ) -> Result<()> {
         self.inner
-            .allow_ack_payloads(coerce_to_bool(Some(enable), false)?)
+            .set_ack_payloads(coerce_to_bool(Some(enable), false)?)
             .map_err(|e| Error::new(Status::GenericFailure, format!("{e:?}")))
+    }
+
+    /// @group Configuration
+    #[napi(getter, js_name = "ackPayloads")]
+    pub fn get_ack_payloads(&self) -> bool {
+        self.inner.get_ack_payloads()
     }
 
     /// Enable or disable the auto-ack feature for all pipes.
     ///
     /// > [!NOTE]
     /// > This feature requires CRC to be enabled.
-    /// > See {@link RF24.setCrcLength | `RF24.setCrcLength()`} for more detail.
+    /// > See {@link RF24.crcLength | `RF24.crcLength`} for more detail.
     ///
     /// @group Configuration
     #[napi]
@@ -408,7 +462,7 @@ impl RF24 {
 
     /// Upload a given ACK packet's payload (`buf`) into the radio's TX FIFO.
     ///
-    /// This feature requires {@link RF24.allowAckPayloads | `RF24.allowAckPayloads()`}
+    /// This feature requires {@link RF24.ackPayloads | `RF24.ackPayloads`}
     /// to be enabled.
     ///
     /// @param pipe - The pipe number that (when data is received) will be responded
@@ -449,39 +503,31 @@ impl RF24 {
 
     /// Set the channel (frequency) that the radio uses to transmit and receive.
     ///
-    /// @param channel - The channel must be in range [0, 125], otherwise this
-    /// function does nothing. This value can be roughly translated into frequency
-    /// by adding its value to 2400 (`channel + 2400 = frequency in Hz`).
+    /// @param channel - This value is clamped to the range [0, 125].
+    ///
+    /// This value can be roughly translated into a frequency with the formula:
+    /// ```text
+    /// frequency (in Hz) = channel + 2400
+    /// ```
     ///
     /// @group Basic
-    #[napi]
+    #[napi(setter, js_name = "channel")]
     pub fn set_channel(&mut self, channel: u8) -> Result<()> {
         self.inner
             .set_channel(channel)
             .map_err(|e| Error::new(Status::GenericFailure, format!("{e:?}")))
     }
 
-    /// Get the currently configured channel.
-    ///
     /// @group Basic
-    #[napi]
+    #[napi(getter, js_name = "channel")]
     pub fn get_channel(&mut self) -> Result<u8> {
         self.inner
             .get_channel()
             .map_err(|e| Error::new(Status::GenericFailure, format!("{e:?}")))
     }
 
-    /// Get the {@link CrcLength | `CrcLength`} used for all outgoing and incoming
-    /// transmissions.
-    ///
-    /// > [!NOTE]
-    /// > If disabled (with {@link RF24.setCrcLength | `RF24.setCrcLength(CrcLength.Disabled)`})
-    /// > while auto-ack feature is disabled, then this function's returned value does not reflect
-    /// > the fact that CRC is forcefully enabled by the radio's firmware (needed by the
-    /// > auto-ack feature).
-    ///
     /// @group Configuration
-    #[napi]
+    #[napi(getter, js_name = "crcLength")]
     pub fn get_crc_length(&mut self) -> Result<CrcLength> {
         self.inner
             .get_crc_length()
@@ -489,24 +535,25 @@ impl RF24 {
             .map(|e| CrcLength::from_inner(e))
     }
 
-    /// Set the {@link CrcLength | `CrcLength`} used for all outgoing and incoming transmissions.
+    /// Get/set the {@link CrcLength | `CrcLength`} used for all outgoing and incoming
+    /// transmissions.
     ///
-    /// > [!IMPORTANT]
-    /// > Because CRC is required for the auto-ack feature, the radio's firmware will forcefully
-    /// > enable CRC even if the user explicitly disables it (using this function).
+    /// > [!NOTE]
+    /// > If disabled (with {@link RF24.crcLength | `RF24.crcLength = CrcLength.Disabled`})
+    /// > while auto-ack feature is disabled, then this function's returned value does not reflect
+    /// > the fact that CRC is forcefully enabled by the radio's firmware (needed by the
+    /// > auto-ack feature).
     ///
     /// @group Configuration
-    #[napi]
+    #[napi(setter, js_name = "crcLength")]
     pub fn set_crc_length(&mut self, crc_length: CrcLength) -> Result<()> {
         self.inner
             .set_crc_length(crc_length.into_inner())
             .map_err(|e| Error::new(Status::GenericFailure, format!("{e:?}")))
     }
 
-    /// Get the {@link DataRate | `DataRate`} used for all incoming and outgoing transmissions.
-    ///
     /// @group Configuration
-    #[napi]
+    #[napi(getter, js_name = "dataRate")]
     pub fn get_data_rate(&mut self) -> Result<DataRate> {
         self.inner
             .get_data_rate()
@@ -514,10 +561,10 @@ impl RF24 {
             .map(|e| DataRate::from_inner(e))
     }
 
-    /// Set the {@link DataRate | `DataRate`} used for all incoming and outgoing transmissions.
+    /// Get/set the {@link DataRate | `DataRate`} used for all incoming and outgoing transmissions.
     ///
     /// @group Configuration
-    #[napi]
+    #[napi(setter, js_name = "dataRate")]
     pub fn set_data_rate(&mut self, data_rate: DataRate) -> Result<()> {
         self.inner
             .set_data_rate(data_rate.into_inner())
@@ -567,7 +614,7 @@ impl RF24 {
     ///
     /// This is automatically called by {@link RF24.asTx | `RF24.asTx()`}
     /// when ACK payloads are enabled (via
-    /// {@link RF24.allowAckPayloads | `RF24.allowAckPayloads()`}).
+    /// {@link RF24.ackPayloads | `RF24.ackPayloads`}).
     ///
     /// @group Advanced
     #[napi]
@@ -594,10 +641,8 @@ impl RF24 {
             .map(|e| FifoState::from_inner(e))
     }
 
-    /// Get the currently configured Power Amplitude (PA) level.
-    ///
     /// @group Configuration
-    #[napi]
+    #[napi(getter, js_name = "paLevel")]
     pub fn get_pa_level(&mut self) -> Result<PaLevel> {
         self.inner
             .get_pa_level()
@@ -605,39 +650,36 @@ impl RF24 {
             .map(|e| PaLevel::from_inner(e))
     }
 
-    /// Set the Power Amplitude (PA) level used for all transmissions (including
+    /// Get/set the Power Amplitude (PA) level used for all transmissions (including
     /// auto ack packet).
     ///
     /// @param paLevel - The {@link PaLevel | `PaLevel`} to use.
     ///
     /// @group Configuration
-    #[napi]
+    #[napi(setter, js_name = "paLevel")]
     pub fn set_pa_level(&mut self, pa_level: PaLevel) -> Result<()> {
         self.inner
             .set_pa_level(pa_level.into_inner())
             .map_err(|e| Error::new(Status::GenericFailure, format!("{e:?}")))
     }
 
-    /// Set the statically sized payload length.
+    /// Get/set the statically sized payload length.
     ///
     /// This configuration is not used if dynamic payloads are enabled.
+    /// Use {@link RF24.getDynamicPayloadLength | `RF24.getDynamicPayloadLength()`}
+    /// instead if dynamically sized payloads are enabled (via
+    /// {@link RF24.dynamicPayloads | `RF24.dynamicPayloads`}).
     ///
     /// @group Configuration
-    #[napi]
+    #[napi(setter, js_name = "payloadLength")]
     pub fn set_payload_length(&mut self, length: u8) -> Result<()> {
         self.inner
             .set_payload_length(length)
             .map_err(|e| Error::new(Status::GenericFailure, format!("{e:?}")))
     }
 
-    /// Get the currently configured length of statically sized payloads.
-    ///
-    /// Use {@link RF24.getDynamicPayloadLength | `RF24.getDynamicPayloadLength()`}
-    /// instead if dynamically sized payloads are enabled (via
-    /// {@link RF24.setDynamicPayloads | `RF24.setDynamicPayloads()`}).
-    ///
     /// @group Configuration
-    #[napi]
+    #[napi(getter, js_name = "payloadLength")]
     pub fn get_payload_length(&mut self) -> Result<u8> {
         self.inner
             .get_payload_length()
@@ -647,10 +689,10 @@ impl RF24 {
     /// Enable or disable the dynamically sized payloads feature.
     ///
     /// @param enable - If set to `true`, the statically sized payload length (set via
-    /// {@link RF24.setPayloadLength | `RF24.setPayloadLength()`}) are not used.
+    /// {@link RF24.payloadLength | `RF24.payloadLength`}) are not used.
     ///
     /// @group Configuration
-    #[napi]
+    #[napi(setter, js_name = "dynamicPayloads")]
     pub fn set_dynamic_payloads(
         &mut self,
         #[napi(ts_arg_type = "boolean | number")] enable: JsNumber,
@@ -660,11 +702,17 @@ impl RF24 {
             .map_err(|e| Error::new(Status::GenericFailure, format!("{e:?}")))
     }
 
+    /// @group Configuration
+    #[napi(getter, js_name = "dynamicPayloads")]
+    pub fn get_dynamic_payloads(&self) -> bool {
+        self.inner.get_dynamic_payloads()
+    }
+
     /// Get the length of the next available payload in the RX FIFO.
     ///
     /// If dynamically sized payloads are not enabled (via
-    /// {@link RF24.setDynamicPayloads | `RF24.setDynamicPayloads()`}),
-    /// then use {@link RF24.getPayloadLength | `RF24.getPayloadLength()`}.
+    /// {@link RF24.dynamicPayloads | `RF24.dynamicPayloads`}),
+    /// then use {@link RF24.payloadLength | `RF24.payloadLength`}.
     ///
     /// @group Advanced
     #[napi]
@@ -731,35 +779,46 @@ impl RF24 {
 
     /// Set the address length (applied to all pipes).
     ///
-    /// @param length - The address length is only allowed to be in range [2, 5].
+    /// @param length - The address length is clamped to the range [2, 5].
     ///
     /// @group Configuration
-    #[napi]
+    #[napi(setter, js_name = "addressLength")]
     pub fn set_address_length(&mut self, length: u8) -> Result<()> {
         self.inner
             .set_address_length(length)
             .map_err(|e| Error::new(Status::GenericFailure, format!("{e:?}")))
     }
 
-    /// Get the current configured address length (applied to all pipes).
-    ///
     /// @group Configuration
-    #[napi]
+    #[napi(getter, js_name = "addressLength")]
     pub fn get_address_length(&mut self) -> Result<u8> {
         self.inner
             .get_address_length()
             .map_err(|e| Error::new(Status::GenericFailure, format!("{e:?}")))
     }
 
-    /// Is the radio powered up?
+    /// @group Configuration
+    #[napi(getter, js_name = "power")]
+    pub fn is_powered(&self) -> bool {
+        self.inner.is_powered()
+    }
+
+    /// Control the radio's powered level.
+    ///
+    /// This is just a convenience attribute that calls {@link RF24.powerUp | `RF24.powerUp()`}
+    /// or {@link RF24.powerDown | `RF24.powerDown()`}.
     ///
     /// Use {@link RF24.isRx | `RF24.isRx`} to determine if
     /// the radio is in RX or TX mode.
     ///
     /// @group Configuration
-    #[napi(getter)]
-    pub fn is_powered(&self) -> bool {
-        self.inner.is_powered()
+    #[napi(setter, js_name = "power")]
+    pub fn set_power(&mut self, enable: JsNumber) -> Result<()> {
+        if coerce_to_bool(Some(enable), true)? {
+            self.power_up(None)
+        } else {
+            self.power_down()
+        }
     }
 
     /// Power Down the radio.
@@ -800,7 +859,7 @@ impl RF24 {
             tx_df: Some(true),
         });
         self.inner
-            .set_status_flags(Some(flags.into_inner()))
+            .set_status_flags(flags.into_inner())
             .map_err(|e| Error::new(Status::GenericFailure, format!("{e:?}")))
     }
 
@@ -817,7 +876,7 @@ impl RF24 {
             tx_df: Some(true),
         });
         self.inner
-            .clear_status_flags(Some(flags.into_inner()))
+            .clear_status_flags(flags.into_inner())
             .map_err(|e| Error::new(Status::GenericFailure, format!("{e:?}")))
     }
 

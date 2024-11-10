@@ -14,25 +14,12 @@ where
 
     fn get_pa_level(&mut self) -> Result<PaLevel, Self::PaLevelErrorType> {
         self.spi_read(1, registers::RF_SETUP)?;
-        let pa_bin = self._buf[1] >> 1 & 3;
-        match pa_bin {
-            0 => Ok(PaLevel::Min),
-            1 => Ok(PaLevel::Low),
-            2 => Ok(PaLevel::High),
-            _ => Ok(PaLevel::Max),
-        }
+        Ok(PaLevel::from_bits(self._buf[1] & 6))
     }
 
     fn set_pa_level(&mut self, pa_level: PaLevel) -> Result<(), Self::PaLevelErrorType> {
-        let pa_bin = 1
-            | (match pa_level {
-                PaLevel::Min => 0u8,
-                PaLevel::Low => 1u8,
-                PaLevel::High => 2u8,
-                PaLevel::Max => 3u8,
-            } << 1);
         self.spi_read(1, registers::RF_SETUP)?;
-        let out = self._buf[1] & !(3 << 1) | pa_bin;
+        let out = self._buf[1] & !6 | pa_level.into_bits();
         self.spi_write_byte(registers::RF_SETUP, out)
     }
 }
@@ -106,7 +93,7 @@ mod test {
             ),
             (vec![registers::RF_SETUP, 0u8], vec![0xEu8, 0u8]),
             (
-                vec![registers::RF_SETUP | commands::W_REGISTER, 7u8],
+                vec![registers::RF_SETUP | commands::W_REGISTER, 6u8],
                 vec![0xEu8, 0u8],
             ),
         ];

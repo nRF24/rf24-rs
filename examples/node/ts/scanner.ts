@@ -1,7 +1,7 @@
 import * as readline from "readline/promises";
 import * as fs from "fs";
 import * as timer from "timers/promises";
-import { RF24, DataRate, FifoState } from "@rf24/rf24";
+import { RF24, CrcLength, DataRate, FifoState } from "@rf24/rf24";
 
 const io = readline.createInterface({
   input: process.stdin,
@@ -40,7 +40,7 @@ export class App {
 
     // This is the worst possible configuration.
     // The intention here is to pick up as much noise as possible.
-    this.radio.setAddressLength(2);
+    this.radio.addressLength = 2;
 
     // For this example, we will use the worst possible addresses
     const address = [
@@ -55,7 +55,11 @@ export class App {
       this.radio.openRxPipe(pipe, address[pipe]);
     }
 
-    this.radio.setDataRate(dataRate);
+    this.radio.dataRate = dataRate;
+    // turn off auto-ack related features
+    this.radio.setAutoAck(false);
+    this.radio.dynamicPayloads = false;
+    this.radio.crcLength = CrcLength.Disabled;
   }
 
   /**
@@ -92,7 +96,7 @@ export class App {
 
     const timeout = Date.now() + (duration || 30) * 1000;
     while (Date.now() < timeout) {
-      this.radio.setChannel(channel);
+      this.radio.channel = channel;
       this.radio.asRx();
       await timer.setTimeout(0.13); // needs to be at least 130 microseconds
       const rpd = this.radio.rpd;

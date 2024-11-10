@@ -3,14 +3,10 @@ use crate::radio::prelude::EsbDetails;
 use embedded_hal::{delay::DelayNs, digital::OutputPin, spi::SpiDevice};
 
 #[cfg(any(feature = "defmt", feature = "std"))]
-use super::{mnemonics, registers};
+use super::registers;
 #[cfg(any(feature = "defmt", feature = "std"))]
-use crate::{
-    radio::prelude::{
-        EsbChannel, EsbCrcLength, EsbDataRate, EsbFifo, EsbPaLevel, EsbPayloadLength, EsbPipe,
-        EsbPower, EsbStatus,
-    },
-    StatusFlags,
+use crate::radio::prelude::{
+    EsbChannel, EsbCrcLength, EsbDataRate, EsbFifo, EsbPaLevel, EsbPayloadLength, EsbPipe, EsbPower,
 };
 
 #[cfg(feature = "std")]
@@ -84,24 +80,22 @@ where
         );
 
         self.spi_read(1, registers::CONFIG)?;
-        self._config_reg = self._buf[1];
-        let mut flags = StatusFlags::default();
-        self.get_status_flags(&mut flags);
+        self._config_reg = Config::from_bits(self._buf[1]);
         defmt::println!(
             "IRQ on Data Ready_________{=bool}",
-            (self._config_reg & mnemonics::MASK_RX_DR) == 0
+            self._config_reg.rx_dr()
         );
-        defmt::println!("    Data Ready triggered__{=bool}", flags.rx_dr);
+        defmt::println!("    Data Ready triggered__{=bool}", self._status.rx_dr());
         defmt::println!(
             "IRQ on Data Sent__________{=bool}",
-            (self._config_reg & mnemonics::MASK_TX_DS) == 0
+            self._config_reg.tx_ds()
         );
-        defmt::println!("    Data Sent triggered___{=bool}", flags.tx_ds);
+        defmt::println!("    Data Sent triggered___{=bool}", self._status.tx_ds());
         defmt::println!(
             "IRQ on Data Fail__________{=bool}",
-            (self._config_reg & mnemonics::MASK_MAX_RT) == 0
+            self._config_reg.tx_df()
         );
-        defmt::println!("    Data Fail triggered___{=bool}", flags.tx_df);
+        defmt::println!("    Data Fail triggered___{=bool}", self._status.tx_df());
 
         let fifo = self.get_fifo_state(true)?;
         defmt::println!("TX FIFO___________________{}", fifo);
@@ -132,7 +126,7 @@ where
         address.copy_from_slice(&self._buf[2..6]);
         address.reverse();
         defmt::println!(
-            "TX address_____________{=[u8; 4]:#08X}{=u8:02X}",
+            "TX address_______________{=[u8; 4]:#08X}{=u8:02X}",
             address,
             self._buf[1]
         );
@@ -170,6 +164,8 @@ where
     #[cfg(not(target_os = "none"))]
     #[cfg(feature = "std")]
     fn print_details(&mut self) -> Result<(), Self::DetailsErrorType> {
+        use crate::radio::rf24::Config;
+
         std::println!("Is a plus variant_________{}", self.is_plus_variant());
 
         let channel = self.get_channel()?;
@@ -217,24 +213,13 @@ where
         );
 
         self.spi_read(1, registers::CONFIG)?;
-        self._config_reg = self._buf[1];
-        let mut flags = StatusFlags::default();
-        self.get_status_flags(&mut flags);
-        std::println!(
-            "IRQ on Data Ready_________{}",
-            (self._config_reg & mnemonics::MASK_RX_DR) == 0
-        );
-        std::println!("    Data Ready triggered__{}", flags.rx_dr);
-        std::println!(
-            "IRQ on Data Sent__________{}",
-            (self._config_reg & mnemonics::MASK_TX_DS) == 0
-        );
-        std::println!("    Data Sent triggered___{}", flags.tx_ds);
-        std::println!(
-            "IRQ on Data Fail__________{}",
-            (self._config_reg & mnemonics::MASK_MAX_RT) == 0
-        );
-        std::println!("    Data Fail triggered___{}", flags.tx_df);
+        self._config_reg = Config::from_bits(self._buf[1]);
+        std::println!("IRQ on Data Ready_________{}", self._config_reg.rx_dr());
+        std::println!("    Data Ready triggered__{}", self._status.rx_dr());
+        std::println!("IRQ on Data Sent__________{}", self._config_reg.tx_ds());
+        std::println!("    Data Sent triggered___{}", self._status.tx_ds());
+        std::println!("IRQ on Data Fail__________{}", self._config_reg.tx_df());
+        std::println!("    Data Fail triggered___{}", self._status.tx_df());
 
         let fifo = self.get_fifo_state(true)?;
         std::println!("TX FIFO___________________{}", fifo);
@@ -254,7 +239,7 @@ where
 
         std::println!(
             "Primary Mode______________{}X",
-            if self._config_reg & 1 > 0 { "R" } else { "T" }
+            if self._config_reg.is_rx() { "R" } else { "T" }
         );
         std::println!("Powered Up________________{}", self.is_powered());
 
@@ -263,7 +248,7 @@ where
         let mut address = [0u8; 4];
         address.copy_from_slice(&self._buf[2..6]);
         std::println!(
-            "TX address_____________{:#08X}{:02X}",
+            "TX address_______________{:#08X}{:02X}",
             u32::from_le_bytes(address),
             self._buf[1]
         );

@@ -22,19 +22,19 @@ where
     /// In full power down mode (a sleep state), the radio will consume approximately
     /// 900nA (.0009mA).
     fn power_down(&mut self) -> Result<(), Self::PowerErrorType> {
-        self._ce_pin.set_low().map_err(Nrf24Error::Gpo)?; // Guarantee CE is low on powerDown
-        self._config_reg &= 0xFD;
-        self.spi_write_byte(registers::CONFIG, self._config_reg)?;
+        self.ce_pin.set_low().map_err(Nrf24Error::Gpo)?; // Guarantee CE is low on powerDown
+        self._config_reg = self._config_reg.with_power(false);
+        self.spi_write_byte(registers::CONFIG, self._config_reg.into_bits())?;
         Ok(())
     }
 
     fn power_up(&mut self, delay: Option<u32>) -> Result<(), Self::PowerErrorType> {
         // if not powered up then power up and wait for the radio to initialize
-        if self._config_reg & 2 > 0 {
+        if self._config_reg.power() {
             return Ok(());
         }
-        self._config_reg |= 2;
-        self.spi_write_byte(registers::CONFIG, self._config_reg)?;
+        self._config_reg = self._config_reg.with_power(true);
+        self.spi_write_byte(registers::CONFIG, self._config_reg.into_bits())?;
 
         // For nRF24L01+ to go from power down mode to TX or RX mode it must first pass through stand-by mode.
         // There must be a delay of Tpd2standby (see Table 16.) after the nRF24L01+ leaves power down mode before
@@ -47,7 +47,7 @@ where
 
     /// Is the radio powered up?
     fn is_powered(&self) -> bool {
-        (self._config_reg & 2) > 0
+        self._config_reg.power()
     }
 }
 
@@ -78,7 +78,7 @@ mod test {
         let spi_expectations = spi_test_expects![
             // get the RF_SETUP register value for each possible result
             (
-                vec![registers::CONFIG | commands::W_REGISTER, 2u8],
+                vec![registers::CONFIG | commands::W_REGISTER, 0xEu8],
                 vec![0xEu8, 0u8],
             ),
         ];
@@ -103,7 +103,7 @@ mod test {
         let spi_expectations = spi_test_expects![
             // get the RF_SETUP register value for each possible result
             (
-                vec![registers::CONFIG | commands::W_REGISTER, 2u8],
+                vec![registers::CONFIG | commands::W_REGISTER, 0xEu8],
                 vec![0xEu8, 0u8],
             ),
         ];

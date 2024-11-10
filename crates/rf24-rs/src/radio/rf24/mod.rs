@@ -1,6 +1,9 @@
 use embedded_hal::{delay::DelayNs, digital::OutputPin, spi::SpiDevice};
 mod auto_ack;
+pub(crate) mod bit_fields;
 mod channel;
+mod init;
+use bit_fields::{Config, Feature};
 mod constants;
 mod crc_length;
 mod data_rate;
@@ -16,7 +19,10 @@ mod status;
 use super::prelude::{
     EsbAutoAck, EsbChannel, EsbCrcLength, EsbFifo, EsbPaLevel, EsbPower, EsbRadio,
 };
-use crate::types::{CrcLength, PaLevel};
+use crate::{
+    types::{CrcLength, PaLevel},
+    StatusFlags,
+};
 
 /// An collection of error types to describe hardware malfunctions.
 #[derive(Clone, Copy, Debug, PartialEq)]
@@ -39,19 +45,25 @@ pub enum Nrf24Error<SPI, DO> {
 ///
 /// Additionally, there are some functions implemented that are specific to the nRF24L01.
 pub struct RF24<SPI, DO, DELAY> {
-    // private attributes
+    /// The delay (in microseconds) in which [`RF24::as_rx()`] will wait for
+    /// ACK packets to complete.
+    ///
+    /// This value is automatically adjusted when calling
+    /// [`EsbDataRate::set_data_rate()`](fn@crate::radio::prelude::EsbDataRate::set_data_rate).
+    pub tx_delay: u32,
     _spi: SPI,
-    _status: u8,
-    _ce_pin: DO,
-    _buf: [u8; 33],
-    _is_plus_variant: bool,
-    _ack_payloads_enabled: bool,
-    _dynamic_payloads_enabled: bool,
-    _config_reg: u8,
+    /// The CE pin for the radio.
+    ///
+    /// This really only exposed for advanced manipulation of active TX mode.
+    /// It is strongly recommended to enter RX or TX mode using [`RF24::as_rx()`] and
+    /// [`RF24::as_tx()`] because those methods guarantee proper radio usage.
+    pub ce_pin: DO,
     _delay_impl: DELAY,
+    _buf: [u8; 33],
+    _status: StatusFlags,
+    _config_reg: Config,
+    _feature: Feature,
     _pipe0_rx_addr: Option<[u8; 5]>,
-    _addr_length: u8,
-    _tx_delay: u32,
     _payload_length: u8,
 }
 
@@ -69,18 +81,18 @@ where
     /// object (passed to the `spi` parameter).
     pub fn new(ce_pin: DO, spi: SPI, delay_impl: DELAY) -> RF24<SPI, DO, DELAY> {
         RF24 {
-            _status: 0,
-            _ce_pin: ce_pin,
+            tx_delay: 250,
+            ce_pin,
             _spi: spi,
-            _buf: [0u8; 33],
-            _is_plus_variant: true,
-            _ack_payloads_enabled: false,
-            _dynamic_payloads_enabled: false,
-            _config_reg: 0,
             _delay_impl: delay_impl,
+            _status: StatusFlags::from_bits(0),
+            _buf: [0u8; 33],
             _pipe0_rx_addr: None,
-            _addr_length: 5,
-            _tx_delay: 250,
+            _feature: Feature::from_bits(0)
+                .with_address_length(5)
+                .with_is_plus_variant(true),
+            // 16 bit CRC, enable all IRQ, and power down as TX
+            _config_reg: Config::from_bits(0xC),
             _payload_length: 32,
         }
     }
@@ -89,7 +101,7 @@ where
         self._spi
             .transfer_in_place(&mut self._buf[..len as usize])
             .map_err(Nrf24Error::Spi)?;
-        self._status = self._buf[0];
+        self._status = StatusFlags::from_bits(self._buf[0]);
         Ok(())
     }
 
@@ -134,9 +146,10 @@ where
 
     /// Is this radio a nRF24L01+ variant?
     ///
-    /// The bool that this function returns is only valid _after_ calling [`RF24::init()`].
+    /// The bool that this function returns is only valid _after_ calling
+    /// [`init()`](fn@crate::radio::prelude::EsbInit::init).
     pub fn is_plus_variant(&self) -> bool {
-        self._is_plus_variant
+        self._feature.is_plus_variant()
     }
 
     pub fn test_rpd(&mut self) -> Result<bool, Nrf24Error<SPI::Error, DO::Error>> {
@@ -152,7 +165,7 @@ where
         self.as_tx()?;
         self.spi_read(1, registers::RF_SETUP)?;
         self.spi_write_byte(registers::RF_SETUP, self._buf[1] | 0x90)?;
-        if self._is_plus_variant {
+        if self._feature.is_plus_variant() {
             self.set_auto_ack(false)?;
             self.set_auto_retries(0, 0)?;
             let buf = [0xFF; 32];
@@ -168,8 +181,8 @@ where
         }
         self.set_pa_level(level)?;
         self.set_channel(channel)?;
-        self._ce_pin.set_high().map_err(Nrf24Error::Gpo)?;
-        if self._is_plus_variant {
+        self.ce_pin.set_high().map_err(Nrf24Error::Gpo)?;
+        if self._feature.is_plus_variant() {
             self._delay_impl.delay_ns(1000000); // datasheet says 1 ms is ok in this instance
             self.rewrite()?;
         }
@@ -186,7 +199,7 @@ where
         self.power_down()?; // per datasheet recommendation (just to be safe)
         self.spi_read(1, registers::RF_SETUP)?;
         self.spi_write_byte(registers::RF_SETUP, self._buf[1] & !0x90)?;
-        self._ce_pin.set_low().map_err(Nrf24Error::Gpo)
+        self.ce_pin.set_low().map_err(Nrf24Error::Gpo)
     }
 
     /// Control the builtin LNA feature on nRF24L01 (older non-plus variants) and Si24R1
@@ -267,7 +280,7 @@ mod test {
             // as_tx()
             // clear PRIM_RX flag
             (
-                vec![registers::CONFIG | commands::W_REGISTER, 0u8],
+                vec![registers::CONFIG | commands::W_REGISTER, 0xCu8],
                 vec![0xEu8, 0u8],
             ),
             // open pipe 0 for TX (regardless of auto-ack)
@@ -341,7 +354,7 @@ mod test {
 
         let mut spi_mock = SpiMock::new(&spi_expectations);
         let mut radio = RF24::new(pin_mock.clone(), spi_mock.clone(), delay_mock);
-        radio._is_plus_variant = is_plus_variant;
+        radio._feature = radio._feature.with_is_plus_variant(is_plus_variant);
         radio.start_carrier_wave(crate::PaLevel::Max, 0xFF).unwrap();
         spi_mock.done();
         pin_mock.done();
@@ -374,7 +387,7 @@ mod test {
         let spi_expectations = spi_test_expects![
             // power_down()
             (
-                vec![registers::CONFIG | commands::W_REGISTER, 0u8],
+                vec![registers::CONFIG | commands::W_REGISTER, 0xCu8],
                 vec![0xEu8, 0u8],
             ),
             // clear special flags in RF_SETUP register

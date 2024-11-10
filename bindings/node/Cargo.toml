@@ -10,6 +10,7 @@ license-file.workspace = true
 crate-type = ["cdylib"]
 
 [dependencies]
+embedded-hal = "1.0.0"
 # Default `napi` features: see https://nodejs.org/api/n-api.html#node-api-version-matrix
 napi = "2.16.13"
 napi-derive = "2.16.12"

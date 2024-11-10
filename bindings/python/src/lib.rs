@@ -1,11 +1,12 @@
 use pyo3::prelude::*;
-// #[cfg(target_os = "linux")]
+mod config;
 mod radio;
 mod types;
 
 #[cfg(target_os = "linux")]
 fn bind_radio_impl(m: &Bound<'_, PyModule>) -> PyResult<()> {
-    m.add_class::<radio::RF24>()
+    m.add_class::<radio::RF24>()?;
+    m.add_class::<config::RadioConfig>()
 }
 
 #[cfg(not(target_os = "linux"))]

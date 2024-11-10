@@ -6,6 +6,8 @@ use core::{
     write,
 };
 
+use bitfield_struct::bitfield;
+
 /// Power Amplifier level. The units dBm (decibel-milliwatts or dB<sub>mW</sub>)
 /// represents a logarithmic signal loss.
 #[derive(Clone, Copy, Debug, PartialEq)]
@@ -41,6 +43,25 @@ impl defmt::Format for PaLevel {
     }
 }
 
+impl PaLevel {
+    pub(crate) const fn into_bits(self) -> u8 {
+        match self {
+            PaLevel::Min => 0,
+            PaLevel::Low => 2,
+            PaLevel::High => 4,
+            PaLevel::Max => 6,
+        }
+    }
+    pub(crate) const fn from_bits(value: u8) -> Self {
+        match value {
+            0 => PaLevel::Min,
+            2 => PaLevel::Low,
+            4 => PaLevel::High,
+            _ => PaLevel::Max,
+        }
+    }
+}
+
 impl Display for PaLevel {
     fn fmt(&self, f: &mut Formatter) -> Result {
         match self {
@@ -61,6 +82,23 @@ pub enum DataRate {
     Mbps2,
     /// represents 250 Kbps
     Kbps250,
+}
+
+impl DataRate {
+    pub(crate) const fn into_bits(self) -> u8 {
+        match self {
+            DataRate::Mbps1 => 0,
+            DataRate::Mbps2 => 0x8,
+            DataRate::Kbps250 => 0x20,
+        }
+    }
+    pub(crate) const fn from_bits(value: u8) -> Self {
+        match value {
+            0x8 => DataRate::Mbps2,
+            0x20 => DataRate::Kbps250,
+            _ => DataRate::Mbps1,
+        }
+    }
 }
 
 #[cfg(feature = "defmt")]
@@ -96,6 +134,23 @@ pub enum CrcLength {
     Bit8,
     /// represents CRC 16 bit checksum is used
     Bit16,
+}
+
+impl CrcLength {
+    pub(crate) const fn into_bits(self) -> u8 {
+        match self {
+            CrcLength::Disabled => 0,
+            CrcLength::Bit8 => 8,
+            CrcLength::Bit16 => 12,
+        }
+    }
+    pub(crate) const fn from_bits(value: u8) -> Self {
+        match value {
+            0 => CrcLength::Disabled,
+            8 => CrcLength::Bit8,
+            _ => CrcLength::Bit16,
+        }
+    }
 }
 
 #[cfg(feature = "defmt")]
@@ -154,15 +209,37 @@ impl Display for FifoState {
     }
 }
 
-#[derive(Clone, Copy, Debug, Default)]
 /// A struct used to describe the different interrupt events.
+///
+/// To instantiate an object with flags that have different values:
+/// ```
+/// let flags = StatusFlags::default() // all flags are false
+///     .with_rx_dr(true); // assert only `rx_dr` flags
+/// ```
+/// Use [`StatusFlags::default`] to instantiate all flags set to false.
+/// Use [`StatusFlags::new`] to instantiate all flags set to true.
+#[bitfield(u8, new = false, order = Msb)]
 pub struct StatusFlags {
+    #[bits(1)]
+    _padding: u8,
+
     /// A flag to describe if RX Data Ready to read.
+    #[bits(1, access = RO)]
     pub rx_dr: bool,
+
     /// A flag to describe if TX Data Sent.
+    #[bits(1, access = RO)]
     pub tx_ds: bool,
+
     /// A flag to describe if TX Data Failed.
+    #[bits(1, access = RO)]
     pub tx_df: bool,
+
+    #[bits(3, access = RO)]
+    pub(crate) rx_pipe: u8,
+
+    #[bits(1, access = RO)]
+    pub(crate) tx_full: bool,
 }
 
 #[cfg(feature = "defmt")]
@@ -178,12 +255,55 @@ impl defmt::Format for StatusFlags {
     }
 }
 
+impl StatusFlags {
+    /// A mask to isolate only the IRQ flags. Useful for STATUS and CONFIG registers.
+    pub(crate) const IRQ_MASK: u8 = 0x70;
+
+    /// A convenience constructor similar to [`StatusFlags::default`] except
+    /// all fields are set to `true`.
+    pub fn new() -> Self {
+        Self::from_bits(0x70)
+    }
+
+    /// A flag to describe if RX Data Ready to read.
+    pub fn with_rx_dr(self, flag: bool) -> Self {
+        let new_val = self.into_bits() & !(1 << Self::RX_DR_OFFSET);
+        if flag {
+            Self::from_bits(new_val | (1 << Self::RX_DR_OFFSET))
+        } else {
+            Self::from_bits(new_val)
+        }
+    }
+
+    /// A flag to describe if TX Data Sent.
+    pub fn with_tx_ds(self, flag: bool) -> Self {
+        let new_val = self.into_bits() & !(1 << Self::TX_DS_OFFSET);
+        if flag {
+            Self::from_bits(new_val | (1 << Self::TX_DS_OFFSET))
+        } else {
+            Self::from_bits(new_val)
+        }
+    }
+
+    /// A flag to describe if TX Data Failed.
+    pub fn with_tx_df(self, flag: bool) -> Self {
+        let new_val = self.into_bits() & !(1 << Self::TX_DF_OFFSET);
+        if flag {
+            Self::from_bits(new_val | (1 << Self::TX_DF_OFFSET))
+        } else {
+            Self::from_bits(new_val)
+        }
+    }
+}
+
 impl Display for StatusFlags {
     fn fmt(&self, f: &mut Formatter<'_>) -> Result {
         write!(
             f,
             "StatusFlags rx_dr: {}, tx_ds: {}, tx_df: {}",
-            self.rx_dr, self.tx_ds, self.tx_df
+            self.rx_dr(),
+            self.tx_ds(),
+            self.tx_df()
         )
     }
 }
@@ -289,5 +409,25 @@ mod test {
             format!("{}", StatusFlags::default()),
             String::from("StatusFlags rx_dr: false, tx_ds: false, tx_df: false")
         );
+    }
+
+    fn set_flags(rx_dr: bool, tx_ds: bool, tx_df: bool) {
+        let flags = StatusFlags::default()
+            .with_rx_dr(rx_dr)
+            .with_tx_ds(tx_ds)
+            .with_tx_df(tx_df);
+        assert_eq!(flags.rx_dr(), rx_dr);
+        assert_eq!(flags.tx_ds(), tx_ds);
+        assert_eq!(flags.tx_df(), tx_df);
+    }
+
+    #[test]
+    fn flags_0x50() {
+        set_flags(true, false, true);
+    }
+
+    #[test]
+    fn flags_0x20() {
+        set_flags(false, true, false);
     }
 }

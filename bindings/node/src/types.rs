@@ -3,6 +3,7 @@
 use napi::{JsNumber, Result};
 
 /// A private helper to implicitly convert JS numbers to boolean values (falling back to a `default` value)
+#[cfg_attr(not(target_os = "linux"), allow(dead_code))]
 pub fn coerce_to_bool(napi_instance: Option<JsNumber>, default: bool) -> Result<bool> {
     if let Some(napi_value) = napi_instance {
         return napi_value.coerce_to_bool()?.get_value();
@@ -66,18 +67,18 @@ pub struct StatusFlags {
 #[cfg(target_os = "linux")]
 impl StatusFlags {
     pub fn into_inner(self) -> rf24::StatusFlags {
-        rf24::StatusFlags {
-            rx_dr: self.rx_dr.unwrap_or_default(),
-            tx_ds: self.tx_ds.unwrap_or_default(),
-            tx_df: self.tx_df.unwrap_or_default(),
-        }
+        rf24::StatusFlags::from_bits(
+            ((self.rx_dr.unwrap_or_default() as u8) << 7)
+                | ((self.tx_ds.unwrap_or_default() as u8) << 6)
+                | ((self.tx_df.unwrap_or_default() as u8) << 5),
+        )
     }
 
     pub fn from_inner(other: rf24::StatusFlags) -> Self {
         Self {
-            rx_dr: Some(other.rx_dr),
-            tx_ds: Some(other.tx_ds),
-            tx_df: Some(other.tx_df),
+            rx_dr: Some(other.rx_dr()),
+            tx_ds: Some(other.tx_ds()),
+            tx_df: Some(other.tx_df()),
         }
     }
 }

@@ -52,10 +52,10 @@ class App:
         self.radio.pa_level = PaLevel.Low  # PaLevel.Max is default
 
         # ACK payloads are dynamically sized, so we need to enable that feature also
-        self.radio.set_dynamic_payloads(True)
+        self.radio.dynamic_payloads = True
 
         # to enable the custom ACK payload feature
-        self.radio.allow_ack_payloads(True)
+        self.radio.ack_payloads = True
 
         # set TX address of RX node into the TX pipe
         self.radio.open_tx_pipe(address[radio_number])  # always uses pipe 0

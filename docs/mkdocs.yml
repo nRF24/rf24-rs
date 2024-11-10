@@ -13,6 +13,7 @@ nav:
     - node-api/README.md
     - Classes:
       - node-api/classes/RF24.md
+      - node-api/classes/RadioConfig.md
     - Enumerations:
       - node-api/enumerations/CrcLength.md
       - node-api/enumerations/DataRate.md
@@ -28,6 +29,7 @@ nav:
     - Classes:
       - python-api/classes/RF24.md
       - python-api/classes/status-flags.md
+      - python-api/classes/config.md
     - Enumerations:
       - python-api/enumerations/crc-length.md
       - python-api/enumerations/data-rate.md
@@ -136,3 +138,4 @@ markdown_extensions:
   - attr_list
   - admonition
   - markdown_gfm_admonition
+  - footnotes

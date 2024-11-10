@@ -1,6 +1,6 @@
 use embedded_hal::{delay::DelayNs, digital::OutputPin, spi::SpiDevice};
 
-use super::registers;
+use super::{registers, Config};
 use crate::radio::{prelude::EsbCrcLength, Nrf24Error, RF24};
 use crate::CrcLength;
 
@@ -14,26 +14,17 @@ where
 
     fn get_crc_length(&mut self) -> Result<CrcLength, Self::CrcLengthErrorType> {
         self.spi_read(1, registers::CONFIG)?;
-        let crc_bin = (self._buf[1] & (3 << 2)) >> 2;
-        match crc_bin {
-            0 => Ok(CrcLength::Disabled),
-            2 => Ok(CrcLength::Bit8),
-            3 => Ok(CrcLength::Bit16),
-            _ => Err(Nrf24Error::BinaryCorruption),
+        if self._buf[1] & 12 == 4 {
+            return Err(Nrf24Error::BinaryCorruption);
         }
+        self._config_reg = Config::from_bits(self._buf[1]);
+        Ok(self._config_reg.crc_length())
     }
 
     fn set_crc_length(&mut self, crc_length: CrcLength) -> Result<(), Self::CrcLengthErrorType> {
-        let crc_bin = {
-            match crc_length {
-                CrcLength::Disabled => 0u8,
-                CrcLength::Bit8 => 2u8,
-                CrcLength::Bit16 => 3u8,
-            }
-        } << 2;
         self.spi_read(1, registers::CONFIG)?;
-        let out = self._buf[1] & !(3 << 2) | crc_bin;
-        self.spi_write_byte(registers::CONFIG, out)
+        self._config_reg = self._config_reg.with_crc_length(crc_length);
+        self.spi_write_byte(registers::CONFIG, self._config_reg.into_bits())
     }
 }
 

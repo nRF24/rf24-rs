@@ -18,12 +18,12 @@ where
         }
 
         if pipe < 2 {
-            // Clamp the address length used: min(self._addr_length, address.len());
+            // Clamp the address length used: min(self._address_length, address.len());
             // This means that we only write the bytes that were passed
-            let width = address.len().min(self._addr_length as usize);
+            let width = address.len().min(self._feature.address_length() as usize);
 
             // If this is pipe 0, cache the address.  This is needed because
-            // open_writing_pipe() will overwrite the pipe 0 address, so
+            // open_tx_pipe() will overwrite the pipe 0 address, so
             // as_rx() will have to restore it.
             if pipe == 0 {
                 let mut cached_addr = self._pipe0_rx_addr.unwrap_or_default();
@@ -62,21 +62,17 @@ where
     }
 
     fn set_address_length(&mut self, length: u8) -> Result<(), Self::PipeErrorType> {
-        let width = match length {
-            2 => 0,
-            3 => 1,
-            4 => 2,
-            _ => 3,
-        };
-        self.spi_write_byte(registers::SETUP_AW, width)?;
-        self._addr_length = width + 2;
+        let width = length.clamp(2, 5);
+        self.spi_write_byte(registers::SETUP_AW, width - 2)?;
+        self._feature.set_address_length(width);
         Ok(())
     }
 
     fn get_address_length(&mut self) -> Result<u8, Self::PipeErrorType> {
         self.spi_read(1, registers::SETUP_AW)?;
-        self._addr_length = self._buf[1] + 2;
-        Ok(self._addr_length)
+        let addr_length = self._buf[1].min(0xFD) + 2;
+        self._feature.set_address_length(addr_length);
+        Ok(addr_length)
     }
 }
 

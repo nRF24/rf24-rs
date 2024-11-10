@@ -23,7 +23,7 @@ where
             // RX FIFO is not empty
             // get last used pipe
             self.spi_read(0, commands::NOP)?;
-            *pipe = &self._status >> 1 & 7;
+            *pipe = self._status.rx_pipe();
             return Ok(true);
         }
         Ok(false)

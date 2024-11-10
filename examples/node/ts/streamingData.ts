@@ -46,7 +46,7 @@ export class App {
 
     // set the Power Amplifier level to -12 dBm since this test example is
     // usually run with nRF24L01 transceivers in close proximity of each other
-    this.radio.setPaLevel(PaLevel.Low); // PaLevel.Max is default
+    this.radio.paLevel = PaLevel.Low; // PaLevel.Max is default
   }
 
   makePayloads(size: number) {
@@ -78,7 +78,7 @@ export class App {
     const payloads = this.makePayloads(payloadSize);
     // save on transmission time by setting the radio to only transmit the
     // number of bytes we need to transmit
-    this.radio.setPayloadLength(payloadSize); // default is the maximum 32 bytes
+    this.radio.payloadLength = payloadSize; // default is the maximum 32 bytes
 
     this.radio.asTx(); // put radio into TX mode
     for (let cnt = 0; cnt < (count || 1); cnt++) {
@@ -134,7 +134,7 @@ export class App {
    * @param size The number of bytes in each payload
    */
   rx(duration?: number, size?: number) {
-    this.radio.setPayloadLength(Math.max(Math.min(size || 32, 32), 6));
+    this.radio.payloadLength = Math.max(Math.min(size || 32, 32), 6);
     let count = 0;
     this.radio.asRx();
     let timeout = Date.now() + (duration || 6) * 1000;

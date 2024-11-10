@@ -5,7 +5,7 @@ use crate::{
     types::StatusFlags,
 };
 
-use super::{commands, mnemonics, registers};
+use super::{commands, registers, Config};
 
 impl<SPI, DO, DELAY> EsbStatus for RF24<SPI, DO, DELAY>
 where
@@ -15,42 +15,15 @@ where
 {
     type StatusErrorType = Nrf24Error<SPI::Error, DO::Error>;
 
-    fn set_status_flags(
-        &mut self,
-        flags: Option<StatusFlags>,
-    ) -> Result<(), Self::StatusErrorType> {
-        let flags = flags.unwrap_or(StatusFlags {
-            rx_dr: true,
-            tx_ds: true,
-            tx_df: true,
-        });
+    fn set_status_flags(&mut self, flags: StatusFlags) -> Result<(), Self::StatusErrorType> {
         self.spi_read(1, registers::CONFIG)?;
-        self._config_reg = self._buf[1] & 0x0F;
-        if !flags.rx_dr {
-            self._config_reg |= mnemonics::MASK_RX_DR;
-        }
-        if !flags.tx_ds {
-            self._config_reg |= mnemonics::MASK_TX_DS;
-        }
-        if !flags.tx_df {
-            self._config_reg |= mnemonics::MASK_MAX_RT;
-        }
-        self.spi_write_byte(registers::CONFIG, self._config_reg)
+        self._config_reg =
+            Config::from_bits(self._buf[1] & 0x0F | (!flags.into_bits() & StatusFlags::IRQ_MASK));
+        self.spi_write_byte(registers::CONFIG, self._config_reg.into_bits())
     }
 
-    fn clear_status_flags(
-        &mut self,
-        flags: Option<StatusFlags>,
-    ) -> Result<(), Self::StatusErrorType> {
-        let flags = flags.unwrap_or(StatusFlags {
-            rx_dr: true,
-            tx_ds: true,
-            tx_df: true,
-        });
-        let new_config = (mnemonics::MASK_RX_DR * (flags.rx_dr as u8))
-            | (mnemonics::MASK_TX_DS * (flags.tx_ds as u8))
-            | (mnemonics::MASK_MAX_RT * (flags.tx_df as u8));
-        self.spi_write_byte(registers::STATUS, new_config)
+    fn clear_status_flags(&mut self, flags: StatusFlags) -> Result<(), Self::StatusErrorType> {
+        self.spi_write_byte(registers::STATUS, flags.into_bits() & StatusFlags::IRQ_MASK)
     }
 
     fn update(&mut self) -> Result<(), Self::StatusErrorType> {
@@ -58,9 +31,7 @@ where
     }
 
     fn get_status_flags(&self, flags: &mut StatusFlags) {
-        flags.rx_dr = (self._status & mnemonics::MASK_RX_DR) > 0;
-        flags.tx_ds = (self._status & mnemonics::MASK_TX_DS) > 0;
-        flags.tx_df = (self._status & mnemonics::MASK_MAX_RT) > 0;
+        *flags = self._status;
     }
 }
 
@@ -98,9 +69,9 @@ mod test {
         radio.update().unwrap();
         let mut flags = StatusFlags::default();
         radio.get_status_flags(&mut flags);
-        assert!(flags.rx_dr);
-        assert!(flags.tx_ds);
-        assert!(flags.tx_df);
+        assert!(flags.rx_dr());
+        assert!(flags.tx_ds());
+        assert!(flags.tx_df());
         spi_mock.done();
         pin_mock.done();
     }
@@ -125,9 +96,7 @@ mod test {
         ];
         let mut spi_mock = SpiMock::new(&spi_expectations);
         let mut radio = RF24::new(pin_mock.clone(), spi_mock.clone(), delay_mock);
-        radio
-            .set_status_flags(Some(StatusFlags::default()))
-            .unwrap();
+        radio.set_status_flags(StatusFlags::default()).unwrap();
         spi_mock.done();
         pin_mock.done();
     }

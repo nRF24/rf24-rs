@@ -4,6 +4,17 @@ use super::registers;
 use crate::radio::{prelude::EsbDataRate, Nrf24Error, RF24};
 use crate::DataRate;
 
+/// A function to set the [`RF24::tx_delay`] in accordance with the desired [`DataRate`].
+///
+/// This function is only public to the crate::radio::rf24 module.
+pub(super) fn set_tx_delay(data_rate: DataRate) -> u32 {
+    match data_rate {
+        DataRate::Mbps1 => 280,
+        DataRate::Mbps2 => 240,
+        DataRate::Kbps250 => 505,
+    }
+}
+
 impl<SPI, DO, DELAY> EsbDataRate for RF24<SPI, DO, DELAY>
 where
     SPI: SpiDevice,
@@ -14,32 +25,16 @@ where
 
     fn get_data_rate(&mut self) -> Result<DataRate, Self::DataRateErrorType> {
         self.spi_read(1, registers::RF_SETUP)?;
-        let da_bin = self._buf[1] >> 3 & 5;
-        match da_bin {
-            0 => Ok(DataRate::Mbps1),
-            1 => Ok(DataRate::Mbps2),
-            4 => Ok(DataRate::Kbps250),
-            _ => Err(Nrf24Error::BinaryCorruption),
+        let da_bin = self._buf[1] & (0x28);
+        if da_bin == 0x28 {
+            return Err(Nrf24Error::BinaryCorruption);
         }
+        Ok(DataRate::from_bits(da_bin))
     }
 
     fn set_data_rate(&mut self, data_rate: DataRate) -> Result<(), Self::DataRateErrorType> {
-        let da_bin = {
-            match data_rate {
-                DataRate::Mbps1 => {
-                    self._tx_delay = 280;
-                    0u8
-                }
-                DataRate::Mbps2 => {
-                    self._tx_delay = 240;
-                    1u8
-                }
-                DataRate::Kbps250 => {
-                    self._tx_delay = 505;
-                    4u8
-                }
-            }
-        } << 3;
+        self.tx_delay = set_tx_delay(data_rate);
+        let da_bin = data_rate.into_bits();
         self.spi_read(1, registers::RF_SETUP)?;
         let out = self._buf[1] & !0x28 | da_bin;
         self.spi_write_byte(registers::RF_SETUP, out)

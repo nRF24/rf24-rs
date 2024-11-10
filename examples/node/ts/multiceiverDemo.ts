@@ -47,13 +47,13 @@ export class App {
 
     // set the Power Amplifier level to -12 dBm since this test example is
     // usually run with nRF24L01 transceivers in close proximity of each other
-    this.radio.setPaLevel(PaLevel.Low); // PaLevel.Max is default
+    this.radio.paLevel = PaLevel.Low; // PaLevel.Max is default
 
     // To save time during transmission, we'll set the payload size to be only what
     // we need. A 32-bit integer value occupies 4 bytes in memory (using little-endian).
     // We'll be transmitting 2 integers for each payload.
     const payloadLength = 8;
-    this.radio.setPayloadLength(payloadLength);
+    this.radio.payloadLength = payloadLength;
     // we'll use a buffer to store the transmitting node ID and payload ID
     this.payload = Buffer.alloc(payloadLength);
     this.payload.writeInt32LE(0, 0); // init mode ID

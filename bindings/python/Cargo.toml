@@ -13,6 +13,7 @@ name = "rf24_py"
 crate-type = ["cdylib"]
 
 [dependencies]
+embedded-hal = "1.0.0"
 pyo3 = {version = "0.22.5", features = ["extension-module"]}
 
 [target.'cfg(target_os = "linux")'.dependencies]

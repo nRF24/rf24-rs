@@ -44,18 +44,16 @@ impl StatusFlags {
 #[cfg(target_os = "linux")]
 impl StatusFlags {
     pub fn into_inner(self) -> rf24::StatusFlags {
-        rf24::StatusFlags {
-            rx_dr: self.rx_dr,
-            tx_ds: self.tx_ds,
-            tx_df: self.tx_df,
-        }
+        rf24::StatusFlags::from_bits(
+            ((self.rx_dr as u8) << 7) | ((self.tx_ds as u8) << 6) | ((self.tx_df as u8) << 5),
+        )
     }
 
     pub fn from_inner(other: rf24::StatusFlags) -> Self {
         Self {
-            rx_dr: other.rx_dr,
-            tx_ds: other.tx_ds,
-            tx_df: other.tx_df,
+            rx_dr: other.rx_dr(),
+            tx_ds: other.tx_ds(),
+            tx_df: other.tx_df(),
         }
     }
 }
