@@ -27,6 +27,7 @@ words:
   - fontawesome
   - gnueabihf
   - gpio
+  - gpiocdev
   - gpiochip
   - gpiod
   - HLINE
@@ -42,6 +43,8 @@ words:
   - mosi
   - msvc
   - musleabihf
+  - nanos
+  - nanosleep
   - napi
   - nocbreak
   - noecho

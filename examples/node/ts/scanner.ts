@@ -117,7 +117,7 @@ export class App {
         channel = 0;
         sweeps += 1;
       }
-      if (sweeps > 15) {
+      if (sweeps >= 15) {
         endl = true;
         sweeps = 0;
         // reset total signal counts for all channels

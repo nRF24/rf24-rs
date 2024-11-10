@@ -1,20 +1,36 @@
 #![cfg(target_os = "linux")]
 use std::borrow::Cow;
+use std::time::Duration;
 
 use crate::config::RadioConfig;
 use crate::types::{CrcLength, DataRate, FifoState, PaLevel, StatusFlags};
-use embedded_hal::digital::OutputPin;
+use embedded_hal::{delay::DelayNs, digital::OutputPin};
 use linux_embedded_hal::{
     gpio_cdev::{chips, LineRequestFlags},
     spidev::{SpiModeFlags, SpidevOptions},
-    CdevPin, Delay, SpidevDevice,
+    CdevPin, SpidevDevice,
 };
+use nix::sys::time::TimeSpec;
+use nix::time::{clock_nanosleep, ClockId, ClockNanosleepFlags};
 
 use pyo3::{
     exceptions::{PyOSError, PyRuntimeError, PyValueError},
     prelude::*,
 };
 use rf24::radio::prelude::*;
+
+struct Delay;
+
+impl DelayNs for Delay {
+    fn delay_ns(&mut self, ns: u32) {
+        clock_nanosleep(
+            ClockId::CLOCK_REALTIME,
+            ClockNanosleepFlags::empty(),
+            &TimeSpec::from_duration(Duration::from_nanos(ns as u64)),
+        )
+        .unwrap_or_else(|e| panic!("delay_ns({ns}) failed. {e:?}"));
+    }
+}
 
 /// Construct an object to control the radio.
 ///
@@ -91,12 +107,12 @@ impl RF24 {
                 )
             )
             })?;
-        let config = SpidevOptions::new()
+        let spi_config = SpidevOptions::new()
             .max_speed_hz(spi_speed)
             .mode(SpiModeFlags::SPI_MODE_0)
             .bits_per_word(8)
             .build();
-        spi.configure(&config)
+        spi.configure(&spi_config)
             .map_err(|e| PyOSError::new_err(format!("{e:?}")))?;
 
         Ok(Self {

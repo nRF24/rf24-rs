@@ -1,21 +1,38 @@
 #![cfg(target_os = "linux")]
 
+use std::time::Duration;
+
 use crate::config::RadioConfig;
 use crate::types::{
     coerce_to_bool, AvailablePipe, CrcLength, DataRate, FifoState, HardwareConfig, PaLevel,
     StatusFlags, WriteConfig,
 };
 
-use embedded_hal::digital::OutputPin;
+use embedded_hal::{delay::DelayNs, digital::OutputPin};
 use linux_embedded_hal::{
     gpio_cdev::{chips, LineRequestFlags},
     spidev::{SpiModeFlags, SpidevOptions},
-    CdevPin, Delay, SpidevDevice,
+    CdevPin, SpidevDevice,
 };
+use nix::sys::time::TimeSpec;
+use nix::time::{clock_nanosleep, ClockId, ClockNanosleepFlags};
 
 use napi::{bindgen_prelude::Buffer, Error, JsNumber, Result, Status};
 
 use rf24::radio::prelude::*;
+
+struct Delay;
+
+impl DelayNs for Delay {
+    fn delay_ns(&mut self, ns: u32) {
+        clock_nanosleep(
+            ClockId::CLOCK_REALTIME,
+            ClockNanosleepFlags::empty(),
+            &TimeSpec::from_duration(Duration::from_nanos(ns as u64)),
+        )
+        .unwrap_or_else(|e| panic!("delay_ns({ns}) failed. {e:?}"));
+    }
+}
 
 /// This class provides the user facing API to interact with a nRF24L01 transceiver.
 #[napi(js_name = "RF24")]
