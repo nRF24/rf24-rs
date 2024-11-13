@@ -1,6 +1,7 @@
 import * as readline from "readline/promises";
 import * as fs from "fs";
 import * as timer from "timers/promises";
+import * as colors from "ansi-colors";
 import { RF24, CrcLength, DataRate, FifoState } from "@rf24/rf24";
 
 const io = readline.createInterface({
@@ -83,6 +84,21 @@ export class App {
   }
 
   /**
+   * Print a colored hexadecimal digit to represent the `total` signal count for a single channel.
+   */
+  print_signals(total: number) {
+    if (total == 0) {
+      process.stdout.write("-");
+    } else if (total < 5) {
+      process.stdout.write(colors.green(total.toString(16).toUpperCase()));
+    } else if (total < 10) {
+      process.stdout.write(colors.yellow(total.toString(16).toUpperCase()));
+    } else {
+      process.stdout.write(colors.red(total.toString(16).toUpperCase()));
+    }
+  }
+
+  /**
    * The scanner behavior.
    */
   async scan(duration?: number) {
@@ -109,7 +125,7 @@ export class App {
         this.radio.flushRx(); // discard any packets (noise) saved in RX FIFO
       }
       const total = caches[channel];
-      process.stdout.write(total > 0 ? total.toString(16) : "-");
+      this.print_signals(total);
 
       channel += 1;
       let endl = false;
@@ -133,7 +149,7 @@ export class App {
     // finish printing current cache of signals
     for (let i = channel; i < CHANNELS; i++) {
       const total = caches[i];
-      process.stdout.write(total > 0 ? total.toString(16) : "-");
+      this.print_signals(total);
     }
   }
 
