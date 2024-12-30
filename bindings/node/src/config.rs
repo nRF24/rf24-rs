@@ -172,8 +172,8 @@ impl RadioConfig {
     ///
     /// To enable the feature for pipes 0, 1 and 4:
     /// ```js
-    /// let config = RadioConfig()
-    /// config.auto_ack = 0b010011
+    /// let config = new RadioConfig();
+    /// config.auto_ack = 0b010011;
     /// ```
     /// If enabling the feature for any pipe other than 0, then the pipe 0 should also have the
     /// feature enabled because pipe 0 is used to transmit automatic ACK packets in RX mode.

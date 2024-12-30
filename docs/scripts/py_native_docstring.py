@@ -13,6 +13,7 @@ which requires a Linux to compile.
 """
 
 import ast
+from typing import cast
 import griffe
 import importlib
 import logging
@@ -34,7 +35,7 @@ def elide_signature_from_docstring(docstring: str) -> str:
     return "\n".join(lines[start:])
 
 
-def inject_docstring(node: ast.AST, native_doc: str | None):
+def inject_docstring(node: ast.FunctionDef | ast.ClassDef, native_doc: str):
     """Inject a given `native_docstring` into the AST node's body.
 
     Tested only with ClassDef and FunctionDef AST nodes.
@@ -48,15 +49,17 @@ def inject_docstring(node: ast.AST, native_doc: str | None):
         wrapper_node = ast.Expr(new_node)
         ast.copy_location(wrapper_node, node)
         node.body.insert(0, wrapper_node)
-    elif node.body[0].value.value != native_doc:
-        node.body[0].value.value = native_doc + docstring
+    elif cast(ast.Constant, cast(ast.Expr, node.body[0]).value).value != native_doc:
+        cast(ast.Constant, cast(ast.Expr, node.body[0]).value).value = (
+            native_doc + docstring
+        )
 
 
 class NativeDocstring(griffe.Extension):
     def __init__(self):
         self.native = importlib.import_module("rf24_py")
 
-    def on_class_node(
+    def on_class_node(  # type: ignore[override]
         self,
         node: ast.ClassDef | griffe.ObjectNode,
         agent: griffe.Visitor | griffe.Inspector,
@@ -76,7 +79,7 @@ class NativeDocstring(griffe.Extension):
         # print(f"Amending docstring for rf24_py.{node.name}")
         inject_docstring(node, native_doc)
 
-    def on_function_node(
+    def on_function_node(  # type: ignore[override]
         self,
         node: ast.FunctionDef | griffe.ObjectNode,
         agent: griffe.Visitor | griffe.Inspector,
@@ -84,12 +87,12 @@ class NativeDocstring(griffe.Extension):
         """Prepend a docstring from the native module"""
         if isinstance(node, griffe.ObjectNode):
             return  # any docstring fetched from pure python should be adequate
-        if not isinstance(node.parent, ast.ClassDef):
+        if not isinstance(node.parent, ast.ClassDef):  # type: ignore[attr-defined]
             return  # we're only concerned with class methods here
-        func_parent = node.parent
+        func_parent = node.parent  # type: ignore[attr-defined]
         native_cls = getattr(self.native, func_parent.name)
         native_obj = getattr(native_cls, node.name)
-        native_doc: str | None = native_obj.__doc__
+        native_doc: str = native_obj.__doc__ or ""
         if node.decorator_list:
             for dec in node.decorator_list:
                 if isinstance(dec, ast.Name) and dec.id == "property":

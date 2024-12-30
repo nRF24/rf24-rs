@@ -5,7 +5,7 @@ use rf24::radio::EsbConfig;
 
 use std::borrow::Cow;
 
-/// Instantiate a [`RadioConfig`] object with library defaults.
+/// Instantiate a [`RadioConfig`][rf24_py.RadioConfig] object with library defaults.
 ///
 /// | feature | default value |
 /// |--------:|:--------------|

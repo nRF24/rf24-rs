@@ -26,19 +26,20 @@ If dynamic payloads are enabled then setting static payload size has no affect.
 
 ## STATUS byte exposed
 
-As with our other implementations, the STATUS byte returned on every SPI transaction is cached to a private member. Understanding the meaning of the status byte is publicly exposed via
+As with our other implementations, the STATUS byte returned on every SPI transaction is cached to a private member.
+Understanding the meaning of the status byte is publicly exposed via
 
 - `update()`: used to get an update about the status flags from the radio.
-- `clear_status_flags()`: with parameters to specify which flag(s) should be cleared.
-- `get_status_flags()`: has a signature similar to C++ `whatHappened()` but does not update nor clear the flags.
+- `clear_status_flags()`: used to specify which flag(s) should be cleared.
+- `get_status_flags()`: similar to C++ `whatHappened()` but does not update nor clear the flags.
 - `set_status_flags()`: similar to C++ `maskIRQ()` except the boolean parameters' meaning is not reversed.
 
     | lang | only trigger on RX_DR events |
     |:----:|:-----------------------------|
     | C++  | `radio.maskIRQ(false, true, true)` |
-    | Rust | `radio.set_status_flags(true, false, false)` |
+    | Rust | `radio.set_status_flags(StatusFlags::default().with_rx_dr(true)` |
 
-    In this library, passing `true` to any parameter of `set_stats_flags()` will enable the IRQ for the corresponding event (see function's documentation).
+In this library, setting and getting the status flags is done with a `StatusFlags` object.
 
 ## No babysitting
 
@@ -47,7 +48,9 @@ To transmit something, RF24 struct offers
 - `send()`: blocking wrapper around `write()`
 - `write()`: non-blocking uploads to TX FIFO.
 
-   Use `update()` and `get_status_flags()` get the updated status flags to determine if transmission was successful or not. The IRQ pin can also be used to trigger calls to `update()` + `get_status_flags()`. See `set_status_flags()` about configuring the IRQ pin.
+   Use `update()` and `get_status_flags()` to determine if transmission was successful or not.
+   The IRQ pin can also be used to trigger calls to `update()` + `get_status_flags()`.
+   See `set_status_flags()` about configuring the IRQ pin.
 
 There will be no equivalents to C++ `writeBlocking()`, `startFastWrite()`, `writeFast()`, `txStandby()`.
 Considering the exposed STATUS byte, these can all be done from the user space (if needed).
@@ -56,13 +59,7 @@ Additionally, `send()` does _**not**_ implement a timeout.
 Every member function in the `RF24` struct (except the `new()`) returns a [`Result`][result],
 so problems with the SPI connections should be detected early in the app lifecycle.
 The rustc compiler will warn users about unhandled [`Result`][result]s.
-
-As an alternative, I've been considering an optional `irq_pin` parameter to the constructor.
-If specified in user code, then `send()` shall wait for the IRQ pin to become active instead of pinging the radio's STATUS byte over SPI.
-
-> [!TIP]
-> Rust does offer a way to overload functions using [traits] (feature akin to C++ templates),
-> but it isn't traditionally relied upon in a public API.
+In the Python and Node.js bindings, an exception is thrown when hardware misbehavior is detected.
 
 ## API structure
 
@@ -77,9 +74,9 @@ flowchart TD
     esb("EsbRadio (trait)") --> RF24
     esb --> nrf51{{RF51}}
     esb --> nrf52{{RF52}}
-    esb--> ble{{FakeBle}}
     end
 
+    RF24 --> ble{{FakeBle}}
     radio --> net{{RF24Network}}
     net --> mesh{{RF24Mesh}}
 ```

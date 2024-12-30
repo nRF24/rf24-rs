@@ -12,8 +12,8 @@ from mkdocs.structure.pages import Page
 from mkdocs.structure.files import Files
 from mkdocs.config.defaults import MkDocsConfig
 
-DEFINED_IN_PATTERN = re.compile(r"#### Defined in\n\nindex\.d\.ts\:\d+")
-SECTIONS_PATTERN = re.compile(r"#### (Parameters|Returns|Throws)")
+DEFINED_IN_PATTERN = re.compile(r"#+ Defined in\n\nindex\.d\.ts\:\d+")
+SECTIONS_PATTERN = re.compile(r"#+ (Parameters|Returns|Throws)")
 LIST_MARKER_PATTERN = re.compile("^• ", re.MULTILINE)
 GROUP_API_PATTERN = re.compile(r"^## \w+\s*$", re.MULTILINE)
 
