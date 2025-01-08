@@ -64,4 +64,5 @@ See the examples in the repository's [examples/rust](https://github.com/nRF24/rf
 - [`RF24`][rf24-struct]`::`[`is_powered()`](fn@crate::radio::prelude::EsbPower::is_powered)
 - [`RF24`][rf24-struct]`::`[`power_up()`](fn@crate::radio::prelude::EsbPower::power_up)
 - [`RF24`][rf24-struct]`::`[`power_down()`](fn@crate::radio::prelude::EsbPower::power_down)
+- [`RF24::tx_delay`](value@crate::radio::RF24::tx_delay)
 - [`RF24::is_plus_variant()`](fn@crate::radio::RF24::is_plus_variant)

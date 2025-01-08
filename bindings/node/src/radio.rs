@@ -863,6 +863,38 @@ impl RF24 {
             .map_err(|e| Error::new(Status::GenericFailure, format!("{e:?}")))
     }
 
+    /// @group Configuration
+    #[napi(getter, js_name = "txDelay")]
+    pub fn get_tx_delay(&self) -> u32 {
+        self.inner.tx_delay
+    }
+
+    /// The driver will delay for this duration (32 bit unsigned int of microseconds)
+    /// when {@link RF24.asTx | `asTx`} is called.
+    ///
+    /// If the auto-ack feature is disabled, then this can be set as low as 0.
+    /// If the auto-ack feature is enabled, then set to 100 microseconds minimum on
+    /// generally faster devices (like RPi).
+    ///
+    /// This value cannot be negative.
+    ///
+    /// Since this value can be optimized per the radio's data rate, this value is
+    /// automatically adjusted when changing
+    /// {@link RF24.dataRate | `dataRate`}.
+    /// If setting this to a custom value be sure, to set it *after*
+    /// changing the radio's data rate.
+    ///
+    /// > [!WARNING]
+    /// > If set to 0, ensure 130 microsecond delay
+    /// > after calling {@link RF24.asTx | `asTx`}
+    /// > and before transmitting.
+    ///
+    /// @group Configuration
+    #[napi(setter, js_name = "txDelay")]
+    pub fn set_tx_delay(&mut self, value: u32) -> () {
+        self.inner.tx_delay = value;
+    }
+
     /// Configure the IRQ pin to reflect the specified {@link StatusFlags | `StatusFlags`}.
     ///
     /// @param flags - If no value is given, then all flags are reflected by the IRQ pin.

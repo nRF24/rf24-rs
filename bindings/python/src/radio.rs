@@ -738,6 +738,35 @@ impl RF24 {
             .map_err(|e| PyRuntimeError::new_err(format!("{e:?}")))
     }
 
+    /// The driver will delay for this duration (32 bit unsigned int of microseconds)
+    /// when [`as_tx()`][rf24_py.RF24.as_tx] is called.
+    ///
+    /// If the auto-ack feature is disabled, then this can be set as low as 0.
+    /// If the auto-ack feature is enabled, then set to 100 microseconds minimum on
+    /// generally faster devices (like RPi).
+    ///
+    /// This value cannot be negative.
+    ///
+    /// Since this value can be optimized per the radio's data rate, this value is
+    /// automatically adjusted when changing
+    /// [`data_rate`][rf24_py.RF24.data_rate].
+    /// If setting this to a custom value be sure, to set it *after*
+    /// changing the radio's data rate.
+    ///
+    /// Warning:
+    ///     If set to 0, ensure 130 microsecond delay
+    ///     after calling [`as_tx()`][rf24_py.RF24.as_tx]
+    ///     and before transmitting.
+    #[setter]
+    pub fn set_tx_delay(&mut self, value: u32) -> () {
+        self.inner.tx_delay = value;
+    }
+
+    #[getter]
+    pub fn get_tx_delay(&self) -> u32 {
+        self.inner.tx_delay
+    }
+
     /// Configure the IRQ pin to reflect the specified [`StatusFlags`][rf24_py.StatusFlags].
     ///
     /// Other Parameters:

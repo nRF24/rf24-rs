@@ -48,8 +48,24 @@ pub struct RF24<SPI, DO, DELAY> {
     /// The delay (in microseconds) in which [`RF24::as_rx()`] will wait for
     /// ACK packets to complete.
     ///
-    /// This value is automatically adjusted when calling
+    /// If the auto-ack feature is disabled, then this can be set as low as 0.
+    /// If the auto-ack feature is enabled, then set to 100 microseconds minimum on
+    /// generally faster devices (like RPi).
+    ///
+    /// Since this value can be optimized per the radio's data rate, this value is
+    /// automatically adjusted when calling
     /// [`EsbDataRate::set_data_rate()`](fn@crate::radio::prelude::EsbDataRate::set_data_rate).
+    /// If setting this to a custom value be sure, to set it *after*
+    /// changing the radio's data rate.
+    ///
+    /// <div class="warning">
+    ///
+    /// If set to 0, ensure 130 microsecond delay
+    /// after calling [`RF24::as_rx()`]
+    /// and before transmitting.
+    ///
+    /// </div>
+    ///
     pub tx_delay: u32,
     _spi: SPI,
     /// The CE pin for the radio.
