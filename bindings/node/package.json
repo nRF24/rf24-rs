@@ -26,8 +26,8 @@
   "license": "MIT",
   "devDependencies": {
     "@napi-rs/cli": "^2.18.4",
-    "@types/node": "^22.7.5",
-    "prettier": "3.3.3"
+    "@types/node": "^22.10.10",
+    "prettier": "3.4.2"
   },
   "engines": {
     "node": ">= 10"
