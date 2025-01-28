@@ -6,7 +6,6 @@ This example does not require a counterpart node.
 See documentation at https://nRF24.github.io/rf24-rs
 """
 
-from pathlib import Path
 import time
 from typing import Optional
 from rf24_py import RF24, CrcLength, FifoState
@@ -21,14 +20,7 @@ def hex_data_str(data: bytes) -> str:
 class App:
     def __init__(self) -> None:
         # The radio's CE Pin uses a GPIO number.
-        # On Linux, consider the device path `/dev/gpiochip<N>`:
-        #   - `<N>` is the gpio chip's identifying number.
-        #     Using RPi4 (or earlier), this number is `0` (the default).
-        #     Using the RPi5, this number is actually `4`.
-        # The radio's CE pin must connected to a pin exposed on the specified chip.
         ce_pin = 22  # for GPIO22
-        # try detecting RPi5 first; fall back to default
-        gpio_chip = 4 if Path("/dev/gpiochip4").exists() else 0
 
         # The radio's CSN Pin corresponds the SPI bus's CS pin (aka CE pin).
         # On Linux, consider the device path `/dev/spidev<a>.<b>`:
@@ -37,7 +29,7 @@ class App:
         csn_pin = 0  # aka CE0 for SPI bus 0 (/dev/spidev0.0)
 
         # create a radio object for the specified hardware config:
-        self.radio = RF24(ce_pin, csn_pin, dev_gpio_chip=gpio_chip)
+        self.radio = RF24(ce_pin, csn_pin)
 
         # initialize the nRF24L01 on the spi bus
         self.radio.begin()

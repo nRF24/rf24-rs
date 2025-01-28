@@ -1,5 +1,4 @@
 import * as readline from "readline/promises";
-import * as fs from "fs";
 import * as timer from "timers/promises";
 import { RF24, PaLevel } from "@rf24/rf24";
 
@@ -18,14 +17,7 @@ export class App {
    */
   constructor(radioNumber: number) {
     // The radio's CE Pin uses a GPIO number.
-    // On Linux, consider the device path `/dev/gpiochip<N>`:
-    //   - `<N>` is the gpio chip's identifying number.
-    //     Using RPi4 (or earlier), this number is `0` (the default).
-    //     Using the RPi5, this number is actually `4`.
-    // The radio's CE pin must connected to a pin exposed on the specified chip.
     const cePin = 22; // for GPIO22
-    // try detecting RPi5 first; fall back to default
-    const gpioChip = fs.existsSync("/dev/gpiochip4") ? 4 : 0;
 
     // The radio's CSN Pin corresponds the SPI bus's CS pin (aka CE pin).
     // On Linux, consider the device path `/dev/spidev<a>.<b>`:
@@ -34,9 +26,7 @@ export class App {
     const csnPin = 0; // aka CE0 for SPI bus 0 (/dev/spidev0.0)
 
     // create a radio object for the specified hardware config:
-    this.radio = new RF24(cePin, csnPin, {
-      devGpioChip: gpioChip,
-    });
+    this.radio = new RF24(cePin, csnPin);
 
     // initialize the nRF24L01 on the spi bus
     this.radio.begin();

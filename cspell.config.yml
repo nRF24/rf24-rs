@@ -42,6 +42,7 @@ words:
   - mkdocstrings
   - mosi
   - msvc
+  - multiceiver
   - musleabihf
   - nanos
   - nanosleep

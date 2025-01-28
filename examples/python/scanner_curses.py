@@ -7,7 +7,6 @@ See documentation at https://nRF24.github.io/rf24-rs
 """
 
 import curses
-from pathlib import Path
 import time
 from typing import List, Tuple
 from rf24_py import RF24, DataRate, CrcLength
@@ -21,8 +20,6 @@ print(__file__)  # print example name
 #     Using the RPi5, this number is actually `4`.
 # The radio's CE pin must connected to a pin exposed on the specified chip.
 CE_PIN = 22  # for GPIO22
-# try detecting RPi5 first; fall back to default
-DEV_GPIO_CHIP = 4 if Path("/dev/gpiochip4").exists() else 0
 
 # The radio's CSN Pin corresponds the SPI bus's CS pin (aka CE pin).
 # On Linux, consider the device path `/dev/spidev<a>.<b>`:
@@ -31,7 +28,7 @@ DEV_GPIO_CHIP = 4 if Path("/dev/gpiochip4").exists() else 0
 CSN_PIN = 0  # aka CE0 for SPI bus 0 (/dev/spidev0.0)
 
 # create a radio object for the specified hardware config:
-radio = RF24(CE_PIN, CSN_PIN, dev_gpio_chip=DEV_GPIO_CHIP)
+radio = RF24(CE_PIN, CSN_PIN)
 
 
 OFFERED_DATA_RATES = ["1 Mbps", "2 Mbps", "250 kbps"]
