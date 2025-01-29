@@ -19,6 +19,6 @@ napi-derive = "2.16.13"
 napi-build = "2.1.4"
 
 [target.'cfg(target_os = "linux")'.dependencies]
-linux-embedded-hal = "0.4.0"
+linux-embedded-hal = {version = "0.4.0", default-features = false, features = ["gpio_cdev", "spi"]}
 nix = { version = "0.29.0", features = ["time"]}
 rf24-rs = { path = "../../crates/rf24-rs", features = ["std"] }
