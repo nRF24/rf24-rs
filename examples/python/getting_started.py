@@ -87,8 +87,8 @@ class App:
         after 6 seconds of no received transmission."""
         self.radio.as_rx()  # put radio into RX mode and power up
 
-        start = time.monotonic()
-        while (time.monotonic() - start) < timeout:
+        end_time = time.monotonic() + timeout
+        while time.monotonic() < end_time:
             has_payload, pipe_number = self.radio.available_pipe()
             if has_payload:
                 # fetch 1 payload from RX FIFO
@@ -102,7 +102,7 @@ class App:
                 print(
                     f"Received {len(received)} bytes on pipe {pipe_number}: {self.payload}"
                 )
-                start = time.monotonic()  # reset the timeout timer
+                end_time = time.monotonic() + timeout  # reset the timeout timer
 
         # recommended behavior is to keep in TX mode while idle
         self.radio.as_tx()  # put the nRF24L01 is in TX mode

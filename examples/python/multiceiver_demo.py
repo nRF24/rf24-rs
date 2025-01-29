@@ -96,8 +96,8 @@ class App:
         for pipe, addr in enumerate(self.addresses):
             self.radio.open_rx_pipe(pipe, addr)
         self.radio.as_rx()  # put base station into RX mode
-        start_timer = time.monotonic()  # start timer
-        while time.monotonic() - start_timer < timeout:
+        end_time = time.monotonic() + timeout  # start timer
+        while time.monotonic() < end_time:
             has_payload, pipe_number = self.radio.available_pipe()
             if has_payload:
                 data = self.radio.read()
@@ -108,7 +108,7 @@ class App:
                     f"Received {len(data)} bytes on pipe {pipe_number} from node {node_id}.",
                     f"PayloadID: {payload_id}",
                 )
-                start_timer = time.monotonic()  # reset timer with every payload
+                end_time = time.monotonic() + timeout  # reset timer with every payload
         self.radio.as_tx()
 
     def set_role(self):

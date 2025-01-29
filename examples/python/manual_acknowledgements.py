@@ -116,8 +116,8 @@ class App:
         after 6 seconds of no received transmission"""
         self.radio.as_rx()  # put radio into RX mode and power up
 
-        start_timer = time.monotonic()  # start a timer to detect timeout
-        while (time.monotonic() - start_timer) < timeout:
+        end_time = time.monotonic() + timeout  # start a timer to detect timeout
+        while time.monotonic() < end_time:
             # receive payloads or wait 6 seconds till timing out
             has_payload, pipe_number = self.radio.available_pipe()
             if has_payload:
@@ -156,7 +156,7 @@ class App:
                 else:
                     self.radio.flush_tx()
                     print("Response failed or timed out")
-                start_timer = time.monotonic()  # reset the timeout timer
+                end_time = time.monotonic() + timeout  # reset the timeout timer
 
         # recommended behavior is to keep in TX mode while idle
         self.radio.as_tx()  # put the nRF24L01 into inactive TX mode

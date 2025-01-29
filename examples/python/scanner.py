@@ -13,10 +13,6 @@ from rf24_py import RF24, CrcLength, FifoState
 print(__file__)  # print example name
 
 
-def hex_data_str(data: bytes) -> str:
-    return " ".join(["%02x" % b for b in data])
-
-
 class App:
     def __init__(self) -> None:
         # The radio's CE Pin uses a GPIO number.
@@ -72,8 +68,8 @@ class App:
         signals = [0] * 126  # store the signal count for each channel
         sweeps = 0  # keep track of the number of sweeps made through all channels
         curr_channel = 0
-        start_timer = time.monotonic()  # start the timer
-        while time.monotonic() - start_timer < timeout:
+        end_time = time.monotonic() + timeout  # start the timer
+        while time.monotonic() < end_time:
             self.radio.channel = curr_channel
             self.radio.as_rx()  # start a RX session
             time.sleep(0.00013)  # wait 130 microseconds
@@ -118,6 +114,10 @@ class App:
         :param int channel: The specific channel to focus on. If not provided, then the
             radio's current setting is used.
         """
+
+        def hex_data_str(data: bytes) -> str:
+            return " ".join(["%02x" % b for b in data])
+
         if channel is not None:
             self.radio.channel = channel
         self.radio.as_rx()

@@ -128,14 +128,14 @@ class App:
 
         self.radio.as_rx()  # put radio into RX mode and power up
         count = 0  # keep track of the number of received payloads
-        start_timer = time.monotonic()  # start timer
-        while time.monotonic() < start_timer + timeout:
+        end_time = time.monotonic() + timeout  # start timer
+        while time.monotonic() < end_time:
             if self.radio.available():
                 count += 1
                 # retrieve the received packet's payload
                 receive_payload = self.radio.read(size)
                 print(f"Received: {repr(receive_payload)} - {count}")
-                start_timer = time.monotonic()  # reset timer on every RX payload
+                end_time = time.monotonic() + timeout  # reset timer on every RX payload
 
         # recommended behavior is to keep in TX mode while idle
         self.radio.as_tx()  # put the nRF24L01 is in TX mode

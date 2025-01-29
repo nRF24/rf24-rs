@@ -104,8 +104,8 @@ class App:
         # pipe number [0,5]
         self.radio.write_ack_payload(1, buffer)  # load ACK for first response
 
-        start = time.monotonic()  # start timer
-        while (time.monotonic() - start) < timeout:
+        end_time = time.monotonic() + timeout  # start timer
+        while time.monotonic() < end_time:
             has_payload, pipe_number = self.radio.available_pipe()
             if has_payload:
                 received = self.radio.read()  # fetch 1 payload from RX FIFO
@@ -114,7 +114,7 @@ class App:
                     f"{received[:6].decode('utf-8')}{received[7:8][0]} Sent:",
                     f"{buffer[:6].decode('utf-8')}{self.counter}",
                 )
-                start = time.monotonic()  # reset timer
+                end_time = time.monotonic() + timeout  # reset timer
 
                 # increment counter from received payload
                 self.counter = received[7:8][0] + 1

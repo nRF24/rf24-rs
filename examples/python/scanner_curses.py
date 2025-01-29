@@ -217,9 +217,9 @@ def main():
         std_scr.addstr(1, 0, "Signal counts are clamped to a single hexadecimal digit.")
         bars = init_display(std_scr)
         channel, val = (0, False)
-        end = time.monotonic() + duration
-        while time.monotonic() < end:
-            std_scr.addstr(2, 0, timer_prompt.format(int(end - time.monotonic())))
+        end_time = time.monotonic() + duration
+        while time.monotonic() < end_time:
+            std_scr.addstr(2, 0, timer_prompt.format(int(end_time - time.monotonic())))
             val = scan_channel(channel)
             cache_sum = stored[channel].push(val)
             if stored[channel].total:

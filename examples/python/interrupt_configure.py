@@ -185,10 +185,10 @@ class App:
         self.radio.write_ack_payload(1, self.ack_payloads[1])
         self.radio.write_ack_payload(1, self.ack_payloads[2])
         self.radio.as_rx()  # start listening & clear irq_dr flag
-        end_timer = time.monotonic() + timeout  # set end time
+        end_time = time.monotonic() + timeout  # set end time
         while (
             self.radio.get_fifo_state(False) != FifoState.Full
-            and time.monotonic() < end_timer
+            and time.monotonic() < end_time
         ):
             # if RX FIFO is not full and timeout is not reached, then keep waiting
             pass
