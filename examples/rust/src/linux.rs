@@ -9,10 +9,12 @@ pub struct BoardHardware {
     gpio: Chip,
 }
 
-#[cfg(target_os = "linux")]
+#[cfg(feature = "linux")]
 extern crate std;
-#[cfg(target_os = "linux")]
+#[cfg(feature = "linux")]
 use std::{format, string::ToString};
+#[cfg(feature = "linux")]
+pub use std::{print, println};
 
 impl BoardHardware {
     pub fn new(dev_gpio_chip: u8) -> Result<Self> {

@@ -1,18 +1,21 @@
 #![no_std]
 
 use core::{f32, time::Duration};
+use std::{io::Write, string::ToString};
 
 use anyhow::{anyhow, Result};
+use embedded_hal::delay::DelayNs;
 use rf24::{
     radio::{prelude::*, RF24},
     PaLevel,
 };
 #[cfg(feature = "linux")]
 use rf24_rs_examples::linux::{
-    BoardHardware, CdevPin as DigitalOutImpl, Delay as DelayImpl, SpidevDevice as SpiImpl,
+    print, println, BoardHardware, CdevPin as DigitalOutImpl, Delay as DelayImpl,
+    SpidevDevice as SpiImpl,
 };
-#[cfg(feature = "rp2040")]
-use rf24_rs_examples::rp2040::BoardHardware;
+#[cfg(feature = "linux")]
+extern crate std;
 
 /// A struct to drive our example app
 struct App {
@@ -46,7 +49,7 @@ impl App {
     /// Setup the radio for this example.
     ///
     /// This will initialize and configure the [`App::radio`] object.
-    pub fn setup(&mut self) -> Result<()> {
+    pub fn setup(&mut self, radio_number: u8) -> Result<()> {
         // initialize the radio hardware
         self.radio.init().map_err(|e| anyhow!("{e:?}"))?;
 
@@ -62,10 +65,10 @@ impl App {
 
         let address = [b"1Node", b"2Node"];
         self.radio
-            .open_rx_pipe(1, address[0])
+            .open_rx_pipe(1, address[radio_number as usize])
             .map_err(|e| anyhow!("{e:?}"))?;
         self.radio
-            .open_tx_pipe(address[1])
+            .open_tx_pipe(address[1 - radio_number as usize])
             .map_err(|e| anyhow!("{e:?}"))?;
         Ok(())
     }
@@ -79,14 +82,23 @@ impl App {
         let mut remaining = count;
         while remaining > 0 {
             let buf = self.payload.to_le_bytes();
+            let start = std::time::Instant::now();
             let result = self.radio.send(&buf, false).map_err(|e| anyhow!("{e:?}"))?;
+            let end = std::time::Instant::now();
             if result {
                 // succeeded
+                println!(
+                    "Transmission successful! Time to Transmit: {} us. Sent: {}",
+                    end.saturating_duration_since(start).as_micros(),
+                    self.payload
+                );
                 self.payload += 0.01;
             } else {
                 // failed
+                println!("Transmission failed or timed out");
             }
             remaining -= 1;
+            DelayImpl.delay_ms(1000);
         }
         Ok(())
     }
@@ -95,10 +107,11 @@ impl App {
     ///
     /// Uses the [`App::radio`] as a receiver.
     pub fn rx(&mut self, timeout: u8) -> Result<()> {
-        let _end = Duration::from_secs(timeout as u64);
         // put radio into active RX mode
         self.radio.as_rx().map_err(|e| anyhow!("{e:?}"))?;
-        while false {
+        let mut end_time =
+            std::time::Instant::now() + Duration::from_secs(timeout as u64);
+        while std::time::Instant::now() < end_time {
             let mut pipe = 15u8;
             if self
                 .radio
@@ -106,13 +119,16 @@ impl App {
                 .map_err(|e| anyhow!("{e:?}"))?
             {
                 let mut buf = [0u8; 4];
-                let _len = self
+                let len = self
                     .radio
                     .read(&mut buf, None)
                     .map_err(|e| anyhow!("{e:?}"))?;
-                // print pipe number and payload length
-                // print buf
                 self.payload = f32::from_le_bytes(buf);
+                // print pipe number and payload length and payload
+                println!("Received {len} bytes on pipe {pipe}: {}", self.payload);
+                // reset timeout
+                end_time =
+                    std::time::Instant::now() + Duration::from_secs(timeout as u64);
             }
         }
 
@@ -120,15 +136,55 @@ impl App {
         self.radio.as_tx().map_err(|e| anyhow!("{e:?}"))?;
         Ok(())
     }
+
+    pub fn set_role(&mut self) -> Result<bool> {
+        let prompt = "*** Enter 'R' for receiver role.\n\
+        *** Enter 'T' for transmitter role.\n\
+        *** Enter 'Q' to quit example.";
+        println!("{prompt}");
+        let mut input = std::string::String::new();
+        std::io::stdin().read_line(&mut input)?;
+        let mut inputs = input.trim().split(' ');
+        let role = inputs
+            .next()
+            .map(|v| v.to_uppercase())
+            .unwrap_or("?".to_string());
+        if role.starts_with('T') {
+            let count = inputs
+                .next()
+                .and_then(|v| v.parse::<u8>().ok())
+                .unwrap_or(5);
+            self.tx(count)?;
+            return Ok(true);
+        } else if role.starts_with('R') {
+            let timeout = inputs
+                .next()
+                .and_then(|v| v.parse::<u8>().ok())
+                .unwrap_or(6);
+            self.rx(timeout)?;
+            return Ok(true);
+        } else if role.starts_with('Q') {
+            self.radio.power_down().map_err(|e| anyhow!("{e:?}"))?;
+            return Ok(false);
+        }
+        println!("{role} is an unrecognized input. Please try again.");
+        Ok(true)
+    }
 }
 
 fn main() -> Result<()> {
     let mut app = App::new()?;
-    app.setup()?;
-    if option_env!("ROLE").unwrap_or_default() == "master" {
-        app.tx(5)?;
-    } else {
-        app.rx(6)?;
-    }
+    let mut input = std::string::String::new();
+    print!("Which radio is this? Enter '0' or '1'. Defaults to '0' ");
+    std::io::stdout().flush()?;
+    std::io::stdin().read_line(&mut input)?;
+    let radio_number = input
+        .trim()
+        .chars()
+        .next()
+        .map(|c| if c == '1' { 1 } else { 0 })
+        .unwrap_or_default();
+    app.setup(radio_number)?;
+    while app.set_role()? {}
     Ok(())
 }

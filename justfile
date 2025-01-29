@@ -5,6 +5,7 @@ set windows-shell := ["powershell.exe", "-NoLogo", "-Command"]
 test profile='default':
     cargo llvm-cov --no-report \
     nextest \
+    --manifest-path crates/rf24-rs/Cargo.toml \
     --lib --tests --color always --profile {{ profile }}
 
 # Clear previous test build artifacts
