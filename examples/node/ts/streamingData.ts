@@ -76,32 +76,34 @@ export class App {
 
       let failures = 0;
       const start = Date.now();
-      for (let bufIndex = 0; bufIndex < payloadSize; bufIndex++) {
+      for (const buf of payloads) {
         // for each payload in stream
-        while (!this.radio.write(payloads[bufIndex])) {
+        while (!this.radio.write(buf)) {
           // upload to TX FIFO failed because TX FIFO is full.
           // check status flags
-          this.radio.update();
           const flags = this.radio.getStatusFlags();
           if (flags.txDf) {
-            // transmission failed
-            this.radio.rewrite(); // resets txDf flag and reuses top level of TX FIFO
+            // a transmission failed
             failures += 1; // increment manual retry count
             if (failures > 99) {
               // too many failures detected
-              break; // prevent infinite loop
+              // we need to prevent an infinite loop
+              console.log("Make sure other node is listening. Aborting stream");
+              break; // receiver radio seems unresponsive
             }
+
+            // rewrite() resets the txDf flag and reuses top level of TX FIFO
+            this.radio.rewrite();
           }
         }
-        if (failures > 99 && bufIndex < 7 && cnt < 2) {
-          this.radio.flushTx();
+        if (failures > 99) {
           break; // receiver radio seems unresponsive
         }
       }
       // wait for radio to finish transmitting everything in the TX FIFO
       while (
-        this.radio.getFifoState(true) != FifoState.Empty &&
-        failures < 99
+        failures < 99 &&
+        this.radio.getFifoState(true) != FifoState.Empty
       ) {
         // getFifoState() also update()s the StatusFlags
         const flags = this.radio.getStatusFlags();

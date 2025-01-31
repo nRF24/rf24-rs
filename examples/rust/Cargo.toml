@@ -17,3 +17,7 @@ linux = ["dep:linux-embedded-hal", "rf24-rs/std"]
 [[bin]]
 name = "getting-started"
 path = "src/main.rs"
+
+[[bin]]
+name = "streaming-data"
+path = "src/bin/streaming_data.rs"

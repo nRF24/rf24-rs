@@ -17,9 +17,12 @@ def make_payloads(size: int = 32) -> list[bytes]:
         # prefix payload with a sequential letter to indicate which
         # payloads were lost (if any)
         buff = bytes([i + (65 if 0 <= i < 26 else 71)])
-        for j in range(size - 1):
-            char = bool(j >= (size - 1) / 2 + abs((size - 1) / 2 - i))
-            char |= bool(j < (size - 1) / 2 - abs((size - 1) / 2 - i))
+        max_len = size - 1
+        half_size = int(max_len / 2)
+        abs_diff = abs(half_size - i)
+        for j in range(max_len):
+            char = bool(j >= half_size + abs_diff)
+            char |= bool(j < half_size - abs_diff)
             buff += bytes([char + 48])
         stream.append(buff)
     return stream
@@ -78,35 +81,31 @@ class App:
         stream = make_payloads(size)
 
         self.radio.as_tx()  # ensures the nRF24L01 is in TX mode
-        for cnt in range(count):  # transmit the same payloads this many times
+        for _ in range(count):  # transmit the same payloads this many times
             self.radio.flush_tx()  # clear the TX FIFO so we can use all 3 levels
-            # NOTE the write_only parameter does not initiate sending
-            buf_iter = 0  # iterator of payloads for the while loop
             failures = 0  # keep track of manual retries
             start_timer = time.monotonic() * 1000  # start timer
-            for buf_index in range(size):  # cycle through all payloads in stream
-                while not self.radio.write(stream[buf_iter]):
+            for buf in stream:  # cycle through all payloads in stream
+                while not self.radio.write(buf):
                     # upload to TX FIFO failed because TX FIFO is full.
                     # check for transmission errors
-                    self.radio.update()
                     flags: StatusFlags = self.radio.get_status_flags()
-                    if flags.tx_df:  # transmission failed
+                    if flags.tx_df:  # a transmission failed
                         failures += 1  # increment manual retry count
+                        if failures > 99:
+                            # too many failures detected
+                            # we need to prevent an infinite loop
+                            print("Make sure other node is listening. Aborting stream")
+                            break  # receiver radio seems unresponsive
+
                         # rewrite() resets the tx_df flag and reuses top level of TX FIFO
                         self.radio.rewrite()
-                        if failures > 99:
-                            break
-                    if failures > 99 and buf_iter < 7 and cnt < 2:
-                        # we need to prevent an infinite loop
-                        print(
-                            "Make sure slave() node is listening. Quitting master_fifo()"
-                        )
-                        buf_iter = size + 1  # be sure to exit the while loop
-                        self.radio.flush_tx()  # discard all payloads in TX FIFO
+                    if failures > 99:
                         break
-                buf_iter += 1
+                if failures > 99:
+                    break
             # wait for radio to finish transmitting everything in the TX FIFO
-            while self.radio.get_fifo_state(True) != FifoState.Empty and failures < 99:
+            while failures < 99 and self.radio.get_fifo_state(True) != FifoState.Empty:
                 # get_fifo_state() also update()s the StatusFlags
                 flags = self.radio.get_status_flags()
                 if flags.tx_df:
