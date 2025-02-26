@@ -16,8 +16,12 @@ linux = ["dep:linux-embedded-hal", "rf24-rs/std"]
 
 [[bin]]
 name = "getting-started"
-path = "src/main.rs"
+path = "src/bin/getting_started.rs"
 
 [[bin]]
 name = "streaming-data"
 path = "src/bin/streaming_data.rs"
+
+[[bin]]
+name = "ack-payloads"
+path = "src/bin/ack_payloads.rs"

@@ -1,7 +1,6 @@
 #![no_std]
 
-use core::{f32, time::Duration};
-use std::{io::Write, string::ToString};
+use core::time::Duration;
 
 use anyhow::{anyhow, Result};
 use embedded_hal::delay::DelayNs;
@@ -16,6 +15,13 @@ use rf24_rs_examples::linux::{
 };
 #[cfg(feature = "linux")]
 extern crate std;
+#[cfg(feature = "linux")]
+use std::{
+    borrow::ToOwned,
+    io::Write,
+    string::{String, ToString},
+    time::Instant,
+};
 
 /// A struct to drive our example app
 struct App {
@@ -24,8 +30,8 @@ struct App {
     board: BoardHardware,
     /// Our instantiated RF24 object.
     radio: RF24<SpiImpl, DigitalOutImpl, DelayImpl>,
-    /// We will be using a 32-bit float value (little-endian) as our payload.
-    payload: f32,
+    /// We will be using a incrementing integer value as part of our payloads.
+    counter: u16,
 }
 
 impl App {
@@ -42,7 +48,7 @@ impl App {
         Ok(Self {
             board,
             radio,
-            payload: 0.0,
+            counter: 0,
         })
     }
 
@@ -58,9 +64,13 @@ impl App {
             .set_pa_level(PaLevel::Low)
             .map_err(|e| anyhow!("{e:?}"))?;
 
-        // we'll be using a 32-bit float, so set the payload length to 4 bytes
+        // we'll be using a automatic ACK payloads, so enable the dynamic payload length feature
         self.radio
-            .set_payload_length(4)
+            .set_dynamic_payloads(true)
+            .map_err(|e| anyhow!("{e:?}"))?;
+        // enable ACK packet payloads
+        self.radio
+            .set_ack_payloads(true)
             .map_err(|e| anyhow!("{e:?}"))?;
 
         let address = [b"1Node", b"2Node"];
@@ -79,20 +89,42 @@ impl App {
     pub fn tx(&mut self, count: u8) -> Result<()> {
         // put radio into TX mode
         self.radio.as_tx().map_err(|e| anyhow!("{e:?}"))?;
+
+        // declare our outgoing payload.
+        // `\x00` is null terminator for the string portion.
+        // `00` is placeholder for the u16 counter.
+        let mut outgoing_payload = b"Hello \x0000".to_owned();
         let mut remaining = count;
         while remaining > 0 {
-            let buf = self.payload.to_le_bytes();
-            let start = std::time::Instant::now();
-            let result = self.radio.send(&buf, false).map_err(|e| anyhow!("{e:?}"))?;
-            let end = std::time::Instant::now();
+            outgoing_payload[7..9].copy_from_slice(&self.counter.to_le_bytes());
+            let start = Instant::now();
+            let result = self
+                .radio
+                .send(&outgoing_payload, false)
+                .map_err(|e| anyhow!("{e:?}"))?;
+            let end = Instant::now();
             if result {
                 // succeeded
-                println!(
-                    "Transmission successful! Time to Transmit: {} us. Sent: {}",
+                print!(
+                    "Transmission successful! Time to Transmit: {} us. Sent: {}{} Received: ",
                     end.saturating_duration_since(start).as_micros(),
-                    self.payload
+                    String::from_utf8_lossy(&outgoing_payload[0..6]),
+                    self.counter,
                 );
-                self.payload += 0.01;
+                self.counter += 1;
+                if self.radio.available().map_err(|e| anyhow!("{e:?}"))? {
+                    let mut incoming_payload = [0u8; 9];
+                    self.radio
+                        .read(&mut incoming_payload, None)
+                        .map_err(|e| anyhow!("{e:?}"))?;
+                    println!(
+                        "{}{}",
+                        String::from_utf8_lossy(&incoming_payload[0..6]),
+                        u16::from_le_bytes([incoming_payload[7], incoming_payload[8]]),
+                    );
+                } else {
+                    println!("An empty ACK payload");
+                }
             } else {
                 // failed
                 println!("Transmission failed or timed out");
@@ -109,31 +141,55 @@ impl App {
     pub fn rx(&mut self, timeout: u8) -> Result<()> {
         // put radio into active RX mode
         self.radio.as_rx().map_err(|e| anyhow!("{e:?}"))?;
-        let mut end_time =
-            std::time::Instant::now() + Duration::from_secs(timeout as u64);
-        while std::time::Instant::now() < end_time {
+
+        // declare our outgoing payload
+        // `\x00` is the null terminator for the string portion
+        // `00` is the 2-byte placeholder for our counter value
+        let mut outgoing_payload = b"World \x0000".to_owned();
+        outgoing_payload[7..9].copy_from_slice(&self.counter.to_le_bytes());
+        // load ACK for first response
+        self.radio
+            .write_ack_payload(1, &outgoing_payload)
+            .map_err(|e| anyhow!("{e:?}"))?;
+
+        let mut end_time = Instant::now() + Duration::from_secs(timeout as u64);
+        while Instant::now() < end_time {
             let mut pipe = 15u8;
             if self
                 .radio
                 .available_pipe(&mut pipe)
                 .map_err(|e| anyhow!("{e:?}"))?
             {
-                let mut buf = [0u8; 4];
+                let mut incoming_payload = [0u8; 9];
                 let len = self
                     .radio
-                    .read(&mut buf, None)
+                    .read(&mut incoming_payload, None)
                     .map_err(|e| anyhow!("{e:?}"))?;
-                self.payload = f32::from_le_bytes(buf);
+                self.counter = u16::from_le_bytes([incoming_payload[7], incoming_payload[8]]);
                 // print pipe number and payload length and payload
-                println!("Received {len} bytes on pipe {pipe}: {}", self.payload);
+                println!(
+                    "Received {len} bytes on pipe {pipe}: {}{} Sent: {}{}",
+                    String::from_utf8_lossy(&incoming_payload[0..6]),
+                    self.counter,
+                    String::from_utf8_lossy(&outgoing_payload[0..6]),
+                    u16::from_le_bytes([outgoing_payload[7], outgoing_payload[8]]),
+                );
                 // reset timeout
-                end_time =
-                    std::time::Instant::now() + Duration::from_secs(timeout as u64);
+                end_time = Instant::now() + Duration::from_secs(timeout as u64);
+
+                // increment counter
+                self.counter += 1;
+                outgoing_payload[7..9].copy_from_slice(&self.counter.to_le_bytes());
+                // load new ACK payload for next response
+                self.radio
+                    .write_ack_payload(1, &outgoing_payload)
+                    .map_err(|e| anyhow!("{e:?}"))?;
             }
         }
 
         // It is highly recommended to keep the radio idling in an inactive TX mode
         self.radio.as_tx().map_err(|e| anyhow!("{e:?}"))?;
+        // as_tx() will also flush any remaining ACK payloads from the radio's TX FIFO.
         Ok(())
     }
 
@@ -142,7 +198,7 @@ impl App {
         *** Enter 'T' for transmitter role.\n\
         *** Enter 'Q' to quit example.";
         println!("{prompt}");
-        let mut input = std::string::String::new();
+        let mut input = String::new();
         std::io::stdin().read_line(&mut input)?;
         let mut inputs = input.trim().split(' ');
         let role = inputs
@@ -174,7 +230,7 @@ impl App {
 
 fn main() -> Result<()> {
     let mut app = App::new()?;
-    let mut input = std::string::String::new();
+    let mut input = String::new();
     print!("Which radio is this? Enter '0' or '1'. Defaults to '0' ");
     std::io::stdout().flush()?;
     std::io::stdin().read_line(&mut input)?;

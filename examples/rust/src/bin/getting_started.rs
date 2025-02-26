@@ -1,11 +1,12 @@
 #![no_std]
 
-use core::time::Duration;
+use core::{f32, time::Duration};
 
 use anyhow::{anyhow, Result};
+use embedded_hal::delay::DelayNs;
 use rf24::{
     radio::{prelude::*, RF24},
-    FifoState, PaLevel, StatusFlags,
+    PaLevel,
 };
 #[cfg(feature = "linux")]
 use rf24_rs_examples::linux::{
@@ -21,9 +22,6 @@ use std::{
     time::Instant,
 };
 
-/// The length of the stream and the length of each payload within the stream.
-const SIZE: usize = 32;
-
 /// A struct to drive our example app
 struct App {
     /// Any platform-specific functionality is abstracted into this object.
@@ -31,6 +29,8 @@ struct App {
     board: BoardHardware,
     /// Our instantiated RF24 object.
     radio: RF24<SpiImpl, DigitalOutImpl, DelayImpl>,
+    /// We will be using a 32-bit float value (little-endian) as our payload.
+    payload: f32,
 }
 
 impl App {
@@ -44,7 +44,11 @@ impl App {
             BoardHardware::default_spi_device()?,
             DelayImpl,
         );
-        Ok(Self { board, radio })
+        Ok(Self {
+            board,
+            radio,
+            payload: 0.0,
+        })
     }
 
     /// Setup the radio for this example.
@@ -59,9 +63,9 @@ impl App {
             .set_pa_level(PaLevel::Low)
             .map_err(|e| anyhow!("{e:?}"))?;
 
-        // we'll be using a 32-byte payload lengths
+        // we'll be using a 32-bit float, so set the payload length to 4 bytes
         self.radio
-            .set_payload_length(SIZE as u8)
+            .set_payload_length(4)
             .map_err(|e| anyhow!("{e:?}"))?;
 
         let address = [b"1Node", b"2Node"];
@@ -74,89 +78,32 @@ impl App {
         Ok(())
     }
 
-    /// return a list of payloads
-    fn make_payloads() -> [[u8; SIZE]; SIZE] {
-        // we'll use `size` for the number of payloads in the list and the
-        // payloads' length
-        let mut stream = [[0u8; SIZE]; SIZE];
-        static MAX_LEN: i8 = SIZE as i8 - 1;
-        static HALF_LEN: i8 = MAX_LEN / 2;
-        for i in 0..SIZE as i8 {
-            // prefix payload with a sequential letter to indicate which
-            // payloads were lost (if any)
-            let buff = &mut stream[i as usize];
-            buff[0] = (i as u8) + if i < 26 { 65 } else { 71 };
-            let abs_diff = (HALF_LEN - i).abs_diff(0) as i8;
-            for j in 0..MAX_LEN {
-                let c = j >= (HALF_LEN + abs_diff) || j < (HALF_LEN - abs_diff);
-                buff[j as usize + 1] = c as u8 + 48;
-            }
-        }
-        stream
-    }
-
     /// The TX role.
     ///
     /// Uses the [`App::radio`] as a transmitter.
     pub fn tx(&mut self, count: u8) -> Result<()> {
-        // create a stream of data
-        let stream = Self::make_payloads();
-        // declare mutable flags for error checking
-        let mut flags = StatusFlags::default();
         // put radio into TX mode
         self.radio.as_tx().map_err(|e| anyhow!("{e:?}"))?;
-        for _ in 0..count {
-            self.radio.flush_tx().map_err(|e| anyhow!("{e:?}"))?;
-            let mut failures = 0u8;
-            // start a timer
+        let mut remaining = count;
+        while remaining > 0 {
+            let buf = self.payload.to_le_bytes();
             let start = Instant::now();
-            for buf in &stream {
-                while !self
-                    .radio
-                    .write(buf, false, true)
-                    .map_err(|e| anyhow!("{e:?}"))?
-                {
-                    // upload to TX FIFO failed because TX FIFO is full.
-                    // check for transmission errors
-                    self.radio.get_status_flags(&mut flags);
-                    if flags.tx_df() {
-                        // a transmission failed
-                        failures += 1; // increment manual retry count
-                        if failures > 99 {
-                            // too many failures detected
-                            // we need to prevent an infinite loop
-                            println!("Make sure other node is listening. Aborting stream");
-                            break; // receiver radio seems unresponsive
-                        }
-
-                        // rewrite() resets the tx_df flag and reuses top level of TX FIFO
-                        self.radio.rewrite().map_err(|e| anyhow!("{e:?}"))?;
-                    }
-                }
-                if failures > 99 {
-                    break; // receiver radio seems unresponsive
-                }
+            let result = self.radio.send(&buf, false).map_err(|e| anyhow!("{e:?}"))?;
+            let end = Instant::now();
+            if result {
+                // succeeded
+                println!(
+                    "Transmission successful! Time to Transmit: {} us. Sent: {}",
+                    end.saturating_duration_since(start).as_micros(),
+                    self.payload
+                );
+                self.payload += 0.01;
+            } else {
+                // failed
+                println!("Transmission failed or timed out");
             }
-            // wait for radio to finish transmitting everything in the TX FIFO
-            while failures < 99
-                && self
-                    .radio
-                    .get_fifo_state(true)
-                    .map_err(|e| anyhow!("{e:?}"))?
-                    != FifoState::Empty
-            {
-                self.radio.get_status_flags(&mut flags);
-                if flags.tx_df() {
-                    failures += 1;
-                    self.radio.rewrite().map_err(|e| anyhow!("{e:?}"))?;
-                }
-            }
-            let end = Instant::now(); // end timer
-            println!(
-                "Transmission took {} ms with {} failures detected",
-                end.saturating_duration_since(start).as_millis(),
-                failures,
-            );
+            remaining -= 1;
+            DelayImpl.delay_ms(1000);
         }
         Ok(())
     }
@@ -167,17 +114,22 @@ impl App {
     pub fn rx(&mut self, timeout: u8) -> Result<()> {
         // put radio into active RX mode
         self.radio.as_rx().map_err(|e| anyhow!("{e:?}"))?;
-        let mut count = 0u16;
         let mut end_time = Instant::now() + Duration::from_secs(timeout as u64);
         while Instant::now() < end_time {
-            if self.radio.available().map_err(|e| anyhow!("{e:?}"))? {
-                count += 1;
-                let mut buf = [0u8; SIZE];
-                self.radio
+            let mut pipe = 15u8;
+            if self
+                .radio
+                .available_pipe(&mut pipe)
+                .map_err(|e| anyhow!("{e:?}"))?
+            {
+                let mut buf = [0u8; 4];
+                let len = self
+                    .radio
                     .read(&mut buf, None)
                     .map_err(|e| anyhow!("{e:?}"))?;
-                // print payload and counter
-                println!("Received: {} - {count}", String::from_utf8_lossy(&buf));
+                self.payload = f32::from_le_bytes(buf);
+                // print pipe number and payload length and payload
+                println!("Received {len} bytes on pipe {pipe}: {}", self.payload);
                 // reset timeout
                 end_time = Instant::now() + Duration::from_secs(timeout as u64);
             }
@@ -193,8 +145,8 @@ impl App {
         *** Enter 'T' for transmitter role.\n\
         *** Enter 'Q' to quit example.";
         println!("{prompt}");
-        let mut input = String::new();
-        stdin().read_line(&mut input)?;
+        let mut input = std::string::String::new();
+        std::io::stdin().read_line(&mut input)?;
         let mut inputs = input.trim().split(' ');
         let role = inputs
             .next()
@@ -204,7 +156,7 @@ impl App {
             let count = inputs
                 .next()
                 .and_then(|v| v.parse::<u8>().ok())
-                .unwrap_or(1);
+                .unwrap_or(5);
             self.tx(count)?;
             return Ok(true);
         } else if role.starts_with('R') {
