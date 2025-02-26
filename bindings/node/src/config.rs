@@ -18,24 +18,24 @@ impl RadioConfig {
     ///
     /// | feature | default value |
     /// |--------:|:--------------|
-    /// | {@link RadioConfig.channel | `RadioConfig.channel`} | `76` |
-    /// | {@link RadioConfig.addressLength | `RadioConfig.addressLength`} | `5` |
-    /// | {@link RadioConfig.paLevel | `RadioConfig.paLevel`} | {@link PaLevel.Max | `PaLevel.Max`} |
-    /// | {@link RadioConfig.lnaEnable | `RadioConfig.lnaEnable`} | `true` |
-    /// | {@link RadioConfig.crcLength | `RadioConfig.crcLength`} | {@link CrcLength.Bit16 | `CrcLength.Bit16`} |
-    /// | {@link RadioConfig.dataRate | `RadioConfig.dataRate`} | {@link DataRate.Mbps1 | `DataRate.Mbps1`} |
-    /// | {@link RadioConfig.payloadLength | `RadioConfig.payloadLength`} | `32` |
-    /// | {@link RadioConfig.dynamicPayloads | `RadioConfig.dynamicPayloads`} | `false` |
-    /// | {@link RadioConfig.autoAck | `RadioConfig.autoAck`} | `0x3F` (enabled for pipes 0 - 5) |
-    /// | {@link RadioConfig.ackPayloads | `RadioConfig.ackPayloads`} | `false` |
-    /// | {@link RadioConfig.askNoAck | `RadioConfig.askNoAck`} | `false` |
-    /// | {@link RadioConfig.autoRetryDelay | `RadioConfig.autoRetryDelay`} | `5` |
-    /// | {@link RadioConfig.autoRetryCount | `RadioConfig.autoRetryCount`} | `15` |
-    /// | {@link RadioConfig.txAddress | `RadioConfig.txAddress`} | `[0xE7, 0xE7, 0xE7, 0xE7, 0xE7]` |
-    /// | {@link RadioConfig.getRxAddress | `RadioConfig.getRxAddress()`} | See below table about [Default RX addresses](#default-rx-pipes-configuration) |
-    /// | {@link RadioConfig.rxDr | `RadioConfig.rxDr`} | `true` |
-    /// | {@link RadioConfig.txDs | `RadioConfig.txDs`} | `true` |
-    /// | {@link RadioConfig.txDf | `RadioConfig.txDf`} | `true` |
+    /// | {@link RadioConfig.channel} | `76` |
+    /// | {@link RadioConfig.addressLength} | `5` |
+    /// | {@link RadioConfig.paLevel} | {@link PaLevel.Max | `PaLevel.Max`} |
+    /// | {@link RadioConfig.lnaEnable} | `true` |
+    /// | {@link RadioConfig.crcLength} | {@link CrcLength.Bit16 | `CrcLength.Bit16`} |
+    /// | {@link RadioConfig.dataRate} | {@link DataRate.Mbps1 | `DataRate.Mbps1`} |
+    /// | {@link RadioConfig.payloadLength} | `32` |
+    /// | {@link RadioConfig.dynamicPayloads} | `false` |
+    /// | {@link RadioConfig.autoAck} | `0x3F` (enabled for pipes 0 - 5) |
+    /// | {@link RadioConfig.ackPayloads} | `false` |
+    /// | {@link RadioConfig.askNoAck} | `false` |
+    /// | {@link RadioConfig.autoRetryDelay} | `5` |
+    /// | {@link RadioConfig.autoRetryCount} | `15` |
+    /// | {@link RadioConfig.txAddress} | `[0xE7, 0xE7, 0xE7, 0xE7, 0xE7]` |
+    /// | {@link RadioConfig.getRxAddress)`} | See below table about [Default RX addresses](#default-rx-pipes-configuration) |
+    /// | {@link RadioConfig.rxDr} | `true` |
+    /// | {@link RadioConfig.txDs} | `true` |
+    /// | {@link RadioConfig.txDf} | `true` |
     ///
     /// #### Default RX pipes' configuration
     ///
@@ -183,14 +183,14 @@ impl RadioConfig {
     }
 
     /// The auto-retry feature's `delay` set by
-    /// {@link RadioConfig.setAutoRetries | `RadioConfig.setAutoRetries()`}.
+    /// {@link RadioConfig.setAutoRetries}.
     #[napi(getter, js_name = "autoRetryDelay")]
     pub fn get_auto_retry_delay(&self) -> u8 {
         self.inner.auto_retry_delay()
     }
 
     /// The auto-retry feature's `count` set by
-    /// {@link RadioConfig.setAutoRetries | `RadioConfig.setAutoRetries()`}.
+    /// {@link RadioConfig.setAutoRetries}.
     #[napi(getter, js_name = "autoRetryCount")]
     pub fn get_auto_retry_count(&self) -> u8 {
         self.inner.auto_retry_count()
@@ -198,7 +198,7 @@ impl RadioConfig {
 
     /// Set the auto-retry feature's `delay` and `count` parameters.
     ///
-    /// See {@link RF24.setAutoRetries | `RF24.setAutoRetries()`}.
+    /// See {@link RF24.setAutoRetries}.
     #[napi]
     pub fn set_auto_retries(&mut self, delay: u8, count: u8) {
         self.inner = self.inner.with_auto_retries(delay, count);
@@ -211,10 +211,10 @@ impl RadioConfig {
 
     /// Enable or disable dynamically sized payloads.
     ///
-    /// Enabling this feature nullifies the utility of {@link RadioConfig.payloadLength | `RadioConfig.payloadLength`}.
+    /// Enabling this feature nullifies the utility of {@link RadioConfig.payloadLength}.
     ///
     /// This feature is enabled automatically when enabling ACK payloads
-    /// via {@link RadioConfig.ackPayloads | `RadioConfig.ackPayloads`}.
+    /// via {@link RadioConfig.ackPayloads}.
     #[napi(setter, js_name = "dynamicPayloads")]
     pub fn set_dynamic_payloads(
         &mut self,
@@ -232,8 +232,8 @@ impl RadioConfig {
 
     /// Enable or disable custom ACK payloads for auto-ACK packets.
     ///
-    /// ACK payloads require the {@link RadioConfig.autoAck | `RadioConfig.autoAck`}
-    /// and {@link RadioConfig.dynamicPayloads | `RadioConfig.dynamicPayloads`}
+    /// ACK payloads require the {@link RadioConfig.autoAck}
+    /// and {@link RadioConfig.dynamicPayloads}
     /// to be enabled. If ACK payloads are enabled, then this function also enables those
     /// features (for all pipes).
     #[napi(setter, js_name = "ackPayloads")]
@@ -254,8 +254,7 @@ impl RadioConfig {
     /// Allow disabling auto-ack per payload.
     ///
     /// See `askNoAck` parameter for
-    /// {@link RF24.send | `RF24.send()`} and {@link RF24.write | `RF24.write()`}
-    /// ({@link WriteConfig.askNoAck | `WriteConfig.askNoAck`}).
+    /// {@link RF24.send} and {@link RF24.write} ({@link WriteConfig.askNoAck}).
     #[napi(setter, js_name = "askNoAck")]
     pub fn set_ask_no_ack(
         &mut self,
@@ -273,7 +272,7 @@ impl RadioConfig {
 
     /// Enable or disable the "RX Data Ready" event triggering the radio's IRQ.
     ///
-    /// See [`StatusFlags.rxDr`][rf24_py.StatusFlags.rxDr).
+    /// See {@link StatusFlags.rxDr}.
     #[napi(setter, js_name = "rxDr")]
     pub fn set_rx_dr(
         &mut self,
@@ -291,7 +290,7 @@ impl RadioConfig {
 
     /// Enable or disable the "TX Data Sent" event triggering the radio's IRQ.
     ///
-    /// See [`StatusFlags.txDs`][rf24_py.StatusFlags.txDs).
+    /// See {@link StatusFlags.txDs}.
     #[napi(setter, js_name = "txDs")]
     pub fn set_tx_ds(
         &mut self,
@@ -309,7 +308,7 @@ impl RadioConfig {
 
     /// Enable or disable the "TX Data Failed" event triggering the radio's IRQ.
     ///
-    /// See [`StatusFlags.txDf`][rf24_py.StatusFlags.txDf).
+    /// See {@link StatusFlags.txDf}.
     #[napi(setter, js_name = "txDf")]
     pub fn set_tx_df(
         &mut self,
@@ -323,8 +322,8 @@ impl RadioConfig {
     /// Is a specified RX pipe open (`true`) or closed (`false`)?
     ///
     /// The value returned here is controlled by
-    /// {@link RadioConfig.setRxAddress | `RadioConfig.setRxAddress()`} (to open a pipe)
-    /// and {@link RadioConfig.closeRxPipe | `RadioConfig.closeRxPipe()`}.
+    /// {@link RadioConfig.setRxAddress} (to open a pipe)
+    /// and {@link RadioConfig.closeRxPipe}.
     #[napi]
     pub fn is_rx_pipe_enabled(&self, pipe: u8) -> bool {
         self.inner.is_rx_pipe_enabled(pipe)
@@ -336,14 +335,14 @@ impl RadioConfig {
     /// For pipes 2 - 5, the 4 LSBytes are used from address set to pipe 1 with the
     /// MSByte from the given `address`.
     ///
-    /// See also {@link RadioConfig.txAddress | `RadioConfig.txAddress`}.
+    /// See also {@link RadioConfig.txAddress}.
     #[napi]
     pub fn set_rx_address(&mut self, pipe: u8, address: Buffer) {
         let address = address.to_vec();
         self.inner = self.inner.with_rx_address(pipe, &address)
     }
 
-    /// Get the address for a specified `pipe` set by {@link RadioConfig.setRxAddress | `RadioConfig.setRxAddress()`}.
+    /// Get the address for a specified `pipe` set by {@link RadioConfig.setRxAddress}.
     #[napi]
     pub fn get_rx_address(&mut self, pipe: u8) -> Buffer {
         self.inner.rx_address(pipe, &mut self._addr_buf);
@@ -368,7 +367,7 @@ impl RadioConfig {
     /// Close a RX pipe from receiving data.
     ///
     /// This is only useful if pipe 1 should be closed instead of open
-    /// (after constructing {@link RadioConfig | `RadioConfig`}).
+    /// (after constructing {@link RadioConfig}).
     #[napi]
     pub fn close_rx_pipe(&mut self, pipe: u8) {
         self.inner = self.inner.close_rx_pipe(pipe);

@@ -46,13 +46,13 @@ impl Default for HardwareConfig {
     }
 }
 
-/// The return type for {@link RF24.getStatusFlags | `RF24.getStatusFlags()`}
-/// and optional parameters for {@link RF24.setStatusFlags | `RF24.setStatusFlags()`}
-/// and {@link RF24.clearStatusFlags | `RF24.clearStatusFlags()`}.
+/// The return type for {@link RF24.getStatusFlags}
+/// and optional parameters for {@link RF24.setStatusFlags}
+/// and {@link RF24.clearStatusFlags}.
 ///
 /// These flags default to `true` if not specified for
-/// {@link RF24.setStatusFlags | `RF24.setStatusFlags()`}
-/// or {@link RF24.clearStatusFlags | `RF24.clearStatusFlags()`}.
+/// {@link RF24.setStatusFlags}
+/// or {@link RF24.clearStatusFlags}.
 #[napi(object)]
 #[derive(Default)]
 pub struct StatusFlags {
@@ -83,13 +83,13 @@ impl StatusFlags {
     }
 }
 
-/// An optional configuration for {@link RF24.write | `RF24.write()`}
+/// An optional configuration for {@link RF24.write}
 #[napi(object)]
 pub struct WriteConfig {
     /// Set to `true` if you want to disable auto-ACK feature for the individual
-    /// payload (required `buf` parameter to {@link RF24.write | `RF24.write()`}).
+    /// payload (required `buf` parameter to {@link RF24.write}).
     ///
-    /// @defaultValue `false`. Be sure to invoke {@link RF24.allowAskNoAck | `RF24.allowAskNoAck(true)`}
+    /// @defaultValue `false`. Be sure to set {@link RF24.allowAskNoAck} to `true`
     /// at least once beforehand, otherwise this option will have no affect at all.
     pub ask_no_ack: Option<bool>,
 
@@ -112,7 +112,7 @@ impl Default for WriteConfig {
     }
 }
 
-/// The return type for {@link RF24.availablePipe | `RF24.availablePipe()`}
+/// The return type for {@link RF24.availablePipe}
 #[napi(object)]
 pub struct AvailablePipe {
     /// Is RX data available in the RX FIFO?

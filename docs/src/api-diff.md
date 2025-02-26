@@ -37,7 +37,7 @@ Understanding the meaning of the status byte is publicly exposed via
     | lang | only trigger on RX_DR events |
     |:----:|:-----------------------------|
     | C++  | `radio.maskIRQ(false, true, true)` |
-    | Rust | `radio.set_status_flags(StatusFlags::default().with_rx_dr(true)` |
+    | Rust | `radio.set_status_flags(StatusFlags::default().with_rx_dr(true))` |
 
 In this library, setting and getting the status flags is done with a `StatusFlags` object.
 

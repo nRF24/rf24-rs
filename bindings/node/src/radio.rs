@@ -134,9 +134,9 @@ impl RF24 {
     /// @throws A Generic Error if a hardware failure caused problems
     /// (includes a message to describe what problem was detected).
     ///
-    /// This is the same as {@link RF24.withConfig | `withConfig(RadioConfig())`},
+    /// This is the same as {@link RF24.withConfig},
     /// but this function also
-    /// - detects if the radio is a plus variant ({@link RF24.isPlusVariant | `isPlusVariant`})
+    /// - detects if the radio is a plus variant ({@link RF24.isPlusVariant})
     /// - checks for data corruption across the SPI lines (MOSI, MISO, SCLK)
     ///
     /// @group Basic
@@ -150,7 +150,7 @@ impl RF24 {
     /// Reconfigure the radio with the specified `config`.
     ///
     /// > [!WARNING]
-    /// > It is strongly encouraged to call {@link RF24.begin | `RF24.begin()`}
+    /// > It is strongly encouraged to call {@link RF24.begin}
     /// > after constructing the RF24 object.
     /// >
     /// > Only use this function subsequently to quickly switch between different
@@ -168,7 +168,7 @@ impl RF24 {
     ///
     /// This is only exposed for advanced use of TX FIFO during
     /// asynchronous TX operations. It is highly encouraged to use
-    /// {@link RF24.asRx | `asRx()`} or {@link RF24.asTx | `asTx()`}
+    /// {@link RF24.asRx} or {@link RF24.asTx}
     /// to ensure proper radio behavior when entering RX or TX mode.
     ///
     /// @group Advanced
@@ -209,7 +209,7 @@ impl RF24 {
     ///
     /// > [!NOTE]
     /// > This function will also flush the TX FIFO when ACK payloads are enabled
-    /// > (via {@link RF24.ackPayloads | `RF24.ackPayloads`}).
+    /// > (via {@link RF24.ackPayloads}).
     ///
     /// @group Basic
     #[napi]
@@ -225,7 +225,7 @@ impl RF24 {
     /// @param buf - The buffer of bytes to transmit.
     /// @param askNoAck - A flag to disable the auto-ack feature for the given payload in `buf`.
     /// This has no effect if auto-ack is disabled or
-    /// {@link RF24.allowAskNoAck | `RF24.allowAskNoAck()`} is not enabled.
+    /// {@link RF24.allowAskNoAck} is not enabled.
     ///
     /// @returns A boolean that describes if transmission is successful or not.
     /// This will always return true if auto-ack is disabled.
@@ -246,9 +246,9 @@ impl RF24 {
 
     /// A non-blocking function that uploads a given `buf` to the radio's TX FIFO.
     ///
-    /// This is a helper function to {@link RF24.send | `RF24.send()`}.
-    /// Use this in combination with {@link RF24.update | `RF24.update()`} and
-    /// {@link RF24.getStatusFlags | `RF24.getStatusFlags()`}
+    /// This is a helper function to {@link RF24.send}.
+    /// Use this in combination with {@link RF24.update} and
+    /// {@link RF24.getStatusFlags}
     /// to determine if transmission was successful.
     ///
     /// @param buf - The buffer of bytes to load into the TX FIFO.
@@ -272,14 +272,14 @@ impl RF24 {
 
     /// Read data from the radio's RX FIFO.
     ///
-    /// Use {@link RF24.available | `RF24.available()`} to determine if there is data ready to read from the RX FIFO.
+    /// Use {@link RF24.available} to determine if there is data ready to read from the RX FIFO.
     ///
     /// @param len - An optional number of bytes to read from the FIFO. This is capped at `32`.
     /// If not specified, then the length of the next available payload is used (which automatically
     /// respects if dynamic payloads are enabled).
     ///
-    /// Use {@link RF24.dynamicPayloads | `RF24.dynamicPayloads`} for dynamically sized
-    /// payload or {@link RF24.payloadLength | `RF24.payloadLength`} for statically sized
+    /// Use {@link RF24.dynamicPayloads} for dynamically sized
+    /// payload or {@link RF24.payloadLength} for statically sized
     /// payloads.
     ///
     /// @group Basic
@@ -294,7 +294,7 @@ impl RF24 {
 
     /// A blocking function to resend a failed payload in the TX FIFO.
     ///
-    /// This is similar to {@link RF24.send | `RF24.send`} but specifically for
+    /// This is similar to {@link RF24.send} but specifically for
     /// failed transmissions.
     ///
     /// @group Basic
@@ -307,9 +307,9 @@ impl RF24 {
 
     /// A non-blocking function to restart a failed transmission.
     ///
-    /// This is a helper function to {@link RF24.resend | `RF24.resend()`}.
-    /// Use {@link RF24.update | `RF24.update()`} and
-    /// {@link RF24.getStatusFlags | `RF24.getStatusFlags()`} to determine if
+    /// This is a helper function to {@link RF24.resend}.
+    /// Use {@link RF24.update} and
+    /// {@link RF24.getStatusFlags} to determine if
     /// retransmission was successful.
     ///
     /// @group Advanced
@@ -325,7 +325,7 @@ impl RF24 {
     /// This resets with every new transmission. The returned value is meaningless if the
     /// auto-ack feature is disabled.
     ///
-    /// Use {@link RF24.setAutoRetries | `RF24.setAutoRetries()`} to configure the
+    /// Use {@link RF24.setAutoRetries} to configure the
     /// automatic retries feature.
     ///
     /// @group Advanced
@@ -379,7 +379,7 @@ impl RF24 {
 
     /// Stop transmitting the constant carrier wave.
     ///
-    /// {@link RF24.startCarrierWave | `RF24.startCarrierWave()`} should be called before
+    /// {@link RF24.startCarrierWave} should be called before
     /// this function.
     ///
     /// @group Advanced
@@ -412,9 +412,9 @@ impl RF24 {
     ///
     /// > [!IMPORTANT]
     /// > This feature requires dynamically sized payloads.
-    /// > This attribute will enable {@link RF24.dynamicPayloads | `dynamicPayloads`}
+    /// > This attribute will enable {@link RF24.dynamicPayloads}
     /// > automatically when needed. This attribute will not disable
-    /// > {@link RF24.dynamicPayloads | `dynamicPayloads`}.
+    /// > {@link RF24.dynamicPayloads}.
     ///
     /// @group Configuration
     #[napi(setter, js_name = "ackPayloads")]
@@ -437,7 +437,7 @@ impl RF24 {
     ///
     /// > [!NOTE]
     /// > This feature requires CRC to be enabled.
-    /// > See {@link RF24.crcLength | `RF24.crcLength`} for more detail.
+    /// > See {@link RF24.crcLength} for more detail.
     ///
     /// @group Configuration
     #[napi]
@@ -463,8 +463,8 @@ impl RF24 {
     /// Allow disabling the auto-ack feature for individual payloads.
     ///
     /// @param enable - Setting this to `true` will allow the `askNoAck` parameter to
-    /// take effect. See {@link RF24.send | `RF24.send()`} and
-    /// {@link WriteConfig.askNoAck | `WriteConfig.askNoAck`} for more detail.
+    /// take effect. See {@link RF24.send} and
+    /// {@link WriteConfig.askNoAck} for more detail.
     ///
     /// @group Configuration
     #[napi]
@@ -479,7 +479,7 @@ impl RF24 {
 
     /// Upload a given ACK packet's payload (`buf`) into the radio's TX FIFO.
     ///
-    /// This feature requires {@link RF24.ackPayloads | `RF24.ackPayloads`}
+    /// This feature requires {@link RF24.ackPayloads}
     /// to be enabled.
     ///
     /// @param pipe - The pipe number that (when data is received) will be responded
@@ -552,12 +552,12 @@ impl RF24 {
             .map(|e| CrcLength::from_inner(e))
     }
 
-    /// Get/set the {@link CrcLength | `CrcLength`} used for all outgoing and incoming
+    /// Get/set the {@link CrcLength} used for all outgoing and incoming
     /// transmissions.
     ///
     /// > [!NOTE]
-    /// > If disabled (with {@link RF24.crcLength | `RF24.crcLength = CrcLength.Disabled`})
-    /// > while auto-ack feature is disabled, then this function's returned value does not reflect
+    /// > If disabled ({@link CrcLength.Disabled})
+    /// > while auto-ack feature is enabled, then this function's returned value does not reflect
     /// > the fact that CRC is forcefully enabled by the radio's firmware (needed by the
     /// > auto-ack feature).
     ///
@@ -578,7 +578,7 @@ impl RF24 {
             .map(|e| DataRate::from_inner(e))
     }
 
-    /// Get/set the {@link DataRate | `DataRate`} used for all incoming and outgoing transmissions.
+    /// Get/set the {@link DataRate} used for all incoming and outgoing transmissions.
     ///
     /// @group Configuration
     #[napi(setter, js_name = "dataRate")]
@@ -590,7 +590,7 @@ impl RF24 {
 
     /// Is there a payload available in the RX FIFO?
     ///
-    /// Use {@link RF24.read | `RF24.read()`} to get the payload data.
+    /// Use {@link RF24.read} to get the payload data.
     ///
     /// @group Basic
     #[napi]
@@ -600,7 +600,7 @@ impl RF24 {
             .map_err(|e| Error::new(Status::GenericFailure, format!("{e:?}")))
     }
 
-    /// Similar to {@link RF24.available | `RF24.available()`} but also returns the
+    /// Similar to {@link RF24.available} but also returns the
     /// pipe that received the next available payload.
     ///
     /// @group Basic
@@ -629,9 +629,8 @@ impl RF24 {
 
     /// Discard all 3 levels of the radio's TX FIFO.
     ///
-    /// This is automatically called by {@link RF24.asTx | `RF24.asTx()`}
-    /// when ACK payloads are enabled (via
-    /// {@link RF24.ackPayloads | `RF24.ackPayloads`}).
+    /// This is automatically called by {@link RF24.asTx}
+    /// when ACK payloads are enabled (via {@link RF24.ackPayloads}).
     ///
     /// @group Advanced
     #[napi]
@@ -670,7 +669,7 @@ impl RF24 {
     /// Get/set the Power Amplitude (PA) level used for all transmissions (including
     /// auto ack packet).
     ///
-    /// @param paLevel - The {@link PaLevel | `PaLevel`} to use.
+    /// @param paLevel - The {@link PaLevel} to use.
     ///
     /// @group Configuration
     #[napi(setter, js_name = "paLevel")]
@@ -683,9 +682,9 @@ impl RF24 {
     /// Get/set the statically sized payload length.
     ///
     /// This configuration is not used if dynamic payloads are enabled.
-    /// Use {@link RF24.getDynamicPayloadLength | `RF24.getDynamicPayloadLength()`}
+    /// Use {@link RF24.getDynamicPayloadLength}
     /// instead if dynamically sized payloads are enabled (via
-    /// {@link RF24.dynamicPayloads | `RF24.dynamicPayloads`}).
+    /// {@link RF24.dynamicPayloads}).
     ///
     /// @group Configuration
     #[napi(setter, js_name = "payloadLength")]
@@ -706,7 +705,7 @@ impl RF24 {
     /// Enable or disable the dynamically sized payloads feature.
     ///
     /// @param enable - If set to `true`, the statically sized payload length (set via
-    /// {@link RF24.payloadLength | `RF24.payloadLength`}) are not used.
+    /// {@link RF24.payloadLength}) are not used.
     ///
     /// @group Configuration
     #[napi(setter, js_name = "dynamicPayloads")]
@@ -728,8 +727,7 @@ impl RF24 {
     /// Get the length of the next available payload in the RX FIFO.
     ///
     /// If dynamically sized payloads are not enabled (via
-    /// {@link RF24.dynamicPayloads | `RF24.dynamicPayloads`}),
-    /// then use {@link RF24.payloadLength | `RF24.payloadLength`}.
+    /// {@link RF24.dynamicPayloads}), then use {@link RF24.payloadLength}.
     ///
     /// @group Advanced
     #[napi]
@@ -780,7 +778,7 @@ impl RF24 {
 
     /// Close the specified pipe from receiving transmissions.
     ///
-    /// Use {@link RF24.openRxPipe | `RF24.openRxPipe()`} to set the address for a
+    /// Use {@link RF24.openRxPipe} to set the address for a
     /// specific pipe.
     ///
     /// @param pipe - The pipe to close. This must be in range [0, 5], otherwise this function
@@ -822,11 +820,10 @@ impl RF24 {
 
     /// Control the radio's powered level.
     ///
-    /// This is just a convenience attribute that calls {@link RF24.powerUp | `RF24.powerUp()`}
-    /// or {@link RF24.powerDown | `RF24.powerDown()`}.
+    /// This is just a convenience attribute that calls {@link RF24.powerUp}
+    /// or {@link RF24.powerDown}.
     ///
-    /// Use {@link RF24.isRx | `RF24.isRx`} to determine if
-    /// the radio is in RX or TX mode.
+    /// Use {@link RF24.isRx} to determine if the radio is in RX or TX mode.
     ///
     /// @group Configuration
     #[napi(setter, js_name = "power")]
@@ -870,7 +867,7 @@ impl RF24 {
     }
 
     /// The driver will delay for this duration (32 bit unsigned int of microseconds)
-    /// when {@link RF24.asTx | `asTx`} is called.
+    /// when {@link RF24.asTx} is called.
     ///
     /// If the auto-ack feature is disabled, then this can be set as low as 0.
     /// If the auto-ack feature is enabled, then set to 100 microseconds minimum on
@@ -880,14 +877,13 @@ impl RF24 {
     ///
     /// Since this value can be optimized per the radio's data rate, this value is
     /// automatically adjusted when changing
-    /// {@link RF24.dataRate | `dataRate`}.
+    /// {@link RF24.dataRate}.
     /// If setting this to a custom value be sure, to set it *after*
     /// changing the radio's data rate.
     ///
     /// > [!WARNING]
     /// > If set to 0, ensure 130 microsecond delay
-    /// > after calling {@link RF24.asTx | `asTx`}
-    /// > and before transmitting.
+    /// > after calling {@link RF24.asTx} and before transmitting.
     ///
     /// @group Configuration
     #[napi(setter, js_name = "txDelay")]
@@ -895,7 +891,7 @@ impl RF24 {
         self.inner.tx_delay = value;
     }
 
-    /// Configure the IRQ pin to reflect the specified {@link StatusFlags | `StatusFlags`}.
+    /// Configure the IRQ pin to reflect the specified {@link StatusFlags}.
     ///
     /// @param flags - If no value is given, then all flags are reflected by the IRQ pin.
     ///
@@ -912,7 +908,7 @@ impl RF24 {
             .map_err(|e| Error::new(Status::GenericFailure, format!("{e:?}")))
     }
 
-    /// Reset the specified {@link StatusFlags | `StatusFlags`}.
+    /// Reset the specified {@link StatusFlags}.
     ///
     /// @param flags - If no value is given, then all flags are reset.
     ///
@@ -931,7 +927,7 @@ impl RF24 {
 
     /// Update the cached value of Status flags.
     ///
-    /// Use {@link RF24.getStatusFlags | `RF24.getStatusFlags()`} to get the updated values.
+    /// Use {@link RF24.getStatusFlags} to get the updated values.
     ///
     /// @group Advanced
     #[napi]
@@ -941,14 +937,14 @@ impl RF24 {
             .map_err(|e| Error::new(Status::GenericFailure, format!("{e:?}")))
     }
 
-    /// Get the current state of the {@link StatusFlags | `StatusFlags`}.
+    /// Get the current state of the {@link StatusFlags}.
     ///
     /// > [!NOTE]
     /// > This function simply returns the value of the flags that was cached
     /// > from the last SPI transaction. It does not actually update the values
     /// > (from the radio) before returning them.
     /// >
-    /// > Use {@link RF24.update | `RF24.update`} to update them first.
+    /// > Use {@link RF24.update} to update them first.
     ///
     /// @group Advanced
     #[napi]
