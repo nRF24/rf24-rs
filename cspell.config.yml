@@ -4,6 +4,7 @@ words:
   - addch
   - addstr
   - androideabi
+  - armhf
   - armv
   - attroff
   - attron
