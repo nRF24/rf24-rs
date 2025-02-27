@@ -23,8 +23,8 @@ use std::{
     time::Instant,
 };
 
-// we'll be using a a 7-byte string with a 2-byte counter as a response payload.
-const SIZE: u8 = 9;
+// we'll be using a a 7-byte string with a 1-byte counter as a response payload.
+const SIZE: u8 = 8;
 
 /// A struct to drive our example app
 struct App {
@@ -34,7 +34,7 @@ struct App {
     /// Our instantiated RF24 object.
     radio: RF24<SpiImpl, DigitalOutImpl, DelayImpl>,
     /// We will be using a incrementing integer value as part of our payloads.
-    counter: u16,
+    counter: u8,
 }
 
 impl App {
@@ -91,11 +91,11 @@ impl App {
 
         // declare our outgoing payload.
         // `\x00` is null terminator for the string portion.
-        // `00` is placeholder for the u16 counter.
-        let mut outgoing_payload = b"Hello \x0000".to_owned();
+        // `0` is placeholder for the u16 counter.
+        let mut outgoing_payload = b"Hello \x000".to_owned();
         let mut remaining = count;
         while remaining > 0 {
-            outgoing_payload[7..SIZE as usize].copy_from_slice(&self.counter.to_le_bytes());
+            outgoing_payload[7] = self.counter;
             let start = Instant::now();
             let result = self
                 .radio
@@ -105,7 +105,7 @@ impl App {
             if result {
                 // send successful. now wait for a response
                 self.radio.as_rx().map_err(|e| anyhow!("{e:?}"))?;
-                let response_timeout = Instant::now() + Duration::from_millis(250);
+                let response_timeout = Instant::now() + Duration::from_millis(150);
                 while Instant::now() < response_timeout && !got_response {
                     got_response = self.radio.available().map_err(|e| anyhow!("{e:?}"))?;
                 }
@@ -126,7 +126,7 @@ impl App {
                     self.radio
                         .read(&mut response, None)
                         .map_err(|e| anyhow!("{e:?}"))?;
-                    self.counter = u16::from_le_bytes([response[7], response[8]]);
+                    self.counter = response[7];
                     println!(
                         "Received: {}{}",
                         String::from_utf8_lossy(&response[0..6]),
@@ -154,8 +154,8 @@ impl App {
 
         // declare our outgoing payload
         // `\x00` is the null terminator for the string portion
-        // `00` is the 2-byte placeholder for our counter value
-        let mut outgoing_payload = b"World \x0000".to_owned();
+        // `0` is the 2-byte placeholder for our counter value
+        let mut outgoing_payload = b"World \x000".to_owned();
 
         let mut end_time = Instant::now() + Duration::from_secs(timeout as u64);
         while Instant::now() < end_time {
@@ -171,9 +171,8 @@ impl App {
                     .radio
                     .read(&mut incoming_payload, None)
                     .map_err(|e| anyhow!("{e:?}"))?;
-                outgoing_payload[7..SIZE as usize]
-                    .copy_from_slice(&incoming_payload[7..SIZE as usize]);
-                self.counter = u16::from_le_bytes([incoming_payload[7], incoming_payload[8]]);
+                self.counter = incoming_payload[7];
+                outgoing_payload[7] = self.counter;
 
                 // send a response
                 self.radio.as_tx().map_err(|e| anyhow!("{e:?}"))?;

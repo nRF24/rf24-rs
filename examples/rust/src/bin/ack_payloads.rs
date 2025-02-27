@@ -31,7 +31,7 @@ struct App {
     /// Our instantiated RF24 object.
     radio: RF24<SpiImpl, DigitalOutImpl, DelayImpl>,
     /// We will be using a incrementing integer value as part of our payloads.
-    counter: u16,
+    counter: u8,
 }
 
 impl App {
@@ -92,11 +92,11 @@ impl App {
 
         // declare our outgoing payload.
         // `\x00` is null terminator for the string portion.
-        // `00` is placeholder for the u16 counter.
-        let mut outgoing_payload = b"Hello \x0000".to_owned();
+        // `0` is placeholder for our counter value.
+        let mut outgoing_payload = b"Hello \x000".to_owned();
         let mut remaining = count;
         while remaining > 0 {
-            outgoing_payload[7..9].copy_from_slice(&self.counter.to_le_bytes());
+            outgoing_payload[7] = self.counter;
             let start = Instant::now();
             let result = self
                 .radio
@@ -113,14 +113,14 @@ impl App {
                 );
                 self.counter += 1;
                 if self.radio.available().map_err(|e| anyhow!("{e:?}"))? {
-                    let mut incoming_payload = [0u8; 9];
+                    let mut incoming_payload = [0u8; 8];
                     self.radio
                         .read(&mut incoming_payload, None)
                         .map_err(|e| anyhow!("{e:?}"))?;
                     println!(
                         "{}{}",
                         String::from_utf8_lossy(&incoming_payload[0..6]),
-                        u16::from_le_bytes([incoming_payload[7], incoming_payload[8]]),
+                        incoming_payload[7],
                     );
                 } else {
                     println!("An empty ACK payload");
@@ -144,9 +144,9 @@ impl App {
 
         // declare our outgoing payload
         // `\x00` is the null terminator for the string portion
-        // `00` is the 2-byte placeholder for our counter value
-        let mut outgoing_payload = b"World \x0000".to_owned();
-        outgoing_payload[7..9].copy_from_slice(&self.counter.to_le_bytes());
+        // `0` is the placeholder for our counter value
+        let mut outgoing_payload = b"World \x000".to_owned();
+        outgoing_payload[7] = self.counter;
         // load ACK for first response
         self.radio
             .write_ack_payload(1, &outgoing_payload)
@@ -160,26 +160,26 @@ impl App {
                 .available_pipe(&mut pipe)
                 .map_err(|e| anyhow!("{e:?}"))?
             {
-                let mut incoming_payload = [0u8; 9];
+                let mut incoming_payload = [0u8; 8];
                 let len = self
                     .radio
                     .read(&mut incoming_payload, None)
                     .map_err(|e| anyhow!("{e:?}"))?;
-                self.counter = u16::from_le_bytes([incoming_payload[7], incoming_payload[8]]);
+                self.counter = incoming_payload[7];
                 // print pipe number and payload length and payload
                 println!(
                     "Received {len} bytes on pipe {pipe}: {}{} Sent: {}{}",
                     String::from_utf8_lossy(&incoming_payload[0..6]),
                     self.counter,
                     String::from_utf8_lossy(&outgoing_payload[0..6]),
-                    u16::from_le_bytes([outgoing_payload[7], outgoing_payload[8]]),
+                    outgoing_payload[7],
                 );
                 // reset timeout
                 end_time = Instant::now() + Duration::from_secs(timeout as u64);
 
                 // increment counter
                 self.counter += 1;
-                outgoing_payload[7..9].copy_from_slice(&self.counter.to_le_bytes());
+                outgoing_payload[7] = self.counter;
                 // load new ACK payload for next response
                 self.radio
                     .write_ack_payload(1, &outgoing_payload)
