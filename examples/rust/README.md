@@ -25,3 +25,4 @@ The provided examples names (value passed to the `--bin` option) are
 - `getting-started`
 - `streaming-data`
 - `ack-payloads`
+- `manual-ack`

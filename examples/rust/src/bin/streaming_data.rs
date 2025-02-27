@@ -1,17 +1,19 @@
 #![no_std]
 
+use anyhow::Result;
 use core::time::Duration;
 
-use anyhow::{anyhow, Result};
 use rf24::{
     radio::{prelude::*, RF24},
     FifoState, PaLevel, StatusFlags,
 };
+use rf24_rs_examples::debug_err;
 #[cfg(feature = "linux")]
 use rf24_rs_examples::linux::{
     print, println, BoardHardware, CdevPin as DigitalOutImpl, Delay as DelayImpl,
     SpidevDevice as SpiImpl,
 };
+
 #[cfg(feature = "linux")]
 extern crate std;
 #[cfg(feature = "linux")]
@@ -52,25 +54,23 @@ impl App {
     /// This will initialize and configure the [`App::radio`] object.
     pub fn setup(&mut self, radio_number: u8) -> Result<()> {
         // initialize the radio hardware
-        self.radio.init().map_err(|e| anyhow!("{e:?}"))?;
+        self.radio.init().map_err(debug_err)?;
 
         // defaults to PaLevel::Max. Use PaLevel::Low for PA/LNA testing
-        self.radio
-            .set_pa_level(PaLevel::Low)
-            .map_err(|e| anyhow!("{e:?}"))?;
+        self.radio.set_pa_level(PaLevel::Low).map_err(debug_err)?;
 
         // we'll be using a 32-byte payload lengths
         self.radio
             .set_payload_length(SIZE as u8)
-            .map_err(|e| anyhow!("{e:?}"))?;
+            .map_err(debug_err)?;
 
         let address = [b"1Node", b"2Node"];
         self.radio
             .open_tx_pipe(address[radio_number as usize])
-            .map_err(|e| anyhow!("{e:?}"))?;
+            .map_err(debug_err)?;
         self.radio
             .open_rx_pipe(1, address[1 - radio_number as usize])
-            .map_err(|e| anyhow!("{e:?}"))?;
+            .map_err(debug_err)?;
         Ok(())
     }
 
@@ -104,18 +104,14 @@ impl App {
         // declare mutable flags for error checking
         let mut flags = StatusFlags::default();
         // put radio into TX mode
-        self.radio.as_tx().map_err(|e| anyhow!("{e:?}"))?;
+        self.radio.as_tx().map_err(debug_err)?;
         for _ in 0..count {
-            self.radio.flush_tx().map_err(|e| anyhow!("{e:?}"))?;
+            self.radio.flush_tx().map_err(debug_err)?;
             let mut failures = 0u8;
             // start a timer
             let start = Instant::now();
             for buf in &stream {
-                while !self
-                    .radio
-                    .write(buf, false, true)
-                    .map_err(|e| anyhow!("{e:?}"))?
-                {
+                while !self.radio.write(buf, false, true).map_err(debug_err)? {
                     // upload to TX FIFO failed because TX FIFO is full.
                     // check for transmission errors
                     self.radio.get_status_flags(&mut flags);
@@ -130,7 +126,7 @@ impl App {
                         }
 
                         // rewrite() resets the tx_df flag and reuses top level of TX FIFO
-                        self.radio.rewrite().map_err(|e| anyhow!("{e:?}"))?;
+                        self.radio.rewrite().map_err(debug_err)?;
                     }
                 }
                 if failures > 99 {
@@ -139,16 +135,12 @@ impl App {
             }
             // wait for radio to finish transmitting everything in the TX FIFO
             while failures < 99
-                && self
-                    .radio
-                    .get_fifo_state(true)
-                    .map_err(|e| anyhow!("{e:?}"))?
-                    != FifoState::Empty
+                && self.radio.get_fifo_state(true).map_err(debug_err)? != FifoState::Empty
             {
                 self.radio.get_status_flags(&mut flags);
                 if flags.tx_df() {
                     failures += 1;
-                    self.radio.rewrite().map_err(|e| anyhow!("{e:?}"))?;
+                    self.radio.rewrite().map_err(debug_err)?;
                 }
             }
             let end = Instant::now(); // end timer
@@ -166,16 +158,14 @@ impl App {
     /// Uses the [`App::radio`] as a receiver.
     pub fn rx(&mut self, timeout: u8) -> Result<()> {
         // put radio into active RX mode
-        self.radio.as_rx().map_err(|e| anyhow!("{e:?}"))?;
+        self.radio.as_rx().map_err(debug_err)?;
         let mut count = 0u16;
         let mut end_time = Instant::now() + Duration::from_secs(timeout as u64);
         while Instant::now() < end_time {
-            if self.radio.available().map_err(|e| anyhow!("{e:?}"))? {
+            if self.radio.available().map_err(debug_err)? {
                 count += 1;
                 let mut buf = [0u8; SIZE];
-                self.radio
-                    .read(&mut buf, None)
-                    .map_err(|e| anyhow!("{e:?}"))?;
+                self.radio.read(&mut buf, None).map_err(debug_err)?;
                 // print payload and counter
                 println!("Received: {} - {count}", String::from_utf8_lossy(&buf));
                 // reset timeout
@@ -184,7 +174,7 @@ impl App {
         }
 
         // It is highly recommended to keep the radio idling in an inactive TX mode
-        self.radio.as_tx().map_err(|e| anyhow!("{e:?}"))?;
+        self.radio.as_tx().map_err(debug_err)?;
         Ok(())
     }
 
@@ -215,7 +205,7 @@ impl App {
             self.rx(timeout)?;
             return Ok(true);
         } else if role.starts_with('Q') {
-            self.radio.power_down().map_err(|e| anyhow!("{e:?}"))?;
+            self.radio.power_down().map_err(debug_err)?;
             return Ok(false);
         }
         println!("{role} is an unrecognized input. Please try again.");

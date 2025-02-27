@@ -39,7 +39,10 @@ impl BoardHardware {
         Ok(BoardHardware { gpio: dev_gpio })
     }
 
-    #[allow(clippy::should_implement_trait)] // trait does not support `-> Result<Self>`
+    #[allow(
+        clippy::should_implement_trait,
+        reason = "Default trait does not support `-> Result<Self>`"
+    )]
     pub fn default() -> Result<Self> {
         let result = Self::new(4);
         if result.is_err() {
