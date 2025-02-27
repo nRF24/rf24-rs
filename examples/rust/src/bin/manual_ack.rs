@@ -74,10 +74,10 @@ impl App {
 
         let address = [b"1Node", b"2Node"];
         self.radio
-            .open_rx_pipe(1, address[radio_number as usize])
+            .open_tx_pipe(address[radio_number as usize])
             .map_err(|e| anyhow!("{e:?}"))?;
         self.radio
-            .open_tx_pipe(address[1 - radio_number as usize])
+            .open_rx_pipe(1, address[1 - radio_number as usize])
             .map_err(|e| anyhow!("{e:?}"))?;
         Ok(())
     }
