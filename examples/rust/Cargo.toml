@@ -25,3 +25,7 @@ path = "src/bin/streaming_data.rs"
 [[bin]]
 name = "ack-payloads"
 path = "src/bin/ack_payloads.rs"
+
+[[bin]]
+name = "manual-ack"
+path = "src/bin/manual_ack.rs"

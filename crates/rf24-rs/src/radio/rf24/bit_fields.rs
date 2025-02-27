@@ -179,7 +179,7 @@ impl Feature {
         let mut new_value = self.into_bits() & !(1u8 << Self::ACK_PAYLOADS_OFFSET);
         if enable {
             // enable dynamic payloads also
-            new_value |= 1u8 << Self::ACK_PAYLOADS_OFFSET | (1u8 << Self::DYNAMIC_PAYLOADS_OFFSET)
+            new_value |= (1u8 << Self::ACK_PAYLOADS_OFFSET) | (1u8 << Self::DYNAMIC_PAYLOADS_OFFSET)
         }
         Self::from_bits(new_value)
     }
