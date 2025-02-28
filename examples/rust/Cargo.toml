@@ -43,3 +43,9 @@ name = "scanner"
 path = "src/bin/scanner.rs"
 test = false
 bench = false
+
+[[bin]]
+name = "multiceiver-demo"
+path = "src/bin/multiceiver_demo.rs"
+test = false
+bench = false

@@ -88,7 +88,7 @@ class App:
                 )
             else:
                 print("Transmission failed or timed out")
-            time.sleep(0.5)  # slow down the test for readability
+            time.sleep(1)  # slow down the test for readability
 
     def rx(self, timeout=10):
         """Use the nRF24L01 as a base station for listening to all nodes"""

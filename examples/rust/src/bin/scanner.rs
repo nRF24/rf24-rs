@@ -109,7 +109,7 @@ impl App {
         for _ in 0..MAX_CHANNELS {
             print!("~");
         }
-        println!("");
+        println!();
 
         let mut sweeps = 0u8;
         let mut signals = [0u8; MAX_CHANNELS as usize];
@@ -153,7 +153,7 @@ impl App {
             };
             if self.channel == 0 {
                 if endl {
-                    print!("\n");
+                    println!();
                 } else {
                     print!("\r");
                 }
@@ -169,7 +169,7 @@ impl App {
                 print!("{:X}", signal);
             }
         }
-        println!("");
+        println!();
         Ok(())
     }
 
