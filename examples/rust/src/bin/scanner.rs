@@ -109,14 +109,15 @@ impl App {
         for _ in 0..MAX_CHANNELS {
             print!("~");
         }
+        println!("");
 
         let mut sweeps = 0u8;
         let mut signals = [0u8; MAX_CHANNELS as usize];
         let end_time = Instant::now() + Duration::from_secs(timeout as u64);
         while Instant::now() < end_time {
             self.radio.set_channel(self.channel).map_err(debug_err)?;
-            // flush stdout while we wait for radio to settle on new channel
-            stdout().flush()?;
+            // wait for radio to settle on new channel
+            DelayImpl.delay_us(10);
 
             // scan the current channel
             self.radio.as_rx().map_err(debug_err)?;
@@ -132,29 +133,43 @@ impl App {
 
             signals[self.channel as usize] += found_signal as u8;
             let signal = signals[self.channel as usize];
-            if signal > 0 {
+            if signal == 0 {
                 print!("-");
             } else {
                 print!("{:X}", signal);
             }
 
             let mut endl = false;
-            self.channel = if self.channel < MAX_CHANNELS {
+            self.channel = if self.channel < (MAX_CHANNELS - 1) {
                 self.channel + 1
             } else {
                 sweeps += 1;
-                if sweeps > 0x0F {
+                if sweeps >= 0x0F {
+                    signals = [0u8; MAX_CHANNELS as usize];
                     endl = true;
+                    sweeps = 0;
                 }
                 0
             };
             if self.channel == 0 {
-                print!("{}", if endl { '\n' } else { '\r' });
+                if endl {
+                    print!("\n");
+                } else {
+                    print!("\r");
+                }
             }
-            if sweeps == 0 && endl {
-                signals = [0u8; MAX_CHANNELS as usize];
+            // flush stdout to ensure display are updated
+            stdout().flush()?;
+        }
+        for ch in self.channel..MAX_CHANNELS {
+            let signal = signals[ch as usize];
+            if signal == 0 {
+                print!("-");
+            } else {
+                print!("{:X}", signal);
             }
         }
+        println!("");
         Ok(())
     }
 
@@ -179,13 +194,14 @@ impl App {
                 print!("{byte:02X} ");
             }
         }
+        println!();
         Ok(())
     }
 
     pub fn set_role(&mut self) -> Result<bool> {
         let prompt = "*** Enter 'S' to scan.\n\
+        *** Enter 'N' to print ambient noise.\n\
         *** Enter 'Q' to quit example.";
-        // *** Enter 'N' to print ambient noise.\n\
         println!("{prompt}");
         let mut input = String::new();
         stdin().read_line(&mut input)?;
@@ -198,7 +214,7 @@ impl App {
             let timeout = inputs
                 .next()
                 .and_then(|v| v.parse::<u8>().ok())
-                .unwrap_or(5);
+                .unwrap_or(30);
             self.scan(timeout)?;
             return Ok(true);
         } else if role.starts_with('N') {

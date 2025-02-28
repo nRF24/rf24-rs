@@ -103,6 +103,9 @@ export class App {
     const timeout = Date.now() + (duration || 30) * 1000;
     while (Date.now() < timeout) {
       this.radio.channel = channel;
+      // wait for radio to settle on the selected channel
+      await timer.setTimeout(0.01);
+
       this.radio.asRx();
       await timer.setTimeout(0.13); // needs to be at least 130 microseconds
       const rpd = this.radio.rpd;
@@ -141,6 +144,7 @@ export class App {
       const total = caches[i];
       this.print_signals(total);
     }
+    console.log();
   }
 
   /**
