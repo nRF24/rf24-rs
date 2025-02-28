@@ -107,7 +107,7 @@ impl App {
             if result {
                 // succeeded
                 println!(
-                    "Transmission of payloadID {counter} as node {node_number} successful! Transmission time: {}",
+                    "Transmission of payloadID {counter} as node {node_number} successful! Transmission time: {} us",
                     end.saturating_duration_since(start).as_micros(),
                 );
             } else {
@@ -155,7 +155,7 @@ impl App {
         let prompt = "*** Enter 'R' for receiver role.\n\
         *** Enter 'T' for transmitter role.\n    \
         Use 'T n' to transmit as node n; n must be in range [0, 5].\n\
-        *** Enter 'Q' to quit example.\n";
+        *** Enter 'Q' to quit example.";
         println!("{prompt}");
         let mut input = String::new();
         stdin().read_line(&mut input)?;
