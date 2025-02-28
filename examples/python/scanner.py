@@ -8,13 +8,13 @@ See documentation at https://nRF24.github.io/rf24-rs
 
 import time
 from typing import Optional
-from rf24_py import RF24, CrcLength, FifoState
+from rf24_py import RF24, CrcLength, FifoState, DataRate
 
 print(__file__)  # print example name
 
 
 class App:
-    def __init__(self) -> None:
+    def __init__(self, data_rate: DataRate) -> None:
         # The radio's CE Pin uses a GPIO number.
         ce_pin = 22  # for GPIO22
 
@@ -34,6 +34,7 @@ class App:
         self.radio.set_auto_ack(False)
         self.radio.dynamic_payloads = False
         self.radio.crc_length = CrcLength.Disabled
+        self.radio.data_rate = data_rate
 
         # use reverse engineering tactics for a better "snapshot"
         self.radio.address_length = 2
@@ -127,7 +128,7 @@ class App:
             if signal:
                 print(hex_data_str(signal))
         self.radio.as_tx()
-        while not self.radio.get_fifo_state(about_tx=False) != FifoState.Full:
+        while self.radio.get_fifo_state(about_tx=False) != FifoState.Empty:
             # dump the left overs in the RX FIFO
             print(hex_data_str(self.radio.read()))
 
@@ -163,8 +164,17 @@ if __name__ == "__main__":
         "!!!Make sure the terminal is wide enough for 126 characters on 1 line."
         " If this line is wrapped, then the output will look bad!"
     )
-
-    app = App()
+    print(
+        "\nSelect the desired DataRate: (defaults to 1 Mbps)\n"
+        "1. 1 Mbps\n2. 2 Mbps\n3. 250 Kbps\n"
+    )
+    d_rate = input().strip()
+    data_rate = (
+        DataRate.Mbps2
+        if d_rate.startswith("2")
+        else (DataRate.Kbps250 if d_rate.startswith("3") else DataRate.Mbps1)
+    )
+    app = App(data_rate)
     try:
         while app.set_role():
             pass  # continue example until 'Q' is entered

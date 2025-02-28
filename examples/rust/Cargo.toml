@@ -37,3 +37,9 @@ name = "manual-ack"
 path = "src/bin/manual_ack.rs"
 test = false
 bench = false
+
+[[bin]]
+name = "scanner"
+path = "src/bin/scanner.rs"
+test = false
+bench = false
