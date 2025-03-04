@@ -82,4 +82,19 @@ impl BoardHardware {
     pub fn default_ce_pin(&mut self) -> Result<CdevPin> {
         self.get_ce_pin(22)
     }
+
+    pub fn get_irq_pin(&mut self, ce_pin: u32) -> Result<CdevPin> {
+        let irq_line = self
+            .gpio
+            .get_line(ce_pin)
+            .map_err(|_| anyhow!("GPIO{ce_pin} is unavailable"))?;
+        let irq_line_handle = irq_line
+            .request(LineRequestFlags::INPUT, 0, "rf24-rs")
+            .map_err(Error::from)?;
+        CdevPin::new(irq_line_handle).map_err(Error::from)
+    }
+
+    pub fn default_irq_pin(&mut self) -> Result<CdevPin> {
+        self.get_irq_pin(24)
+    }
 }

@@ -49,3 +49,9 @@ name = "multiceiver-demo"
 path = "src/bin/multiceiver_demo.rs"
 test = false
 bench = false
+
+[[bin]]
+name = "irq-config"
+path = "src/bin/irq_config.rs"
+test = false
+bench = false
