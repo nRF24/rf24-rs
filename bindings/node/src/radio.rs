@@ -354,7 +354,7 @@ impl RF24 {
     #[napi(getter)]
     pub fn rpd(&mut self) -> Result<bool> {
         self.inner
-            .test_rpd()
+            .rpd()
             .map_err(|e| Error::new(Status::GenericFailure, format!("{e:?}")))
     }
 

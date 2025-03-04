@@ -168,7 +168,7 @@ where
         self._feature.is_plus_variant()
     }
 
-    pub fn test_rpd(&mut self) -> Result<bool, Nrf24Error<SPI::Error, DO::Error>> {
+    pub fn rpd(&mut self) -> Result<bool, Nrf24Error<SPI::Error, DO::Error>> {
         self.spi_read(1, registers::RPD)?;
         Ok(self._buf[1] & 1 == 1)
     }
@@ -263,7 +263,7 @@ mod test {
         ];
         let mut spi_mock = SpiMock::new(&spi_expectations);
         let mut radio = RF24::new(pin_mock.clone(), spi_mock.clone(), delay_mock);
-        assert!(radio.test_rpd().unwrap());
+        assert!(radio.rpd().unwrap());
         spi_mock.done();
         pin_mock.done();
     }

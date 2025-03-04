@@ -315,7 +315,7 @@ impl RF24 {
     #[getter]
     pub fn get_rpd(&mut self) -> PyResult<bool> {
         self.inner
-            .test_rpd()
+            .rpd()
             .map_err(|e| PyRuntimeError::new_err(format!("{e:?}")))
     }
 

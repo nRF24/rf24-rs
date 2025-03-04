@@ -122,16 +122,18 @@ impl App {
             // scan the current channel
             self.radio.as_rx().map_err(debug_err)?;
             DelayImpl.delay_us(130);
-            let found_signal = self.radio.test_rpd().map_err(debug_err)?;
+            let found_signal = self.radio.rpd().map_err(debug_err)?;
             self.radio.as_tx().map_err(debug_err)?;
             let found_signal = if self.radio.available().map_err(debug_err)? {
-                self.radio.flush_tx().map_err(debug_err)?;
+                // discard any packets (noise) saved in RX FIFO
+                self.radio.flush_rx().map_err(debug_err)?;
                 true
             } else {
-                found_signal || self.radio.test_rpd().map_err(debug_err)?
+                found_signal || self.radio.rpd().map_err(debug_err)?
             };
-
-            signals[self.channel as usize] += found_signal as u8;
+            if found_signal {
+                signals[self.channel as usize] += 1;
+            }
             let signal = signals[self.channel as usize];
             if signal == 0 {
                 print!("-");
@@ -145,9 +147,10 @@ impl App {
             } else {
                 sweeps += 1;
                 if sweeps >= 0x0F {
-                    signals = [0u8; MAX_CHANNELS as usize];
                     endl = true;
                     sweeps = 0;
+                    // reset total signal counts for all channels
+                    signals = [0u8; MAX_CHANNELS as usize];
                 }
                 0
             };
@@ -161,6 +164,8 @@ impl App {
             // flush stdout to ensure display are updated
             stdout().flush()?;
         }
+
+        // finish printing current cache of signals
         for ch in self.channel..MAX_CHANNELS {
             let signal = signals[ch as usize];
             if signal == 0 {

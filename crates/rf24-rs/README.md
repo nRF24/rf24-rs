@@ -37,7 +37,7 @@ See the examples in the repository's [examples/rust](https://github.com/nRF24/rf
 - [`RF24`][rf24-struct]`::`[`flush_tx()`](fn@crate::radio::prelude::EsbFifo::flush_tx)
 - [`RF24::start_carrier_wave()`](fn@crate::radio::RF24::start_carrier_wave)
 - [`RF24::stop_carrier_wave()`](fn@crate::radio::RF24::stop_carrier_wave)
-- [`RF24::test_rpd()`](fn@crate::radio::RF24::test_rpd)
+- [`RF24::rpd()`](fn@crate::radio::RF24::rpd)
 - [`RF24`][rf24-struct]`::`[`get_last_arc()`](fn@crate::radio::prelude::EsbRadio::get_last_arc)
 - [`RF24`][rf24-struct]`::`[`get_dynamic_payload_length()`](fn@crate::radio::prelude::EsbPayloadLength::get_dynamic_payload_length)
 

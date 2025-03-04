@@ -12,6 +12,8 @@ from rf24_py import RF24, CrcLength, FifoState, DataRate
 
 print(__file__)  # print example name
 
+MAX_CHANNELS = 126
+
 
 class App:
     def __init__(self, data_rate: DataRate) -> None:
@@ -74,38 +76,42 @@ class App:
             self.radio.channel = curr_channel
             self.radio.as_rx()  # start a RX session
             time.sleep(0.00013)  # wait 130 microseconds
-            found_signal = self.radio.rpd
+            rpd = self.radio.rpd
             self.radio.as_tx()  # end the RX session
-            found_signal = found_signal or self.radio.rpd or self.radio.available()
 
-            # count signal as interference
-            signals[curr_channel] += found_signal
-            # clear the RX FIFO if a signal was detected/captured
+            found_signal = self.radio.available()
+            if found_signal or rpd or self.radio.rpd:
+                # count signal as interference
+                signals[curr_channel] += 1
             if found_signal:
-                self.radio.flush_rx()  # flush the RX FIFO because it asserts the RPD flag
-            endl = False
-            if curr_channel >= 124:
-                sweeps += 1
-                if int(sweeps / 100) > 0:
-                    endl = True
-                    sweeps = 0
+                # discard any packets (noise) saved in RX FIFO
+                self.radio.flush_rx()
 
             # output the signal counts per channel
             sig_cnt = signals[curr_channel]
             print(
-                ("%X" % min(15, sig_cnt)) if sig_cnt else "-",
-                sep="",
-                end="" if curr_channel < 125 else ("\n" if endl else "\r"),
+                ("%X" % sig_cnt) if sig_cnt else "-",
+                end="",
+                flush=curr_channel < (MAX_CHANNELS - 1),
             )
-            curr_channel = curr_channel + 1 if curr_channel < 125 else 0
-            if endl:
-                signals = [0] * 126  # reset the signal counts for new line
+
+            endl = False
+            curr_channel = curr_channel + 1
+            if curr_channel >= MAX_CHANNELS:
+                curr_channel = 0
+                sweeps += 1
+            if sweeps >= 0x0F:
+                endl = True
+                sweeps = 0
+                # reset the signal counts for new line
+                signals = [0] * MAX_CHANNELS
+            if curr_channel == 0:
+                print("\n" if endl else "\r", end="", flush=True)
 
         # finish printing results and end with a new line
-        while curr_channel < len(signals) - 1:
-            curr_channel += 1
-            sig_cnt = signals[curr_channel]
-            print(("%X" % min(15, sig_cnt)) if sig_cnt else "-", sep="", end="")
+        for channel in range(curr_channel, MAX_CHANNELS):
+            sig_cnt = signals[channel]
+            print(("%X" % sig_cnt) if sig_cnt else "-", end="")
         print("")
 
     def noise(self, timeout: float = 1, channel: Optional[int] = None):

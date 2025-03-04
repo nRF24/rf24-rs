@@ -8,7 +8,7 @@ const io = readline.createInterface({
   output: process.stdout,
 });
 
-const CHANNELS = 126;
+const MAX_CHANNELS = 126;
 
 export class App {
   radio: RF24;
@@ -61,7 +61,7 @@ export class App {
     let tens = "";
     let ones = "";
     let divider = "";
-    for (let i = 0; i < CHANNELS; i++) {
+    for (let i = 0; i < MAX_CHANNELS; i++) {
       hundreds += Math.floor(i / 100).toString();
       tens += (Math.floor(i / 10) % 10).toString();
       ones += (i % 10).toString();
@@ -94,7 +94,7 @@ export class App {
   async scan(duration?: number) {
     this.printHeader();
     const caches = [];
-    for (let i = 0; i < CHANNELS; i++) {
+    for (let i = 0; i < MAX_CHANNELS; i++) {
       caches.push(0);
     }
     let sweeps = 0;
@@ -110,27 +110,29 @@ export class App {
       await timer.setTimeout(0.13); // needs to be at least 130 microseconds
       const rpd = this.radio.rpd;
       this.radio.asTx();
+
       const foundSignal = this.radio.available();
-
-      caches[channel] += Number(foundSignal || rpd || this.radio.rpd);
-
+      if (foundSignal || rpd || this.radio.rpd) {
+        caches[channel] += 1;
+      }
       if (foundSignal) {
         this.radio.flushRx(); // discard any packets (noise) saved in RX FIFO
       }
+
       const total = caches[channel];
       this.print_signals(total);
 
       channel += 1;
       let endl = false;
-      if (channel >= CHANNELS) {
+      if (channel >= MAX_CHANNELS) {
         channel = 0;
         sweeps += 1;
       }
-      if (sweeps >= 15) {
+      if (sweeps >= 0x0f) {
         endl = true;
         sweeps = 0;
         // reset total signal counts for all channels
-        for (let i = 0; i < CHANNELS; i++) {
+        for (let i = 0; i < MAX_CHANNELS; i++) {
           caches[i] = 0;
         }
       }
@@ -140,7 +142,7 @@ export class App {
     }
 
     // finish printing current cache of signals
-    for (let i = channel; i < CHANNELS; i++) {
+    for (let i = channel; i < MAX_CHANNELS; i++) {
       const total = caches[i];
       this.print_signals(total);
     }
