@@ -4,15 +4,15 @@ on:
   push:
     branches: [main]
     paths:
-      - 'library/**'
-      - '!library/README.md'
+      - 'crates/**'
+      - '!crates/README.md'
       - Cargo.toml
       - .github/workflows/tests.yml
   pull_request:
     branches: [main]
     paths:
-      - 'library/**'
-      - '!library/README.md'
+      - 'crates/**'
+      - '!crates/README.md'
       - Cargo.toml
       - .github/workflows/tests.yml
 
@@ -22,17 +22,14 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Setup Rust
-        uses: dtolnay/rust-toolchain@stable
-      - name: Install cargo-binstall
-        uses: cargo-bins/cargo-binstall@main
-      - name: Install Just
-        run: cargo binstall -y just
+        run: rustup update --no-self-update
       - name: Cache deps
         uses: actions/cache@v4
         with:
           path: ~/.cargo
           key: cargo-lib-${{ hashFiles('lib/src/**', 'lib/Cargo.toml') }}
-      - run: just lint
+      - run: cargo clippy
+      - run: cargo fmt --check
 
   test:
     needs: [lint-lib]
@@ -40,7 +37,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Setup Rust
-        uses: dtolnay/rust-toolchain@stable
+        run: rustup update --no-self-update
       - name: Install cargo-binstall
         uses: cargo-bins/cargo-binstall@main
       - name: Install Just

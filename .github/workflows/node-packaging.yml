@@ -9,13 +9,15 @@ on:
     branches: [main]
     tags: ['v*']
     paths:
-      - 'library/src/**'
+      - crates/rf24-rs/src/**
+      - '!crates/rf24-rs/README.md'
       - 'bindings/node/**'
       - '!**/*.md'
   pull_request:
     branches: [main]
     paths:
-      - 'library/src/**'
+      - crates/rf24-rs/src/**
+      - '!crates/rf24-rs/README.md'
       - 'bindings/node/**'
       - '!**/*.md'
 

@@ -10,11 +10,13 @@ words:
   - attron
   - autorefs
   - bindgen
+  - binstall
   - bitfield
   - bytearray
   - calcsize
   - cbreak
   - Cdev
+  - clippy
   - codecov
   - corepack
   - datasheet
@@ -48,20 +50,24 @@ words:
   - nanos
   - nanosleep
   - napi
+  - nextest
   - nocbreak
   - noecho
   - pyclass
   - pymdownx
   - pymethods
   - pymodule
+  - pyproject
   - repr
   - reshim
   - RETR
   - riscv
   - rustc
+  - rustup
   - RXADDR
   - SCLK
   - Spidev
+  - startswith
   - struct
   - superfences
   - tasklist

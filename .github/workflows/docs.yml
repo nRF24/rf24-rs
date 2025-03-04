@@ -5,7 +5,7 @@ on:
     branches: [main]
     paths:
       - 'docs/**'
-      - 'lib/**'
+      - 'crates/rf24-rs/**'
       - Cargo.toml
       - '*.md'
       - .github/workflows/docs.yml
@@ -13,7 +13,7 @@ on:
     branches: [main]
     paths:
       - 'docs/**'
-      - 'lib/**'
+      - 'crates/rf24-rs/**'
       - Cargo.toml
       - '*.md'
       - .github/workflows/docs.yml
@@ -52,7 +52,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Setup Rust
-        uses: dtolnay/rust-toolchain@stable
+        run: rustup update --no-self-update
       - name: Install cargo-binstall
         uses: cargo-bins/cargo-binstall@main
       - name: Install Just
@@ -63,4 +63,3 @@ jobs:
         with:
           name: api-docs
           path: target/doc
-    

@@ -10,7 +10,8 @@ on:
     branches: [main]
     paths:
       - bindings/python/**
-      - library/src/**
+      - crates/rf24-rs/**
+      - '!crates/rf24-rs/README.md'
       - Cargo.toml
       - pyproject.toml
       - .github/workflows/python-packaging.yml
@@ -20,7 +21,8 @@ on:
     branches: [main]
     paths:
       - bindings/python/**
-      - library/src/**
+      - crates/rf24-rs/src/**
+      - '!crates/rf24-rs/README.md'
       - Cargo.toml
       - pyproject.toml
       - .github/workflows/python-packaging.yml

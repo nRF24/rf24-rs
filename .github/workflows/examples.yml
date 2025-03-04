@@ -48,7 +48,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - run: rustup update --no-self-update
-      - uses: cargo-bins/cargo-binstall@main
-      - name: Install just
-        run: cargo binstall -y just
-      - run: just lint-examples
+      - run: >-
+          cargo clippy
+          --manifest-path examples/rust/Cargo.toml
+          --features linux
+      - run: cargo fmt --check --manifest-path examples/rust/Cargo.toml
