@@ -1,5 +1,7 @@
 """
-Simple example of using the RF24 class.
+The simplest example of using the nRF24L01 transceiver to send and receive.
+
+This example is meant to be run on 2 separate nRF24L01 transceivers.
 
 See documentation at https://nRF24.github.io/rf24-rs
 """

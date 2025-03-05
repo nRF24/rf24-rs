@@ -1,3 +1,12 @@
+/**
+ * This example uses 1 nRF24L01 to receive data from up to 6 other
+ * transceivers. This technique is called "multiceiver" in the datasheet.
+ *
+ * This example is meant to be run on at least 2 separate nRF24L01 transceivers.
+ * Although, this example can be used on 7 transceivers at most simultaneously.
+ *
+ * See documentation at https://nRF24.github.io/rf24-rs
+ */
 import * as readline from "readline/promises";
 import * as timer from "timers/promises";
 import { RF24, PaLevel } from "@rf24/rf24";

@@ -1,3 +1,13 @@
+//! This example demonstrates how to
+//! transmit multiple payloads as a stream of data.
+//!
+//! Any transmission failures will be retried.
+//! If the number of failures exceeds 100, then the example aborts
+//! transmitting the stream.
+//!
+//! This example is meant to be run on 2 separate nRF24L01 transceivers.
+//!
+//! See documentation at https://docs.rs/rf24-rs
 #![no_std]
 
 use anyhow::Result;

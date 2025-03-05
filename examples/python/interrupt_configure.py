@@ -1,6 +1,10 @@
 """
 Simple example of detecting (and verifying) the IRQ (interrupt) pin on the
-nRF24L01
+nRF24L01.
+
+This example is meant to be run on 2 separate nRF24L01 transceivers.
+
+This example requires gpiod lib to monitor the radio's IRQ pin.
 
 See documentation at https://nRF24.github.io/rf24-rs
 """

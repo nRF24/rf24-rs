@@ -1,3 +1,4 @@
+//! Linux implementation for GPIO, SPI, and Delay API.
 use anyhow::{anyhow, Error, Result};
 pub use linux_embedded_hal::{
     gpio_cdev::{chips, Chip, LineRequestFlags},

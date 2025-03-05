@@ -1,3 +1,9 @@
+//! Simple example of detecting (and verifying) the IRQ (interrupt) pin on the
+//! nRF24L01.
+//!
+//! This example is meant to be run on 2 separate nRF24L01 transceivers.
+//!
+//! See documentation at https://docs.rs/rf24-rs
 #![no_std]
 
 use anyhow::Result;

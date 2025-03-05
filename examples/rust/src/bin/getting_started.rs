@@ -1,3 +1,8 @@
+//! The simplest example of using the nRF24L01 transceiver to send and receive.
+//!
+//! This example is meant to be run on 2 separate nRF24L01 transceivers.
+//!
+//! See documentation at https://docs.rs/rf24-rs
 #![no_std]
 
 use anyhow::Result;

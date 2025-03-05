@@ -1,5 +1,12 @@
 """
-Example of library usage for streaming multiple payloads.
+This example demonstrates how to
+transmit multiple payloads as a stream of data.
+
+This example is meant to be run on 2 separate nRF24L01 transceivers.
+
+Any transmission failures will be retried.
+If the number of failures exceeds 100, then the example aborts
+transmitting the stream.
 
 See documentation at https://nRF24.github.io/rf24-rs
 """

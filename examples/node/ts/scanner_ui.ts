@@ -1,3 +1,12 @@
+/**
+ * A scanner example that displays progress bars for each channel
+ * using the terminal-kit library.
+ *
+ * This is a good diagnostic tool to check whether you're picking a
+ * good channel for your application.
+ *
+ * See documentation at https://nRF24.github.io/rf24-rs
+ */
 import * as readline from "readline/promises";
 import * as timer from "timers/promises";
 import * as tui from "terminal-kit";

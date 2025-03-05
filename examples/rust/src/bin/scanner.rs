@@ -1,3 +1,28 @@
+//! This is an example of how to use the nRF24L01's builtin
+//! Received Power Detection (RPD) to scan for possible interference.
+//!
+//! This example does not require a counterpart node.
+//!
+//! The output of the scanner example is supposed to be read vertically (as columns).
+//! So, the following
+//!
+//! ```text
+//! 000
+//! 111
+//! 789
+//! ~~~
+//! 13-
+//! ```
+//!     
+//! should be interpreted as
+//!
+//! - `1` signal detected on channel `017`
+//! - `3` signals detected on channel `018`
+//! - no signal (`-`) detected on channel `019`
+//!
+//! The `~` is just a divider between the vertical header and the signal counts.
+//!
+//! See documentation at https://docs.rs/rf24-rs
 #![no_std]
 
 use anyhow::Result;

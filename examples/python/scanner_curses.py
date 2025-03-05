@@ -1,4 +1,5 @@
-"""A scanner example written in python using the std lib's ncurses wrapper.
+"""
+A scanner example written in python using the std lib's ncurses wrapper.
 
 This is a good diagnostic tool to check whether you're picking a
 good channel for your application.

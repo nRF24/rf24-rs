@@ -1,3 +1,14 @@
+/**
+ * This example uses the nRF24L01 to transmit and respond with an
+ * acknowledgment (ACK) transmissions. Notice that the auto-ack feature is
+ * enabled, but this example doesn't use automatic ACK payloads because automatic
+ * ACK payloads' data will always be outdated by 1 transmission. Instead, this
+ * example uses a call-and-response paradigm.
+ *
+ * This example is meant to be run on 2 separate nRF24L01 transceivers.
+ *
+ * See documentation at https://nRF24.github.io/rf24-rs
+ */
 import * as readline from "readline/promises";
 import * as timer from "timers/promises";
 import { RF24, PaLevel } from "@rf24/rf24";

@@ -1,6 +1,8 @@
 """
-Simple example of using the library to transmit
-and retrieve custom automatic acknowledgment payloads.
+Simple example of using the nRF24L01 to transmit and
+retrieve automatic acknowledgment packets with customized payloads.
+
+This example is meant to be run on 2 separate nRF24L01 transceivers.
 
 See documentation at https://nRF24.github.io/rf24-rs
 """
