@@ -82,5 +82,6 @@ fn main() -> Result<()> {
     let mut app = App::new()?;
     app.setup()?;
     app.run()?;
+    app.radio.power_down().map_err(debug_err)?;
     Ok(())
 }

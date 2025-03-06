@@ -60,7 +60,6 @@ export class App {
     this.radio.withConfig(normalContext);
     console.log("\nSettings for normal context\n---------------------------");
     this.radio.printDetails();
-    console.log();
   }
 }
 
@@ -68,6 +67,7 @@ export async function main() {
   console.log(module.filename);
   const app = new App();
   app.run();
+  app.radio.powerDown();
 }
 
 main();

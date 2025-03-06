@@ -53,7 +53,6 @@ class App:
             "\nSettings for normal context\n---------------------------",
         )
         self.radio.print_details()
-        print()
 
 
 if __name__ == "__main__":
@@ -61,3 +60,4 @@ if __name__ == "__main__":
 
     app = App()
     app.run()
+    app.radio.power_down()
