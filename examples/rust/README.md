@@ -29,3 +29,4 @@ The provided examples names (value passed to the `--bin` option) are
 - `multiceiver-demo`
 - `irq-config`
 - `scanner`
+- `quick-config`

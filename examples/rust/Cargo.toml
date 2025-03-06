@@ -55,3 +55,9 @@ name = "irq-config"
 path = "src/bin/irq_config.rs"
 test = false
 bench = false
+
+[[bin]]
+name = "quick-config"
+path = "src/bin/quick_config.rs"
+test = false
+bench = false

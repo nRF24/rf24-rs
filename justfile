@@ -46,7 +46,7 @@ docs-build:
 # rust API docs
 [group("docs")]
 docs-rs open='':
-    cargo doc --no-deps --lib --manifest-path Cargo.toml {{ open }}
+    cargo doc --no-deps --lib --manifest-path crates/rf24-rs/Cargo.toml {{ open }}
 
 # run clippy and rustfmt (on library only)
 lint:
