@@ -75,17 +75,15 @@ where
         self.spi_write_byte(registers::RF_SETUP, setup_rf_reg_val)?;
         self.tx_delay = set_tx_delay(config.data_rate());
 
-        // close/reset all RX pipes (except pipe 0 for auto-ack in TX mode)
-        // open_rx_pipe() will open them as needed
-        self.spi_write_byte(registers::EN_RXADDR, 1u8)?;
-
         let mut address = [0; 5];
-        for pipe in 0..5 {
-            if !config.is_rx_pipe_enabled(pipe) {
-                continue;
-            }
+        for pipe in 0..6 {
             config.rx_address(pipe, &mut address);
             self.open_rx_pipe(pipe, &address)?;
+            // we need to set the pipe addresses before closing the pipe
+            // because pipe 1 address is reused for pipes 2-5
+            if !config.is_rx_pipe_enabled(pipe) {
+                self.close_rx_pipe(pipe)?;
+            }
         }
         config.tx_address(&mut address);
         self.open_tx_pipe(&address)?;
@@ -94,8 +92,8 @@ where
 
         self.set_channel(config.channel())?;
 
-        // Clear CONFIG register:
-        //      Reflect all IRQ events on IRQ pin
+        // Set CONFIG register:
+        //      Set all IRQ events on IRQ pin
         //      Set CRC length
         //      Power up
         //      Enable PTX
@@ -232,29 +230,64 @@ mod test {
                     ],
                     vec![0xEu8, 0u8],
                 ),
-                // disable RX pipes
-                (
-                    vec![registers::EN_RXADDR | commands::W_REGISTER, 1u8],
-                    vec![0xEu8, 0],
-                ),
-                // set RX address for pipe 1
-                (
-                    vec![
-                        (registers::RX_ADDR_P0 + 1) | commands::W_REGISTER,
-                        0xC2,
-                        0xC2,
-                        0xC2,
-                        0xC2,
-                        0xC2
-                    ],
-                    vec![0xEu8, 0, 0, 0, 0, 0],
-                ),
-                // enable RX pipe 1
-                (vec![registers::EN_RXADDR, 0u8], vec![0xEu8, 1],),
-                (
-                    vec![registers::EN_RXADDR | commands::W_REGISTER, 3u8],
-                    vec![0xEu8, 0],
-                ),
+            ]);
+            for (pipe, addr) in [0xE7, 0xC2].iter().enumerate() {
+                spi_expectations.extend(spi_test_expects![
+                    // set RX address for pipe
+                    (
+                        vec![
+                            (registers::RX_ADDR_P0 + pipe as u8) | commands::W_REGISTER,
+                            *addr,
+                            *addr,
+                            *addr,
+                            *addr,
+                            *addr
+                        ],
+                        vec![0xEu8, 0, 0, 0, 0, 0],
+                    ),
+                    // enable RX pipe
+                    (vec![registers::EN_RXADDR, 0], vec![0xEu8, 0]),
+                    (
+                        vec![registers::EN_RXADDR | commands::W_REGISTER, 1 << pipe],
+                        vec![0xEu8, 0],
+                    ),
+                ]);
+                if pipe == 0 {
+                    // close pipe 0
+                    spi_expectations.extend(spi_test_expects![
+                        (vec![registers::EN_RXADDR, 0], vec![0xEu8, 1]),
+                        (
+                            vec![registers::EN_RXADDR | commands::W_REGISTER, 0],
+                            vec![0xEu8, 0],
+                        ),
+                    ]);
+                }
+            }
+            for (pipe, addr) in [0xC3, 0xC4, 0xC5, 0xC6].iter().enumerate() {
+                spi_expectations.extend(spi_test_expects![
+                    // set RX address for pipe
+                    (
+                        vec![
+                            (registers::RX_ADDR_P0 + 2 + pipe as u8) | commands::W_REGISTER,
+                            *addr,
+                        ],
+                        vec![0xEu8, 0],
+                    ),
+                    // enable RX pipe
+                    (vec![registers::EN_RXADDR, 0], vec![0xEu8, 0]),
+                    (
+                        vec![registers::EN_RXADDR | commands::W_REGISTER, 1 << (pipe + 2)],
+                        vec![0xEu8, 0],
+                    ),
+                    // close RX pipe
+                    (vec![registers::EN_RXADDR, 0], vec![0xEu8, 1 << (pipe + 2)]),
+                    (
+                        vec![registers::EN_RXADDR | commands::W_REGISTER, 0],
+                        vec![0xEu8, 0],
+                    ),
+                ]);
+            }
+            spi_expectations.extend(spi_test_expects![
                 // set TX address for pipe 0
                 (
                     vec![

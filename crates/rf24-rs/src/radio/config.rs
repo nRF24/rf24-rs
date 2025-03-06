@@ -150,30 +150,30 @@ impl Default for EsbConfig {
                - powered down
                - inactive TX (StandBy-I) mode
             */
-            config_reg: Config::from_bits(0xCu8),
+            config_reg: Config::default(),
             /*
                - 5 * 250 + 250 = 1500 us delay between attempts
                - 15 max attempts
             */
-            auto_retries: SetupRetry::from_bits(0x5Fu8),
+            auto_retries: SetupRetry::default(),
             /*
                 - 5 byte address length
-                - 2 Mbps
+                - 1 Mbps data rate
                 - Max PA level
                 - LNA enabled
             */
-            setup_rf_aw: SetupRfAw::from_bits(0xC7),
+            setup_rf_aw: SetupRfAw::default(),
             /*
                - disabled dynamic payloads
                - disabled ACK payloads
                - disabled ask_no_ack param
             */
-            feature: Default::default(),
-            channel: 76u8,
-            payload_length: 32u8,
+            feature: Feature::default(),
+            channel: 76,
+            payload_length: 32,
             // enable auto-ACK for pipes 0 - 5
             auto_ack: 0x3F,
-            pipes: Default::default(),
+            pipes: EsbPipeConfig::default(),
         }
     }
 }

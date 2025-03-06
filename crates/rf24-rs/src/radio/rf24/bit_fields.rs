@@ -21,7 +21,7 @@ pub(crate) struct Config {
     #[bits(1, access = None)]
     pub tx_df: bool,
 
-    #[bits(2, access = None)]
+    #[bits(2, access = None, default = 3)]
     pub crc_length: u8,
 
     pub power: bool,
@@ -83,25 +83,26 @@ impl Config {
 #[bitfield(u8, order = Msb)]
 pub(crate) struct SetupRetry {
     /// The auto-retry feature's `delay`.
-    #[bits(4)]
+    #[bits(4, default = 5)]
     pub ard: u8,
 
     /// The auto-retry feature's `count`.
-    #[bits(4)]
+    #[bits(4, default = 15)]
     pub arc: u8,
 }
 
 #[bitfield(u8, order = Msb)]
 pub(crate) struct SetupRfAw {
-    #[bits(2, access = None)]
+    #[bits(2, access = None, default = 3)]
     address_length: u8,
 
     #[bits(3, access = None)]
     data_rate: u8,
 
-    #[bits(2, access = None)]
+    #[bits(2, access = None, default = 3)]
     pa_level: u8,
 
+    #[bits(1, default = true)]
     pub lna_enable: bool,
 }
 
