@@ -15,15 +15,11 @@ use rf24::{
     PaLevel,
 };
 use rf24_rs_examples::debug_err;
-#[cfg(feature = "linux")]
-use rf24_rs_examples::linux::{
-    print, println, BoardHardware, CdevPin as DigitalOutImpl, Delay as DelayImpl,
-    SpidevDevice as SpiImpl,
-};
+use rf24_rs_examples::hal::{print, println, BoardHardware, DelayImpl, DigitalOutImpl, SpiImpl};
 
-#[cfg(feature = "linux")]
+#[cfg(target_os = "linux")]
 extern crate std;
-#[cfg(feature = "linux")]
+#[cfg(target_os = "linux")]
 use std::{
     borrow::ToOwned,
     io::{stdin, Write},

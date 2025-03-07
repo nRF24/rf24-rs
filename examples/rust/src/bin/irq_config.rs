@@ -6,24 +6,22 @@
 //! See documentation at <https://docs.rs/rf24-rs>
 #![no_std]
 
-use anyhow::Result;
+use anyhow::{anyhow, Result};
 use core::time::Duration;
-use embedded_hal::delay::DelayNs;
+use embedded_hal::{delay::DelayNs, digital::InputPin};
 
 use rf24::{
     radio::{prelude::*, RF24},
     FifoState, PaLevel, StatusFlags,
 };
 use rf24_rs_examples::debug_err;
-#[cfg(feature = "linux")]
-use rf24_rs_examples::linux::{
-    print, println, BoardHardware, CdevPin as DigitalOutImpl, Delay as DelayImpl,
-    SpidevDevice as SpiImpl,
+use rf24_rs_examples::hal::{
+    print, println, BoardHardware, DelayImpl, DigitalInImpl, DigitalOutImpl, SpiImpl,
 };
 
-#[cfg(feature = "linux")]
+#[cfg(target_os = "linux")]
 extern crate std;
-#[cfg(feature = "linux")]
+#[cfg(target_os = "linux")]
 use std::{
     io::{stdin, stdout, Write},
     string::{String, ToString},
@@ -37,7 +35,7 @@ struct App {
     board: BoardHardware,
     /// Our instantiated RF24 object.
     radio: RF24<SpiImpl, DigitalOutImpl, DelayImpl>,
-    irq_pin: DigitalOutImpl,
+    irq_pin: DigitalInImpl,
     pl_iterator: u8,
 }
 
@@ -97,7 +95,7 @@ impl App {
         let end_time = Instant::now() + Duration::from_secs(timeout as u64);
         let mut event_occurred = false;
         while Instant::now() < end_time && !event_occurred {
-            event_occurred = self.irq_pin.get_value()? == 0;
+            event_occurred = self.irq_pin.is_low().map_err(|e| anyhow!("{e:?}"))?;
         }
         if !event_occurred {
             println!("\tInterrupt event not detected for {timeout} seconds!");
