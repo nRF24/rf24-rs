@@ -252,9 +252,9 @@ impl defmt::Format for StatusFlags {
         defmt::write!(
             fmt,
             "StatusFlags rx_dr: {}, tx_ds: {}, tx_df: {}",
-            self.rx_dr,
-            self.tx_ds,
-            self.tx_df
+            self.rx_dr(),
+            self.tx_ds(),
+            self.tx_df()
         )
     }
 }

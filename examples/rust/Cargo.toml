@@ -12,11 +12,18 @@ rf24-rs = {path = "../../crates/rf24-rs", version = "0.3.1"}
 rf24ble-rs = {path = "../../crates/rf24ble-rs", version = "0.1.4"}
 embedded-hal = "1.0.0"
 anyhow = {version = "1.0.98", default-features = false}
+embassy-rp = {version = "0.4.0", optional = true}
+embassy-sync = {version = "0.6.2", optional = true}
+embassy-embedded-hal = {version = "0.3.0", optional = true}
+
+[target.'cfg(target_os = "linux")'.dependencies]
 linux-embedded-hal = {version = "0.4.0", optional = true, default-features = false, features = ["gpio_cdev", "spi"]}
+rf24-rs = {path = "../../crates/rf24-rs", features = ["std"]}
+rf24ble-rs = {path = "../../crates/rf24ble-rs", features = ["std"]}
 
 [features]
-default = ["linux"]
-linux = ["dep:linux-embedded-hal", "rf24-rs/std", "rf24ble-rs/std"]
+default = ["rp2040"]
+rp2040 = ["dep:embassy-rp", "dep:embassy-sync", "dep:embassy-embedded-hal", "rf24-rs/defmt"]
 
 [[bin]]
 name = "getting-started"
