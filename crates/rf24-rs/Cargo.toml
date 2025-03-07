@@ -14,7 +14,7 @@ categories = ["embedded", "no-std"]
 name = "rf24"
 
 [dependencies]
-bitfield-struct = "0.9.3"
+bitfield-struct = "0.10.1"
 defmt = {version = "0.3.10", optional = true}
 embedded-hal = "1.0.0"
 
