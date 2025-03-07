@@ -1,0 +1,65 @@
+name: Docs
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'docs/**'
+      - 'crates/rf24-rs/**'
+      - Cargo.toml
+      - '*.md'
+      - .github/workflows/docs.yml
+  pull_request:
+    branches: [main]
+    paths:
+      - 'docs/**'
+      - 'crates/rf24-rs/**'
+      - Cargo.toml
+      - '*.md'
+      - .github/workflows/docs.yml
+
+jobs:
+  supplemental:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install cargo-binstall
+        uses: cargo-bins/cargo-binstall@main
+      - name: Install Just
+        run: cargo binstall -y just
+      - uses: actions/setup-python@v5
+        with:
+          python-version: 3.x
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20.x
+      - run: yarn install
+      - name: Build Node.js type definitions
+        run: yarn build:debug
+      - name: Generate Node.js API docs
+        run: yarn docs
+      - run: pip install -r docs/requirements.txt
+      - run: pip install .
+      - run: just docs-build
+      - name: Save docs build as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          path: docs/site
+          name: supplemental-docs
+
+  api:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Rust
+        run: rustup update --no-self-update
+      - name: Install cargo-binstall
+        uses: cargo-bins/cargo-binstall@main
+      - name: Install Just
+        run: cargo binstall -y just
+      - run: just docs-rs
+      - name: save docs as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: api-docs
+          path: target/doc

@@ -1,0 +1,18 @@
+{
+  "name": "@rf24/rf24-win32-x64-msvc",
+  "version": "0.1.0",
+  "os": [
+    "win32"
+  ],
+  "cpu": [
+    "x64"
+  ],
+  "main": "rf24.win32-x64-msvc.node",
+  "files": [
+    "rf24.win32-x64-msvc.node"
+  ],
+  "license": "MIT",
+  "engines": {
+    "node": ">= 10"
+  }
+}

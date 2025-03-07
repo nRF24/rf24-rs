@@ -1,0 +1,76 @@
+th {
+    background-color: var(--md-default-fg-color--lightest);
+}
+
+/* Fancier color for operators such as * and |. */
+.doc-signature .o {
+    color: var(--md-code-hl-special-color);
+}
+
+/* Fancier color for constants such as None, True, and False. */
+.doc-signature .kc {
+    color: var(--md-code-hl-constant-color);
+}
+
+/* Fancier color for built-in types (only useful when cross-references are used). */
+.doc-signature .n>a.autorefs {
+    color: var(--md-primary-fg-color);
+}
+
+.doc-signature .n>a.autorefs:hover {
+    color: var(--md-accent-fg-color);
+}
+
+.doc.doc-contents.first {
+    margin-left: 2em;
+}
+
+.doc.doc-label>code {
+    background-color: var(--md-accent-fg-color--transparent);
+    color: var(--md-accent-fg-color);
+    outline: solid var(--md-accent-fg-color) 1px;
+    border-radius: 2em;
+    padding: 0.25em 0.5em;
+}
+
+.doc.doc-label {
+    float: right;
+}
+
+.doc-symbol-toc.doc-symbol-parameter::after {
+    content: "P";
+}
+
+.doc-symbol-toc.doc-symbol-attribute::after {
+    content: "A";
+}
+
+.doc-symbol-toc.doc-symbol-function::after {
+    content: "F";
+}
+
+.doc-symbol-toc.doc-symbol-method::after {
+    content: "M";
+}
+
+.doc-symbol-toc.doc-symbol-class::after {
+    content: "C";
+}
+
+.doc-symbol-toc.doc-symbol-module::after {
+    content: "M";
+}
+
+.admonition.important {
+    border-color: #00b8d4;
+}
+
+.admonition.important>.admonition-title::before {
+    -webkit-mask-image: var(--md-admonition-icon--info);
+    mask-image: var(--md-admonition-icon--info);
+    background-color: #00b8d4;
+}
+
+.admonition.important>.admonition-title {
+    background-color: #00b8d41a;
+}

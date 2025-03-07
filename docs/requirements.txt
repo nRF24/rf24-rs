@@ -1,0 +1,6 @@
+black==24.10.0
+markdown-gfm-admonition==0.1.1
+mkdocs==1.6.1
+mkdocs-include-markdown-plugin==7.1.2
+mkdocs-material==9.5.50
+mkdocstrings-python==1.13.0

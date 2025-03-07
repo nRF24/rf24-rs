@@ -1,0 +1,61 @@
+[build-system]
+requires = ["maturin>=1.7,<2.0"]
+build-backend = "maturin"
+
+[project]
+name = "rf24-py"
+description = "A python package wrapping the nRF24 C++ libraries."
+requires-python = ">=3.8"
+keywords = [
+    "nrf24l01",
+    "nRF24L01+",
+    "raspberry",
+    "pi",
+    "driver",
+    "radio",
+    "transceiver",
+    "RF24",
+    "RF24Network",
+    "RF24Mesh",
+]
+license = {text = "MIT"}
+authors = [
+    { name = "Brendan Doherty", email = "2bndy5@gmail.com" },
+]
+classifiers = [
+    # https://pypi.org/pypi?%3Aaction=list_classifiers
+    "Programming Language :: Rust",
+    "Programming Language :: Python :: Implementation :: CPython",
+    "Programming Language :: Python :: Implementation :: PyPy",
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: POSIX :: Linux",
+    "Programming Language :: C++",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Topic :: Software Development :: Libraries",
+    "Topic :: System :: Hardware",
+    "Topic :: System :: Hardware :: Hardware Drivers",
+    "Topic :: System :: Networking",
+    "Typing :: Typed",
+]
+dynamic = ["version"]
+
+[project.urls]
+Documentation = "http://nRF24.github.io/rf24-rs"
+Source =  "https://github.com/nRF24/rf24-rs"
+Tracker = "https://github.com/nRF24/rf24-rs/issues"
+
+[tool.mypy]
+show_error_codes = true
+pretty = true
+files = [
+    "examples/python/*.py",
+    "rf24_py.pyi"
+]
+
+[tool.maturin]
+manifest-path = "bindings/python/Cargo.toml"

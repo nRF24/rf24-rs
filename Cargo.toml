@@ -1,6 +1,16 @@
-[package]
-name = "rf24-rs"
-version = "0.1.0"
-edition = "2021"
+[workspace]
+members = ["crates/rf24-rs", "examples/rust", "bindings/python", "bindings/node"]
+default-members = ["crates/rf24-rs", "examples/rust"]
+resolver = "2"
 
-[dependencies]
+[workspace.package]
+version = "0.1.0"
+repository = "https://github.com/nRF24/rf24-rs"
+homepage = "https://nRF24.github.io/rf24-rs"
+edition = "2021"
+rust-version = "1.70"
+license-file = "LICENSE"
+
+[profile.release]
+lto = true
+strip = "symbols"

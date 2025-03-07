@@ -1,0 +1,15 @@
+{
+  "name": "@rf24/rf24-darwin-universal",
+  "version": "0.1.0",
+  "os": [
+    "darwin"
+  ],
+  "main": "rf24.darwin-universal.node",
+  "files": [
+    "rf24.darwin-universal.node"
+  ],
+  "license": "MIT",
+  "engines": {
+    "node": ">= 10"
+  }
+}

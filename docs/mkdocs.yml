@@ -1,0 +1,141 @@
+site_name: rf24-rs
+site_description: "The RF24 rust library"
+site_url: "https://nRF24.github.io/rf24-rs"
+repo_url: "https://github.com/nRF24/rf24-rs"
+repo_name: "nRF24/rf24-rs"
+edit_uri: "edit/main/docs/"
+docs_dir: src
+nav:
+  - index.md
+  - api-diff.md
+  - changelog.md
+  - node.js binding:
+    - node-api/README.md
+    - Classes:
+      - node-api/classes/RF24.md
+      - node-api/classes/RadioConfig.md
+    - Enumerations:
+      - node-api/enumerations/CrcLength.md
+      - node-api/enumerations/DataRate.md
+      - node-api/enumerations/FifoState.md
+      - node-api/enumerations/PaLevel.md
+    - Interfaces:
+      - node-api/interfaces/AvailablePipe.md
+      - node-api/interfaces/HardwareConfig.md
+      - node-api/interfaces/StatusFlags.md
+      - node-api/interfaces/WriteConfig.md
+  - python binding:
+    - python-api/README.md
+    - Classes:
+      - python-api/classes/RF24.md
+      - python-api/classes/status-flags.md
+      - python-api/classes/config.md
+    - Enumerations:
+      - python-api/enumerations/crc-length.md
+      - python-api/enumerations/data-rate.md
+      - python-api/enumerations/pa-level.md
+      - python-api/enumerations/fifo-state.md
+
+theme:
+  name: material
+  features:
+    - navigation.top
+    - content.tabs.link
+    - content.tooltips
+    - content.code.annotate
+    - content.code.copy
+    - content.action.view
+    - content.action.edit
+    - navigation.footer
+    - search.suggest
+    - search.share
+    - navigation.tracking
+    - toc.follow
+  logo: images/logo.jpg
+  favicon: images/favicon.ico
+  icon:
+    repo: fontawesome/brands/github
+  palette:
+    # Palette toggle for automatic mode
+    - media: "(prefers-color-scheme)"
+      primary: yellow
+      accent: cyan
+      toggle:
+        icon: material/brightness-auto
+        name: Switch to light mode
+
+    # Palette toggle for light mode
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: yellow
+      accent: cyan
+      toggle:
+        icon: material/lightbulb-outline
+        name: Switch to dark mode
+
+    # Palette toggle for dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: yellow
+      accent: cyan
+      toggle:
+        icon: material/lightbulb
+        name: Switch to system preference
+extra:
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/nRF24/rf24-rs
+
+extra_css:
+  - stylesheets/extra.css
+
+hooks:
+  - scripts/html_sanitizer.py
+
+plugins:
+  - search
+  - include-markdown
+  - mkdocstrings:
+      handlers:
+        python:
+          paths: ['../']
+          import: [https://docs.python.org/3/objects.inv]
+          options:
+            extensions:
+              - scripts/py_native_docstring.py
+            allow_inspection: false
+            show_if_no_docstring: true
+            show_signature_annotations: true
+            separate_signature: true
+            signature_crossrefs: true
+            show_source: false
+            show_symbol_type_toc: true
+            docstring_section_style: list
+            show_root_heading: true
+            members_order: source
+            merge_init_into_class: true
+
+markdown_extensions:
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+  - pymdownx.tabbed:
+      alternate_style: true
+  - toc:
+      permalink: true
+  - pymdownx.emoji:
+      emoji_index: !!python/name:material.extensions.emoji.twemoji
+      emoji_generator: !!python/name:material.extensions.emoji.to_svg
+  - pymdownx.highlight:
+      linenums_style: pymdownx-inline
+  # - pymdownx.inlinehilite
+  - pymdownx.tasklist:
+      custom_checkbox: true
+  - pymdownx.snippets:
+      check_paths: true
+  - attr_list
+  - admonition
+  - markdown_gfm_admonition
+  - footnotes

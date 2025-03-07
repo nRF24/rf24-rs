@@ -1,0 +1,58 @@
+name: Tests
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'crates/**'
+      - '!crates/README.md'
+      - Cargo.toml
+      - .github/workflows/tests.yml
+  pull_request:
+    branches: [main]
+    paths:
+      - 'crates/**'
+      - '!crates/README.md'
+      - Cargo.toml
+      - .github/workflows/tests.yml
+
+jobs:
+  lint-lib:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Rust
+        run: rustup update --no-self-update
+      - name: Cache deps
+        uses: actions/cache@v4
+        with:
+          path: ~/.cargo
+          key: cargo-lib-${{ hashFiles('lib/src/**', 'lib/Cargo.toml') }}
+      - run: cargo clippy
+      - run: cargo fmt --check
+
+  test:
+    needs: [lint-lib]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Rust
+        run: rustup update --no-self-update
+      - name: Install cargo-binstall
+        uses: cargo-bins/cargo-binstall@main
+      - name: Install Just
+        run: cargo binstall -y just cargo-nextest cargo-llvm-cov
+      - name: Cache deps
+        uses: actions/cache@v4
+        with:
+          path: ~/.cargo
+          key: cargo-lib-${{ hashFiles('lib/src/**', 'lib/Cargo.toml') }}
+      - run: rustup component add llvm-tools-preview
+        # this enables a tool (for default toolchain) needed to measure code coverage.
+      - name: Run tests and generate reports
+        run: just test ci lcov
+      - uses: codecov/codecov-action@v4
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: lcov.info
+          fail_ci_if_error: true

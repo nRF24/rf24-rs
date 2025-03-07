@@ -1,0 +1,21 @@
+{
+  "name": "@rf24/rf24-linux-arm64-musl",
+  "version": "0.1.0",
+  "os": [
+    "linux"
+  ],
+  "cpu": [
+    "arm64"
+  ],
+  "main": "rf24.linux-arm64-musl.node",
+  "files": [
+    "rf24.linux-arm64-musl.node"
+  ],
+  "license": "MIT",
+  "engines": {
+    "node": ">= 10"
+  },
+  "libc": [
+    "musl"
+  ]
+}

@@ -1,0 +1,14 @@
+{
+    "name": "@rf24/docs",
+    "private": true,
+    "version": "0.1.0",
+    "devDependencies": {
+        "typedoc": "^0.27.6",
+        "typedoc-plugin-markdown": "^4.4.1",
+        "typescript": "^5.7.3"
+    },
+    "license": "MIT",
+    "scripts": {
+        "build": "npx typedoc ../bindings/node/index.d.ts --out ./src/node-api"
+    }
+}
