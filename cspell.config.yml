@@ -37,6 +37,7 @@ words:
   - inlinehilite
   - istr
   - Kbps
+  - libgpiod
   - linenums
   - maturin
   - Mbps

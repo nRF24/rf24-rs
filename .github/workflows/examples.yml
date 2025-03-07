@@ -35,6 +35,8 @@ jobs:
           node-version: 20
           cache: yarn
       - run: rustup update --no-self-update
+      - name: Install libgpiod
+        run: sudo apt-get install -y libgpiod-dev
       - run: yarn install
       - name: Build binding (debug)
         run: yarn build:debug
