@@ -75,14 +75,14 @@ export class App {
         const elapsed = (end - start) / BigInt(1000);
         process.stdout.write(
           `Transmission successful! Time to Transmit: ${elapsed} us. Sent: ` +
-            `${outgoing.subarray(0, 6).toString()}${this.counter} `,
+            `${outgoing.subarray(0, 6).toString("utf-8")}${this.counter} `,
         );
         this.counter += 1;
         if (this.radio.available()) {
           const incoming = this.radio.read();
           const counter = incoming.readUint8(7);
           console.log(
-            ` Received: ${incoming.subarray(0, 6).toString()}${counter}`,
+            ` Received: ${incoming.subarray(0, 6).toString("utf-8")}${counter}`,
           );
         } else {
           console.log("Received an empty ACK packet");
@@ -112,8 +112,8 @@ export class App {
         const counter = incoming.readUint8(7);
         console.log(
           `Received ${incoming.length} bytes on pipe ${hasRx.pipe}: ` +
-            `${incoming.subarray(0, 6).toString()}${counter} Sent: ` +
-            `${outgoing.subarray(0, 6).toString()}${this.counter}`,
+            `${incoming.subarray(0, 6).toString("utf-8")}${counter} Sent: ` +
+            `${outgoing.subarray(0, 6).toString("utf-8")}${this.counter}`,
         );
         this.counter = counter;
         outgoing.writeUint8(counter + 1, 7);

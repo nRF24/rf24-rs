@@ -26,7 +26,7 @@ The provided examples names (value passed to the `--bin` option) are
 - `streaming-data`
 - `ack-payloads`
 - `manual-ack`
-- `multiceiver-demo`
+- `multiceiver`
 - `irq-config`
 - `scanner`
 - `quick-config`

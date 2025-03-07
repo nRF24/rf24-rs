@@ -90,8 +90,6 @@ class App:
         # a string that changes on every transmission. (successful or not)
         # Make a couple tuples of payloads & an iterator to traverse them
         self.pl_iterator = 0
-        self.tx_payloads = (b"Ping ", b"Pong ", b"Radio", b"1FAIL")
-        self.ack_payloads = (b"Yak ", b"Back", b" ACK")
 
     def interrupt_handler(self) -> None:
         """This function is called when IRQ pin is detected active LOW"""
@@ -133,6 +131,9 @@ class App:
         (supposedly making RX node unresponsive)
         4. intentionally fail transmit on the fourth
         """
+
+        tx_payloads = (b"Ping ", b"Pong ", b"Radio", b"1FAIL")
+
         self.radio.as_tx()  # put radio in TX mode
 
         # on data ready test
@@ -140,7 +141,7 @@ class App:
         self.radio.set_status_flags(StatusFlags(rx_dr=True, tx_ds=False, tx_df=True))
         print("    Pinging slave node for an ACK payload...")
         self.pl_iterator = 0
-        self.radio.write(self.tx_payloads[0])
+        self.radio.write(tx_payloads[0])
         if self._wait_for_irq():
             self.interrupt_handler()
 
@@ -149,7 +150,7 @@ class App:
         self.radio.set_status_flags(StatusFlags(rx_dr=False, tx_ds=True, tx_df=True))
         print("    Pinging slave node again...")
         self.pl_iterator = 1
-        self.radio.write(self.tx_payloads[1])
+        self.radio.write(tx_payloads[1])
         if self._wait_for_irq():
             self.interrupt_handler()
 
@@ -157,7 +158,7 @@ class App:
         print("\nSending one extra payload to fill RX FIFO on slave node.")
         print("Disabling IRQ pin for all events.")
         self.radio.set_status_flags(StatusFlags())
-        if self.radio.send(self.tx_payloads[2]):
+        if self.radio.send(tx_payloads[2]):
             print("Slave node should not be listening anymore.")
         else:
             print("Slave node was unresponsive.")
@@ -169,12 +170,12 @@ class App:
         print("    Sending a ping to inactive slave node...")
         self.radio.flush_tx()  # just in case any previous tests failed
         self.pl_iterator = 2
-        self.radio.write(self.tx_payloads[3])
+        self.radio.write(tx_payloads[3])
         if self._wait_for_irq():
             self.interrupt_handler()
         self.radio.flush_tx()  # flush artifact payload in TX FIFO from last test
-        # all 3 ACK payloads received were 4 bytes each, and RX FIFO is full
-        # so, fetching 12 bytes from the RX FIFO also flushes RX FIFO
+        # All 3 ACK payloads received were 4 bytes each, and RX FIFO is full.
+        # So, fetching 12 bytes from the RX FIFO also flushes RX FIFO.
         print("\nComplete RX FIFO:", self.radio.read(12))
 
     def rx(self, timeout=6):  # will listen for 6 seconds before timing out
@@ -184,23 +185,27 @@ class App:
         # receive with ACK payloads enabled (& loaded in TX FIFO)
         print("\nDisabling IRQ pin for all events.")
         self.radio.set_status_flags(StatusFlags())
-        # setup radio to receive pings, fill TX FIFO with ACK payloads
-        self.radio.write_ack_payload(1, self.ack_payloads[0])
-        self.radio.write_ack_payload(1, self.ack_payloads[1])
-        self.radio.write_ack_payload(1, self.ack_payloads[2])
+        # fill TX FIFO with ACK payloads
+        ack_payloads = (b"Yak ", b"Back", b" ACK")
+        for ack in ack_payloads:
+            self.radio.write_ack_payload(1, ack)
+
         self.radio.as_rx()  # start listening & clear irq_dr flag
         end_time = time.monotonic() + timeout  # set end time
         while (
             self.radio.get_fifo_state(False) != FifoState.Full
             and time.monotonic() < end_time
         ):
-            # if RX FIFO is not full and timeout is not reached, then keep waiting
+            # wait for RX FIFO to fill up or until timeout is reached
             pass
         time.sleep(0.5)  # wait for last ACK payload to transmit
-        self.radio.as_tx()  # put radio in TX mode & discard any ACK payloads
+
+        #  exit RX mode
+        self.radio.as_tx()  # also clears the TX FIFO when ACK payloads are enabled
+
         if self.radio.available():  # if RX FIFO is not empty (timeout did not occur)
-            # all 3 payloads received were 5 bytes each, and RX FIFO is full
-            # so, fetching 15 bytes from the RX FIFO also flushes RX FIFO
+            # All 3 payloads received were 5 bytes each, and RX FIFO is full.
+            # So, fetching 15 bytes from the RX FIFO also flushes RX FIFO.
             print("Complete RX FIFO:", self.radio.read(15))
 
     def set_role(self) -> bool:

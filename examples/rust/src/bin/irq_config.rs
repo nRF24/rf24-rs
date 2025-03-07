@@ -221,7 +221,6 @@ impl App {
     /// Uses the [`App::radio`] as a receiver.
     /// Only listen for 3 payload from the master node
     pub fn rx(&mut self, timeout: u8) -> Result<()> {
-        let ack_payloads = [b"Yak ", b"Back", b" Ack"];
         // the "data ready" event will trigger in RX mode
         // the "data sent" or "data fail" events will trigger when we
         // receive with ACK payloads enabled (& loaded in TX FIFO)
@@ -230,25 +229,22 @@ impl App {
             .set_status_flags(StatusFlags::default())
             .map_err(debug_err)?;
         // setup radio to receive pings, fill TX FIFO with ACK payloads
-        self.radio
-            .write_ack_payload(1, ack_payloads[0])
-            .map_err(debug_err)?;
-        self.radio
-            .write_ack_payload(1, ack_payloads[1])
-            .map_err(debug_err)?;
-        self.radio
-            .write_ack_payload(1, ack_payloads[2])
-            .map_err(debug_err)?;
+        let ack_payloads = [b"Yak ", b"Back", b" Ack"];
+        for ack in ack_payloads {
+            self.radio.write_ack_payload(1, ack).map_err(debug_err)?;
+        }
+
         self.radio.as_rx().map_err(debug_err)?; // start listening & clear irq_dr flag
         let end_time = Instant::now() + Duration::from_secs(timeout as u64); // set end time
         while Instant::now() < end_time
             && self.radio.get_fifo_state(false).map_err(debug_err)? != FifoState::Full
         {
-            // if RX FIFO is not full and timeout is not reached, then keep waiting
+            // wait for RX FIFO to fill up or until timeout is reached
         }
         DelayImpl.delay_ms(500); // wait for last ACK payload to transmit
-                                 // put radio in TX mode & discard any ACK payloads
-        self.radio.as_tx().map_err(debug_err)?;
+
+        // exit TX mode
+        self.radio.as_tx().map_err(debug_err)?; // also clears the TX FIFO when ACK payloads are enabled
 
         // if RX FIFO is not empty (timeout did not occur)
         if self.radio.available().map_err(debug_err)? {

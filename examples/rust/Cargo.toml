@@ -45,8 +45,8 @@ test = false
 bench = false
 
 [[bin]]
-name = "multiceiver-demo"
-path = "src/bin/multiceiver_demo.rs"
+name = "multiceiver"
+path = "src/bin/multiceiver.rs"
 test = false
 bench = false
 

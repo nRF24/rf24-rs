@@ -94,7 +94,7 @@ export class App {
         const end = process.hrtime.bigint();
         process.stdout.write(
           `Transmission successful! Sent: ` +
-            `${outgoing.subarray(0, 6).toString()}${this.counter} `,
+            `${outgoing.subarray(0, 6).toString("utf-8")}${this.counter} `,
         );
         this.counter += 1;
         if (gotResponse) {
@@ -102,7 +102,7 @@ export class App {
           const incoming = this.radio.read();
           const counter = incoming.readUint8(7);
           console.log(
-            `Received: ${incoming.subarray(0, 6).toString()}${counter}`,
+            `Received: ${incoming.subarray(0, 6).toString("utf-8")}${counter}`,
             `Roundtrip delay: ${elapsed} us.`,
           );
         } else {
