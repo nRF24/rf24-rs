@@ -54,6 +54,7 @@ words:
   - nextest
   - nocbreak
   - noecho
+  - opengpio
   - pyclass
   - pymdownx
   - pymethods

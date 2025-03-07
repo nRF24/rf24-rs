@@ -67,11 +67,10 @@ pub struct StatusFlags {
 #[cfg(target_os = "linux")]
 impl StatusFlags {
     pub fn into_inner(self) -> rf24::StatusFlags {
-        rf24::StatusFlags::from_bits(
-            ((self.rx_dr.unwrap_or_default() as u8) << 7)
-                | ((self.tx_ds.unwrap_or_default() as u8) << 6)
-                | ((self.tx_df.unwrap_or_default() as u8) << 5),
-        )
+        rf24::StatusFlags::default()
+            .with_rx_dr(self.rx_dr.unwrap_or_default())
+            .with_tx_ds(self.tx_ds.unwrap_or_default())
+            .with_tx_df(self.tx_df.unwrap_or_default())
     }
 
     pub fn from_inner(other: rf24::StatusFlags) -> Self {

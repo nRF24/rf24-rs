@@ -62,6 +62,10 @@ export class App {
     this.irqPin = GpioPin.input({ chip: 0, line: 24 }); // using GPIO24 exposed via /dev/gpiochip0
   }
 
+  /**
+   * Wait till IRQ pin goes active (LOW).
+   * IRQ pin is LOW when activated. Otherwise it is always HIGH
+   */
   private waitForIRQ(timeout: number): boolean {
     const endTime = Date.now() + timeout * 1000;
     let eventOccurred = false;
@@ -119,8 +123,8 @@ export class App {
     console.log("    Pinging slave node for an ACK payload...");
     this.plIterator = 0;
     if (!this.radio.write(txPayloads[0])) {
-      console.log("Failed to upload payload to RX FIFO");
-    } else if (this.waitForIRQ(5)) {
+      console.log("Failed to upload payload to TX FIFO");
+    } else if (this.waitForIRQ(2)) {
       this.interruptHandler();
     }
 
@@ -130,8 +134,8 @@ export class App {
     console.log("    Pinging slave node again...");
     this.plIterator = 1;
     if (!this.radio.write(txPayloads[1])) {
-      console.log("Failed to upload payload to RX FIFO");
-    } else if (this.waitForIRQ(5)) {
+      console.log("Failed to upload payload to TX FIFO");
+    } else if (this.waitForIRQ(2)) {
       this.interruptHandler();
     }
 
@@ -153,8 +157,8 @@ export class App {
     this.radio.flushTx(); // just in case any previous tests failed
     this.plIterator = 2;
     if (!this.radio.write(txPayloads[3])) {
-      console.log("Failed to upload payload to RX FIFO");
-    } else if (this.waitForIRQ(5)) {
+      console.log("Failed to upload payload to TX FIFO");
+    } else if (this.waitForIRQ(2)) {
       this.interruptHandler();
     }
     this.radio.flushTx(); // flush artifact payload in TX FIFO from last test

@@ -87,9 +87,8 @@ impl App {
         Ok(())
     }
 
-    /// Wait for event to occur.
-    ///
-    /// Detects change in IRQ pin level.
+    /// Wait till IRQ pin goes active (LOW).
+    /// IRQ pin is LOW when activated. Otherwise it is always HIGH
     fn wait_for_irq(&mut self, timeout: u8) -> Result<bool> {
         let end_time = Instant::now() + Duration::from_secs(timeout as u64);
         let mut event_occurred = false;
@@ -161,7 +160,7 @@ impl App {
             .map_err(debug_err)?
         {
             println!("Failed to upload payload to TX FIFO");
-        } else if self.wait_for_irq(5)? {
+        } else if self.wait_for_irq(2)? {
             self.interrupt_handler()?;
         }
 
@@ -177,7 +176,7 @@ impl App {
             .map_err(debug_err)?
         {
             println!("Failed to upload payload to TX FIFO");
-        } else if self.wait_for_irq(5)? {
+        } else if self.wait_for_irq(2)? {
             self.interrupt_handler()?;
         }
 
@@ -211,7 +210,7 @@ impl App {
             .map_err(debug_err)?
         {
             println!("Failed to upload payload to TX FIFO");
-        } else if self.wait_for_irq(5)? {
+        } else if self.wait_for_irq(2)? {
             self.interrupt_handler()?;
         }
 
