@@ -14,10 +14,7 @@ use rf24::{
     CrcLength,
 };
 use rf24_rs_examples::debug_err;
-#[cfg(feature = "linux")]
-use rf24_rs_examples::linux::{
-    println, BoardHardware, CdevPin as DigitalOutImpl, Delay as DelayImpl, SpidevDevice as SpiImpl,
-};
+use rf24_rs_examples::hal::{println, BoardHardware, DelayImpl, DigitalOutImpl, SpiImpl};
 
 /// A struct to drive our example app
 struct App {
