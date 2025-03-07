@@ -145,6 +145,7 @@ impl App {
     /// 4. intentionally fail transmit on the fourth
     pub fn tx(&mut self) -> Result<()> {
         let tx_payloads = [b"Ping ", b"Pong ", b"Radio", b"FAIL!"];
+
         // put radio into TX mode
         self.radio.as_tx().map_err(debug_err)?;
 
@@ -154,10 +155,13 @@ impl App {
         self.radio.set_status_flags(flags).map_err(debug_err)?;
         println!("    Pinging slave node for an ACK payload...");
         self.pl_iterator = 0;
-        self.radio
+        if !self
+            .radio
             .write(tx_payloads[0], false, true)
-            .map_err(debug_err)?;
-        if self.wait_for_irq(5)? {
+            .map_err(debug_err)?
+        {
+            println!("Failed to upload payload to TX FIFO");
+        } else if self.wait_for_irq(5)? {
             self.interrupt_handler()?;
         }
 
@@ -167,10 +171,13 @@ impl App {
         self.radio.set_status_flags(flags).map_err(debug_err)?;
         println!("    Pinging slave node again...");
         self.pl_iterator = 1;
-        self.radio
+        if !self
+            .radio
             .write(tx_payloads[1], false, true)
-            .map_err(debug_err)?;
-        if self.wait_for_irq(5)? {
+            .map_err(debug_err)?
+        {
+            println!("Failed to upload payload to TX FIFO");
+        } else if self.wait_for_irq(5)? {
             self.interrupt_handler()?;
         }
 
@@ -198,10 +205,13 @@ impl App {
         // just in case any previous tests failed, flush the TX FIFO before sending
         self.radio.flush_tx().map_err(debug_err)?;
         self.pl_iterator = 2;
-        self.radio
+        if !self
+            .radio
             .write(tx_payloads[3], false, true)
-            .map_err(debug_err)?;
-        if self.wait_for_irq(5)? {
+            .map_err(debug_err)?
+        {
+            println!("Failed to upload payload to TX FIFO");
+        } else if self.wait_for_irq(5)? {
             self.interrupt_handler()?;
         }
 

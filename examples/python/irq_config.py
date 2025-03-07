@@ -91,7 +91,7 @@ class App:
         # Make a couple tuples of payloads & an iterator to traverse them
         self.pl_iterator = 0
 
-    def interrupt_handler(self) -> None:
+    def _interrupt_handler(self) -> None:
         """This function is called when IRQ pin is detected active LOW"""
         print("\tIRQ pin went active LOW.")
         self.radio.update()
@@ -141,18 +141,20 @@ class App:
         self.radio.set_status_flags(StatusFlags(rx_dr=True, tx_ds=False, tx_df=True))
         print("    Pinging slave node for an ACK payload...")
         self.pl_iterator = 0
-        self.radio.write(tx_payloads[0])
-        if self._wait_for_irq():
-            self.interrupt_handler()
+        if not self.radio.write(tx_payloads[0]):
+            print("Failed to upload payload to TX FIFO")
+        elif self._wait_for_irq():
+            self._interrupt_handler()
 
         # on "data sent" test
         print("\nConfiguring IRQ pin to only ignore 'on data ready' event")
         self.radio.set_status_flags(StatusFlags(rx_dr=False, tx_ds=True, tx_df=True))
         print("    Pinging slave node again...")
         self.pl_iterator = 1
-        self.radio.write(tx_payloads[1])
-        if self._wait_for_irq():
-            self.interrupt_handler()
+        if not self.radio.write(tx_payloads[1]):
+            print("Failed to upload payload to TX FIFO")
+        elif self._wait_for_irq():
+            self._interrupt_handler()
 
         # trigger slave node to exit by filling the slave node's RX FIFO
         print("\nSending one extra payload to fill RX FIFO on slave node.")
@@ -170,9 +172,10 @@ class App:
         print("    Sending a ping to inactive slave node...")
         self.radio.flush_tx()  # just in case any previous tests failed
         self.pl_iterator = 2
-        self.radio.write(tx_payloads[3])
-        if self._wait_for_irq():
-            self.interrupt_handler()
+        if not self.radio.write(tx_payloads[3]):
+            print("Failed to upload payload to TX FIFO")
+        elif self._wait_for_irq():
+            self._interrupt_handler()
         self.radio.flush_tx()  # flush artifact payload in TX FIFO from last test
         # All 3 ACK payloads received were 4 bytes each, and RX FIFO is full.
         # So, fetching 12 bytes from the RX FIFO also flushes RX FIFO.

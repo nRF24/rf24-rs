@@ -82,7 +82,8 @@ export class App {
     console.log("\tIRQ pin went active LOW.");
     this.radio.update();
     const flags = this.radio.getStatusFlags(); // update IRQ status flags
-    console.log(`\t${flags}`);
+    process.stdout.write("\t");
+    console.dir(flags);
     if (this.plIterator == 0) {
       console.log("'data ready' event test", flags.rxDr ? "passed" : "failed");
     } else if (this.plIterator == 1) {
@@ -109,6 +110,7 @@ export class App {
       Buffer.from("Radio"),
       Buffer.from("FAIL!"),
     ];
+
     this.radio.asTx(); // put radio in TX mode
 
     // on data ready test
@@ -116,8 +118,9 @@ export class App {
     this.radio.setStatusFlags({ rxDr: true, txDs: false, txDf: true });
     console.log("    Pinging slave node for an ACK payload...");
     this.plIterator = 0;
-    this.radio.write(txPayloads[0]);
-    if (this.waitForIRQ(5)) {
+    if (!this.radio.write(txPayloads[0])) {
+      console.log("Failed to upload payload to RX FIFO");
+    } else if (this.waitForIRQ(5)) {
       this.interruptHandler();
     }
 
@@ -126,15 +129,16 @@ export class App {
     this.radio.setStatusFlags({ rxDr: false, txDs: true, txDf: true });
     console.log("    Pinging slave node again...");
     this.plIterator = 1;
-    this.radio.write(txPayloads[1]);
-    if (this.waitForIRQ(5)) {
+    if (!this.radio.write(txPayloads[1])) {
+      console.log("Failed to upload payload to RX FIFO");
+    } else if (this.waitForIRQ(5)) {
       this.interruptHandler();
     }
 
     // trigger slave node to exit by filling the slave node's RX FIFO
     console.log("\nSending one extra payload to fill RX FIFO on slave node.");
     console.log("Disabling IRQ pin for all events.");
-    this.radio.setStatusFlags({});
+    this.radio.setStatusFlags({ rxDr: false, txDs: false, txDf: false });
     if (this.radio.send(txPayloads[2])) {
       console.log("Slave node should not be listening anymore.");
     } else {
@@ -148,8 +152,9 @@ export class App {
     console.log("    Sending a ping to inactive slave node...");
     this.radio.flushTx(); // just in case any previous tests failed
     this.plIterator = 2;
-    this.radio.write(txPayloads[3]);
-    if (this.waitForIRQ(5)) {
+    if (!this.radio.write(txPayloads[3])) {
+      console.log("Failed to upload payload to RX FIFO");
+    } else if (this.waitForIRQ(5)) {
       this.interruptHandler();
     }
     this.radio.flushTx(); // flush artifact payload in TX FIFO from last test
