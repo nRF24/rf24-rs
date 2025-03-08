@@ -8,7 +8,6 @@ docs_dir: src
 nav:
   - index.md
   - api-diff.md
-  - changelog.md
   - node.js binding:
     - node-api/README.md
     - Classes:

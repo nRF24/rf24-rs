@@ -24,7 +24,14 @@ updates:
       cargo:
         patterns:
           - "*"
-
+  - package-ecosystem: npm
+    directories: ['**/package.json']
+    schedule:
+      interval: "weekly"
+    groups:
+      npm:
+        patterns:
+          - "*"
   - package-ecosystem: pip
     directory: /
     schedule:

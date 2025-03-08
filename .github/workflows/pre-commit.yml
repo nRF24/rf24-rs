@@ -70,11 +70,13 @@ jobs:
     if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v4
       - run: rustup update --no-self-update
       - name: Install cargo-binstall
         uses: cargo-bins/cargo-binstall@main
-      - name: Install git-cliff and cargo-edit
+      - name: Install committed
         run: cargo binstall -y committed
       - name: Check PR title
         run: >-
-          ${{ github.event.pull_request.title }} | committed --commit-file - --config .config/committed.toml
+          echo "${{ github.event.pull_request.title }}"
+          | committed --config .config/committed.toml --commit-file -

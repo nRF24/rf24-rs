@@ -84,7 +84,7 @@ trim = true
 # parse the commits based on https://www.conventionalcommits.org
 conventional_commits = true
 # filter out the commits that are not conventional
-filter_unconventional = false
+filter_unconventional = true
 # regex for preprocessing the commit messages
 commit_preprocessors = [
     # remove issue numbers from commits
@@ -92,45 +92,20 @@ commit_preprocessors = [
 ]
 # regex for parsing and grouping commits
 commit_parsers = [
-    { field = "github.pr_labels", pattern = "breaking", group = "<!-- 0 --> 💥 Breaking changes" },
-    { field = "github.pr_labels", pattern = "breaking-change", group = "<!-- 0 --> 💥 Breaking changes" },
-    { field = "github.pr_labels", pattern = "feature", group = "<!-- 1 --> 🚀 Added" },
-    { field = "github.pr_labels", pattern = "enhancement", group = "<!-- 1 --> 🚀 Added" },
-    { field = "github.pr_labels", pattern = "deprecated", group = "<!-- 2 --> 🚫 Deprecated" },
-    { field = "github.pr_labels", pattern = "removed", group = "<!-- 3 --> 🗑️ Removed" },
-    { field = "github.pr_labels", pattern = "bug", group = "<!-- 4 --> 🛠️ Fixed" },
-    { field = "github.pr_labels", pattern = "security", group = "<!-- 5 --> 🔐 Security" },
-    { field = "github.pr_labels", pattern = "dependencies", group = "<!-- 6 --> 📦 Dependency updates" },
-    { field = "github.pr_labels", pattern = "test", group = "<!-- 7 -->🚦 Tests"},
-    { field = "github.pr_labels", pattern = "tests", group = "<!-- 7 -->🚦 Tests"},
-    { field = "github.pr_labels", pattern = "documentation", group = "<!-- 8 --> 📝 Documentation" },
-    { field = "github.pr_labels", pattern = "refactor", group = "<!-- 9 --> 🗨️ Changed" },
-    { field = "github.pr_labels", pattern = "skip-changelog", skip = true },
-    { field = "github.pr_labels", pattern = "no-changelog", skip = true },
-    { field = "github.pr_labels", pattern = "invalid", skip = true },
-    # The order of parsers matters. Put rules for PR labels first to prioritize PR labels.
-    { message = "^[a|A]dd", group = "<!-- 1 --> 🚀 Added" },
-    { message = "^[s|S]upport", group = "<!-- 1 --> 🚀 Added" },
-    { message = "^.*: support", group = "<!-- 1 --> 🚀 Added" },
-    { message = "^.*: add", group = "<!-- 1 --> 🚀 Added" },
-    { message = "^.*: deprecated", group = "<!-- 2 --> 🚫 Deprecated" },
-    { message = "[d|D]eprecate", group = "<!-- 2 --> 🚫 Deprecated" },
-    { message = "[t|T]ests", group = "<!-- 7 -->🚦 Tests"},
+    # The order of parsers matters.
+    { field = "group", pattern = "add", group = "<!-- 1 --> 🚀 Added" },
+    { field = "group", pattern = "feat", group = "<!-- 1 --> 🚀 Added" },
+    { field = "group", pattern = "fix", group = "<!-- 4 --> 🛠️ Fixed" },
+    { field = "group", pattern = "perf", group = "<!-- 4 --> 🛠️ Fixed" },
+    { field = "group", pattern = "build", group = "<!-- 6 --> 📦 Dependency updates" },
+    { field = "group", pattern = "test", group = "<!-- 7 -->🚦 Tests" },
+    { field = "group", pattern = "docs", group = "<!-- 8 --> 📝 Documentation" },
+    { field = "group", pattern = "chore", group = "<!-- 9 --> 🗨️ Changed" },
+    { field = "group", pattern = "style", group = "<!-- 9 --> 🗨️ Changed" },
     { message = "[r|R]emove", group = "<!-- 3 --> 🗑️ Removed" },
-    { message = "^.*: remove", group = "<!-- 3 --> 🗑️ Removed" },
+    { message = "[d|D]eprecate", group = "<!-- 2 --> 🚫 Deprecated" },
     { message = "^.*: delete", group = "<!-- 3 --> 🗑️ Removed" },
-    { message = "^[f|F]ix", group = "<!-- 4 --> 🛠️ Fixed" },
-    { message = "^.*: fix", group = "<!-- 4 --> 🛠️ Fixed" },
-    { message = "^.*: secure", group = "<!-- 5 --> 🔐 Security" },
-    { message = "[s|S]ecure", group = "<!-- 5 --> 🔐 Security" },
     { message = "[s|S]ecurity", group = "<!-- 5 --> 🔐 Security" },
-    { message = "^.*: security", group = "<!-- 5 --> 🔐 Security" },
-    { message = "doc", group = "<!-- 8 --> 📝 Documentation" },
-    { message = "docs", group = "<!-- 8 --> 📝 Documentation" },
-    { message = "documentation", group = "<!-- 8 --> 📝 Documentation" },
-    { message = "[r|R]efactor", group = "<!-- 9 --> 🗨️ Changed" },
-    { field = "github.pr_labels", pattern = ".*", group = "<!-- 9 --> 🗨️ Changed" },
-    { message = "^.*", group = "<!-- 9 --> 🗨️ Changed" },
 ]
 # filter out the commits that are not matched by commit parsers
 filter_commits = true
@@ -139,6 +114,6 @@ topo_order = false
 # sort the commits inside sections by oldest/newest order
 sort_commits = "oldest"
 
-# [remote.github]
-# owner = "cpp-linter"
-# repo = "cpp-linter-rs"
+[remote.github]
+owner = "nRF24"
+repo = "rf24-rs"
