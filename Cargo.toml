@@ -4,7 +4,6 @@ default-members = ["crates/rf24-rs", "examples/rust"]
 resolver = "2"
 
 [workspace.package]
-version = "0.1.0"
 repository = "https://github.com/nRF24/rf24-rs"
 homepage = "https://nRF24.github.io/rf24-rs"
 edition = "2021"

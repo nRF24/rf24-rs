@@ -17,6 +17,9 @@ updates:
     directory: /
     schedule:
       interval: "weekly"
+    ignore:
+      - dependency-name: bitfield-struct
+        versions: ['>=0.10.0']
     groups:
       cargo:
         patterns:

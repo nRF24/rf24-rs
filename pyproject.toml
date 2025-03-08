@@ -11,12 +11,13 @@ keywords = [
     "nRF24L01+",
     "raspberry",
     "pi",
+    "linux",
     "driver",
     "radio",
     "transceiver",
     "RF24",
-    "RF24Network",
-    "RF24Mesh",
+    # "RF24Network",
+    # "RF24Mesh",
 ]
 license = {text = "MIT"}
 authors = [
@@ -33,9 +34,6 @@ classifiers = [
     "Operating System :: POSIX :: Linux",
     "Programming Language :: C++",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.8",
-    "Programming Language :: Python :: 3.9",
-    "Programming Language :: Python :: 3.10",
     "Topic :: Software Development :: Libraries",
     "Topic :: System :: Hardware",
     "Topic :: System :: Hardware :: Hardware Drivers",
