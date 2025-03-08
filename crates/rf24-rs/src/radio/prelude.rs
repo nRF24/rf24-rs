@@ -162,7 +162,7 @@ pub trait EsbFifo {
     /// ```
     ///
     /// <div class="warning">
-    ///     
+    ///
     /// According to the nRF24L01 datasheet, the data saved to `pipe` is
     /// "unreliable" during a FALLING transition on the IRQ pin.
     ///

@@ -1,0 +1,80 @@
+name: pre-commit
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  all-files:
+    # also lints python files
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        id: python-setup
+        with:
+          python-version: 3.x
+          cache: "pip"
+          cache-dependency-path: examples/python/requirements*.txt
+      - name: Install workflow tools
+        run: >-
+          python -m pip install
+          -r examples/python/requirements.txt
+          -r examples/python/requirements-dev.txt
+      - run: mypy
+      - name: Cache pre-commit environments
+        uses: actions/cache@v4
+        with:
+          path: '~/.cache/pre-commit'
+          key: pre-commit-${{ steps.python-setup.outputs.python-version }}-${{ hashFiles('.pre-commit-config.yaml') }}
+      - run: pip install pre-commit
+      - run: pre-commit run --show-diff-on-failure --color=always --all-files
+
+  lint-rust:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Rust
+        run: rustup update --no-self-update
+      - name: Cache deps
+        uses: actions/cache@v4
+        with:
+          path: ~/.cargo
+          key: cargo-lib-${{ hashFiles('lib/src/**', 'lib/Cargo.toml') }}
+      - run: cargo clippy
+      - run: cargo fmt --check
+
+  lint-typescript:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: yarn
+      - run: rustup update --no-self-update
+      - name: Install libgpiod
+        run: sudo apt-get install -y libgpiod-dev
+      - run: yarn install
+      - name: Build binding (debug)
+        run: yarn build:debug
+      - name: Lint examples
+        run: yarn examples-lint
+      - name: Compile examples
+        run: yarn examples-build
+
+  conventional-commit:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - run: rustup update --no-self-update
+      - name: Install cargo-binstall
+        uses: cargo-bins/cargo-binstall@main
+      - name: Install git-cliff and cargo-edit
+        run: cargo binstall -y committed
+      - name: Check PR title
+        run: >-
+          ${{ github.event.pull_request.title }} | committed --commit-file - --config .config/committed.toml

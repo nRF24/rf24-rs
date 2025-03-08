@@ -7,7 +7,7 @@ on:
   push:
     branches: [main]
     paths:
-      - '**/*.rs'
+      - crates/**/*.rs
       - crates/**/Cargo.toml
       - .github/workflows/rust.yml
     tags:
@@ -18,7 +18,7 @@ on:
   pull_request:
     branches: [main]
     paths:
-      - '**/*.rs'
+      - crates/**/*.rs
       - crates/**/Cargo.toml
       - .github/workflows/rust.yml
 
@@ -31,22 +31,7 @@ defaults:
     shell: bash
 
 jobs:
-  lint:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - name: Setup Rust
-        run: rustup update --no-self-update
-      - name: Cache deps
-        uses: actions/cache@v4
-        with:
-          path: ~/.cargo
-          key: cargo-lib-${{ hashFiles('lib/src/**', 'lib/Cargo.toml') }}
-      - run: cargo clippy
-      - run: cargo fmt --check
-
   test:
-    needs: [lint]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4

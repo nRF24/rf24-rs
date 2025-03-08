@@ -99,7 +99,7 @@ plugins:
       handlers:
         python:
           paths: ['../']
-          import: [https://docs.python.org/3/objects.inv]
+          import: ['https://docs.python.org/3/objects.inv']
           options:
             extensions:
               - scripts/py_native_docstring.py

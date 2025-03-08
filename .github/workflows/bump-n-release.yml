@@ -39,7 +39,7 @@ jobs:
         uses: cargo-bins/cargo-binstall@main
       - name: Install git-cliff and cargo-edit
         run: cargo binstall -y git-cliff cargo-edit
-      
+
       - uses: actions/setup-node@v4
         if: inputs.package == 'rf24-node'
         with:
