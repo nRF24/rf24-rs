@@ -20,7 +20,15 @@ GIT_CLIFF_CONFIG = (
 ).resolve()
 RELEASE_NOTES = GIT_CLIFF_CONFIG.with_name("ReleaseNotes.md")
 PACKAGES = {
-    "rf24-rs": _PkgPaths(include=["crates/rf24-rs/**"], exclude=[]),
+    "rf24-rs": _PkgPaths(
+        include=["crates/rf24-rs/**"],
+        exclude=[
+            ".github/**",
+            "docs/**",
+            "examples/python/**",
+            "examples/node/**",
+        ],
+    ),
     "rf24-py": _PkgPaths(
         include=[
             "crates/**/*.rs",
@@ -28,9 +36,22 @@ PACKAGES = {
             "pyproject.toml",
             "rf24_py.pyi",
         ],
-        exclude=[],
+        exclude=[
+            ".github/**",
+            "docs/**",
+            "examples/rust/**",
+            "examples/node/**",
+        ],
     ),
-    "rf24-node": _PkgPaths(include=["crates/**/*.rs", "bindings/node/**"], exclude=[]),
+    "rf24-node": _PkgPaths(
+        include=["crates/**/*.rs", "bindings/node/**"],
+        exclude=[
+            ".github/**",
+            "docs/**",
+            "examples/python/**",
+            "examples/rust/**",
+        ],
+    ),
 }
 
 
