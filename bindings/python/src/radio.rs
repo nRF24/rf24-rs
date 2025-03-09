@@ -185,7 +185,7 @@ impl RF24 {
     ///
     /// Note:
     ///     This function will also flush the TX FIFO when ACK payloads are enabled
-    ///     (via [`RF24.allow_ack_payloads()`][rf24_py.RF24.allow_ack_payloads]).
+    ///     (via [`RF24.ack_payloads`][rf24_py.RF24.ack_payloads]).
     pub fn as_tx(&mut self) -> PyResult<()> {
         self.inner
             .as_tx()
@@ -421,7 +421,7 @@ impl RF24 {
     /// Upload a given ACK packet's payload (`buf`) into the radio's TX FIFO.
     ///
     /// This feature requires
-    /// [`RF24.allow_ack_payloads()`][rf24_py.RF24.allow_ack_payloads] to be enabled.
+    /// [`RF24.ack_payloads`][rf24_py.RF24.ack_payloads] to be enabled.
     ///
     /// Parameters:
     ///     pipe: The pipe number that (when data is received) will be responded
