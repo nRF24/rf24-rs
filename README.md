@@ -18,6 +18,15 @@ This includes but is not limited to Linux on RPi. Other points of interest:
 - the [awesome embedded rust][awesome-hal] list
 - the [embedded-hal][eh] framework
 
+## API Docs
+
+The Rust API documentation is hosted at [docs.rs/rf24-rs](https://docs.rs/rf24-rs).
+
+Here, you will find the API for FFI (Foreign Function Interface) bindings:
+
+- [Node.js bindings][node-api]
+- [Python bindings][python-api]
+
 ## Goals
 
 Here is the intended roadmap:
@@ -58,3 +67,7 @@ maintainers' attention.
 [rust-traits]: https://doc.rust-lang.org/book/ch19-03-advanced-traits.html#advanced-traits
 [crates-rf24]: https://crates.io/search?q=rf24
 [crate-esb]: https://crates.io/crates/esb
+
+<!--absolute-links-->
+[node-api]: https://rf24-rs.readthedocs.io/en/latest/node-api/
+[python-api]: https://rf24-rs.readthedocs.io/en/latest/python-api/

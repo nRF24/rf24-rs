@@ -1,13 +1,8 @@
-<!-- markdownlint-disable MD041 -->
+<!-- markdownlint-disable MD041 MD053 -->
 {%
     include-markdown  "../../README.md"
+    end="<!--absolute-links-->"
 %}
 
-## API Docs
-
-The Rust API documentation is hosted at [docs.rs/rf24](https://docs.rs/rf24).
-
-Here, you will find the API for FFI (Foreign Function Interface) bindings:
-
-- [Node.js bindings](node-api/README.md)
-- [Python bindings](python-api/README.md)
+[node-api]: node-api/README.md
+[python-api]: python-api/README.md

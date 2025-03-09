@@ -3,6 +3,7 @@
   "version": "0.1.0",
   "main": "index.js",
   "types": "index.d.ts",
+  "description": "A npm package binding the nRF24/rf24-rs rust project.",
   "napi": {
     "name": "rf24",
     "triples": {
