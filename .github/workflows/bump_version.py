@@ -16,7 +16,7 @@ class _PkgPaths(NamedTuple):
 
 
 COMPONENTS = ["major", "minor", "patch"]
-REPO_ROOT = Path(__file__).parent.parent.parent
+REPO_ROOT = Path(__file__).parent.parent.parent.resolve()
 GIT_CLIFF_CONFIG = REPO_ROOT / ".config" / "cliff.toml"
 RELEASE_NOTES = GIT_CLIFF_CONFIG.with_name("ReleaseNotes.md")
 PACKAGES = {
@@ -85,7 +85,6 @@ def increment_version(pkg: str, bump: str = "patch") -> Tuple[str, str]:
         check=True,
         capture_output=True,
     )
-    print(result.stderr.decode(encoding="utf-8"), flush=True)
     stdout_prefix = f"Upgrading {pkg} from "
     for line in result.stderr.splitlines():
         out = line.decode(encoding="utf-8").strip()
@@ -109,7 +108,7 @@ def increment_version(pkg: str, bump: str = "patch") -> Tuple[str, str]:
 def get_changelog(tag: str, pkg: str, full: bool = False):
     """Gets the changelog for the given ``pkg``'s ``tag``.
 
-    If ``full`` is true, then this stores the current release's changes in a temp
+    If ``full`` is true, then this stores the current release's changes in a temp file
     (to be used with `gh release create`).
 
     If ``full`` is true, then this stores the complete changelog in the package's
@@ -122,26 +121,25 @@ def get_changelog(tag: str, pkg: str, full: bool = False):
     args = [
         "git-cliff",
         "--tag-pattern",
-        f"{pkg}/[0-9]+.[0-9]+.[0-9]+",
+        f'"{pkg}/[0-9]+.[0-9]+.[0-9]+"',
         "--tag",
         tag,
         "--config",
         str(GIT_CLIFF_CONFIG),
     ]
-    paths = PACKAGES[pkg]
-    for included in paths.include:
-        args.extend(["--include-path", included])
-    for excluded in paths.exclude:
-        args.extend(["--exclude-path", excluded])
     if not full:
         args.append("--unreleased")
         output = RELEASE_NOTES
     args.extend(["--output", str(output)])
     if not full:
         args.extend(["--strip", "header"])
+    paths = PACKAGES[pkg]
+    if paths.include:
+        args.extend(["--include-path", *paths.include])
+    if paths.exclude:
+        args.extend(["--exclude-path", *paths.exclude])
     subprocess.run(args, check=True)
-    if full:
-        print("Updated", str(output))
+    print("Updated" if full else "Generated", str(output))
 
 
 class Args(argparse.Namespace):
