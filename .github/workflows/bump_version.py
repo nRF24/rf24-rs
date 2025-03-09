@@ -98,7 +98,6 @@ def increment_version(pkg: str, bump: str = "patch") -> Tuple[str, str]:
         subprocess.run(
             ["yarn", "version", "--no-git-tag-version", "--new-version", new_ver],
             check=True,
-            shell=True,
             cwd=str(PACKAGES[pkg].path),
         )
         print("Updated version in bindings/node/**/package.json")
