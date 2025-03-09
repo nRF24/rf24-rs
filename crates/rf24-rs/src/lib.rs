@@ -1,7 +1,7 @@
 #![doc(
-    html_logo_url = "https://raw.githubusercontent.com/nRF24/RF24/master/docs/images/Logo%20large.png"
+    html_logo_url = "https://raw.githubusercontent.com/nRF24/rf24-rs/main/docs/src/images/logo-square.png"
 )]
-#![doc(html_favicon_url = "https://github.com/nRF24/RF24/raw/master/docs/images/favicon.ico")]
+#![doc(html_favicon_url = "https://github.com/nRF24/rf24-rs/raw/main/docs/src/images/favicon.ico")]
 #![doc = include_str!("../README.md")]
 #![no_std]
 

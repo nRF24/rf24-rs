@@ -1,6 +1,6 @@
 [package]
-name = "rf24_node"
-version.workspace = true
+name = "rf24-node"
+version = "0.1.0"
 repository.workspace = true
 edition.workspace = true
 rust-version.workspace = true

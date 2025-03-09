@@ -17,11 +17,21 @@ updates:
     directory: /
     schedule:
       interval: "weekly"
+    ignore:
+      - dependency-name: bitfield-struct
+        versions: ['>=0.10.0']
     groups:
       cargo:
         patterns:
           - "*"
-
+  - package-ecosystem: npm
+    directories: ['**/package.json']
+    schedule:
+      interval: "weekly"
+    groups:
+      npm:
+        patterns:
+          - "*"
   - package-ecosystem: pip
     directory: /
     schedule:

@@ -13,7 +13,7 @@
 //! ~~~
 //! 13-
 //! ```
-//!     
+//!
 //! should be interpreted as
 //!
 //! - `1` signal detected on channel `017`

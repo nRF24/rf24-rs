@@ -350,3 +350,6 @@ Cargo.lock
 # coverage output
 coverage.json
 lcov.info
+
+# CI generated release notes
+ReleaseNotes.md

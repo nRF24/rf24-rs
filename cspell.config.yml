@@ -2,6 +2,7 @@ version: "0.2"
 words:
   - aarch
   - addch
+  - addnab
   - addstr
   - androideabi
   - armhf
@@ -16,16 +17,20 @@ words:
   - calcsize
   - cbreak
   - Cdev
+  - cdylib
   - clippy
   - codecov
   - corepack
   - datasheet
   - defmt
   - Doherty
+  - dtolnay
   - DYNPD
   - eabi
+  - endfor
   - endl
   - endlineno
+  - endmacro
   - endwin
   - fontawesome
   - gnueabihf
@@ -39,6 +44,7 @@ words:
   - Kbps
   - libgpiod
   - linenums
+  - manylinux
   - maturin
   - Mbps
   - milliwatts
@@ -48,17 +54,23 @@ words:
   - msvc
   - multiceiver
   - musleabihf
+  - musllinux
+  - mypy
   - nanos
   - nanosleep
   - napi
   - nextest
   - nocbreak
   - noecho
+  - npmjs
   - opengpio
+  - pkgid
   - pyclass
   - pymdownx
   - pymethods
   - pymodule
+  - pypa
+  - pypi
   - pyproject
   - repr
   - reshim
@@ -67,7 +79,9 @@ words:
   - rustc
   - rustup
   - RXADDR
+  - sccache
   - SCLK
+  - sdist
   - Spidev
   - startswith
   - struct

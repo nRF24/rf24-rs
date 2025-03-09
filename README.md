@@ -1,5 +1,5 @@
 <!-- markdownlint-disable MD041 -->
-[![Python builds][python-ci-badge]][python-ci] [![Node.js Builds][node-js-ci-badge]][node-js-ci] [![Tests][test-ci-badge]][test-ci] [![codecov][codecov-badge]][codecov-project] [![Docs][docs-ci-badge]][docs-ci] [![Examples][examples-ci-badge]][examples-ci]
+[![Python][python-ci-badge]][python-ci] [![Node.js][node-js-ci-badge]][node-js-ci] [![Rust][rust-ci-badge]][rust-ci] [![codecov][codecov-badge]][codecov-project] [![Docs][docs-badge]][docs]
 
 # rf24-rs
 
@@ -17,6 +17,15 @@ This includes but is not limited to Linux on RPi. Other points of interest:
 - [crates.io for embedded-hal crates][crates-hal]
 - the [awesome embedded rust][awesome-hal] list
 - the [embedded-hal][eh] framework
+
+## API Docs
+
+The Rust API documentation is hosted at [docs.rs/rf24-rs](https://docs.rs/rf24-rs).
+
+Here, you will find the API for FFI (Foreign Function Interface) bindings:
+
+- [Node.js bindings][node-api]
+- [Python bindings][python-api]
 
 ## Goals
 
@@ -39,18 +48,17 @@ but they all seem unmaintained or designed to be application-specific. There's e
 a [crate to use the nRF5x chips' ESB support][crate-esb], but this too seems lacking
 maintainers' attention.
 
-[python-ci-badge]: https://github.com/nRF24/rf24-rs/actions/workflows/python-packaging.yml/badge.svg
-[python-ci]: https://github.com/nRF24/rf24-rs/actions/workflows/python-packaging.yml
-[node-js-ci-badge]: https://github.com/nRF24/rf24-rs/actions/workflows/node-packaging.yml/badge.svg
-[node-js-ci]: https://github.com/nRF24/rf24-rs/actions/workflows/node-packaging.yml
-[docs-ci-badge]: https://github.com/nRF24/rf24-rs/actions/workflows/docs.yml/badge.svg
-[docs-ci]: https://github.com/nRF24/rf24-rs/actions/workflows/docs.yml
-[examples-ci-badge]: https://github.com/nRF24/rf24-rs/actions/workflows/examples.yml/badge.svg
-[examples-ci]: https://github.com/nRF24/rf24-rs/actions/workflows/examples.yml
-[test-ci-badge]: https://github.com/nRF24/rf24-rs/actions/workflows/tests.yml/badge.svg
-[test-ci]: https://github.com/nRF24/rf24-rs/actions/workflows/tests.yml
+[python-ci-badge]: https://github.com/nRF24/rf24-rs/actions/workflows/python.yml/badge.svg
+[python-ci]: https://github.com/nRF24/rf24-rs/actions/workflows/python.yml
+[node-js-ci-badge]: https://github.com/nRF24/rf24-rs/actions/workflows/node.yml/badge.svg
+[node-js-ci]: https://github.com/nRF24/rf24-rs/actions/workflows/node.yml
+[docs-badge]: https://github.com/nRF24/rf24-rs/actions/workflows/docs.yml/badge.svg
+[docs]: https://rf24-rs.readthedocs.io/en/latest
+[rust-ci-badge]: https://github.com/nRF24/rf24-rs/actions/workflows/rust.yml/badge.svg
+[rust-ci]: https://github.com/nRF24/rf24-rs/actions/workflows/rust.yml
 [codecov-badge]: https://codecov.io/gh/nRF24/rf24-rs/graph/badge.svg?token=BMQ97Y5RVP
 [codecov-project]: https://codecov.io/gh/nRF24/rf24-rs
+
 [embedded-rs]: https://docs.rust-embedded.org/book/
 [crates-hal]: https://crates.io/search?q=embedded-hal
 [awesome-hal]: https://github.com/rust-embedded/awesome-embedded-rust
@@ -59,3 +67,7 @@ maintainers' attention.
 [rust-traits]: https://doc.rust-lang.org/book/ch19-03-advanced-traits.html#advanced-traits
 [crates-rf24]: https://crates.io/search?q=rf24
 [crate-esb]: https://crates.io/crates/esb
+
+<!--absolute-links-->
+[node-api]: https://rf24-rs.readthedocs.io/en/latest/node-api/
+[python-api]: https://rf24-rs.readthedocs.io/en/latest/python-api/

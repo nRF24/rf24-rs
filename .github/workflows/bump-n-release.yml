@@ -1,0 +1,77 @@
+name: Bump version and release
+
+on:
+  workflow_dispatch:
+    inputs:
+      package:
+        type: choice
+        required: true
+        options:
+          - 'rf24-rs'
+          - 'rf24-node'
+          - 'rf24-py'
+          # - 'rf24network-rs'
+          # - 'rf24mesh-rs'
+          # - 'rf24ble-rs'
+      bump-component:
+        type: choice
+        default: 'patch'
+        required: true
+        options:
+          - 'major'
+          - 'minor'
+          - 'patch'
+
+run-name: Deploying ${{ inputs.package }}
+
+jobs:
+  release-version-bump:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.BUMP_N_RELEASE }}
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          # here we need v3.10+
+          python-version: 3.x
+      - run: rustup update --no-self-update
+
+      - name: Install cargo-binstall
+        uses: cargo-bins/cargo-binstall@main
+      - name: Install git-cliff and cargo-edit
+        run: cargo binstall -y git-cliff cargo-edit
+
+      - uses: actions/setup-node@v4
+        if: inputs.package == 'rf24-node'
+        with:
+          node-version: 20.x
+      - run: yarn install
+        if: inputs.package == 'rf24-node'
+      - run: yarn global add @napi-rs/cli
+        if: inputs.package == 'rf24-node'
+
+      - name: increment version
+        id: inc-ver
+        run: >-
+          python ".github/workflows/bump_version.py"
+          --bump=${{ inputs.bump-component }}
+          ${{ inputs.package }}
+
+      - name: push metadata changes
+        run: |-
+          git config --global user.name "${GITHUB_ACTOR}"
+          git config --global user.email "${GITHUB_ACTOR_ID}+${GITHUB_ACTOR}@users.noreply.github.com"
+          git add --all
+          git commit -m "chore(${{ inputs.package }}): bump version to ${{ steps.inc-ver.outputs.new-version }}"
+          git push
+
+      - name: publish release
+        env:
+          GH_TOKEN: ${{ secrets.BUMP_N_RELEASE }}
+        run: >-
+          gh release create
+          "${{ inputs.package }}/${{ steps.inc-ver.outputs.new-version }}"
+          --notes-file ${{ steps.inc-ver.outputs.release-notes }}
+          --title "${{ inputs.package }} v${{ steps.inc-ver.outputs.new-version }}"

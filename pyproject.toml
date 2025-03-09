@@ -4,19 +4,20 @@ build-backend = "maturin"
 
 [project]
 name = "rf24-py"
-description = "A python package wrapping the nRF24 C++ libraries."
+description = "A python package binding the nRF24/rf24-rs rust project."
 requires-python = ">=3.8"
 keywords = [
     "nrf24l01",
     "nRF24L01+",
     "raspberry",
     "pi",
+    "linux",
     "driver",
     "radio",
     "transceiver",
     "RF24",
-    "RF24Network",
-    "RF24Mesh",
+    # "RF24Network",
+    # "RF24Mesh",
 ]
 license = {text = "MIT"}
 authors = [
@@ -33,9 +34,6 @@ classifiers = [
     "Operating System :: POSIX :: Linux",
     "Programming Language :: C++",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.8",
-    "Programming Language :: Python :: 3.9",
-    "Programming Language :: Python :: 3.10",
     "Topic :: Software Development :: Libraries",
     "Topic :: System :: Hardware",
     "Topic :: System :: Hardware :: Hardware Drivers",
@@ -45,7 +43,7 @@ classifiers = [
 dynamic = ["version"]
 
 [project.urls]
-Documentation = "http://nRF24.github.io/rf24-rs"
+Documentation = "https://rf24-rs.readthedocs.io/en/latest"
 Source =  "https://github.com/nRF24/rf24-rs"
 Tracker = "https://github.com/nRF24/rf24-rs/issues"
 
@@ -59,3 +57,7 @@ files = [
 
 [tool.maturin]
 manifest-path = "bindings/python/Cargo.toml"
+include = [
+    { path = "rf24_py.pyi", format = "sdist" },
+    { path = "LICENSE", format = "sdist" },
+]
