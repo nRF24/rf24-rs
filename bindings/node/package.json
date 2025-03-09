@@ -6,7 +6,7 @@
   "description": "A npm package binding the nRF24/rf24-rs rust project.",
   "repository": {
     "type": "git",
-    "url": "https://github.com/nRF24/rf24-rs"
+    "url": "git+https://github.com/nRF24/rf24-rs.git"
   },
   "napi": {
     "name": "rf24",
