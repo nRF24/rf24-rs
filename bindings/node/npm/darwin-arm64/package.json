@@ -1,6 +1,10 @@
 {
   "name": "@rf24/rf24-darwin-arm64",
-  "version": "0.1.0",
+  "version": "0.1.1",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/nRF24/rf24-rs"
+  },
   "os": [
     "darwin"
   ],

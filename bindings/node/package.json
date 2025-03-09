@@ -1,6 +1,6 @@
 {
   "name": "@rf24/rf24",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "main": "index.js",
   "types": "index.d.ts",
   "description": "A npm package binding the nRF24/rf24-rs rust project.",
@@ -47,14 +47,14 @@
   },
   "packageManager": "yarn@1.22.22+sha512.a6b2f7906b721bba3d67d4aff083df04dad64c399707841b7acf00f6b133b7ac24255f2652fa22ae3534329dc6180534e98d17432037ff6fd140556e2bb3137e",
   "keywords": [
-      "nrf24l01",
-      "nRF24L01+",
-      "raspberry",
-      "pi",
-      "linux",
-      "driver",
-      "radio",
-      "transceiver",
-      "RF24"
+    "nrf24l01",
+    "nRF24L01+",
+    "raspberry",
+    "pi",
+    "linux",
+    "driver",
+    "radio",
+    "transceiver",
+    "RF24"
   ]
 }
