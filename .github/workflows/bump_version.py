@@ -44,9 +44,8 @@ def ensure_main_branch():
     else:
         raise RuntimeError("Could not determine the currently checked out branch")
 
-    # filter tags and find the appropriate latest tag according to current branch
     if branch != "main":
-        raise RuntimeError(f"checked out branch {branch} is not the default")
+        raise RuntimeError(f"The checked out branch {branch} is not the default")
 
 
 def increment_version(pkg: str, bump: str = "patch") -> Tuple[str, str]:
@@ -111,13 +110,8 @@ def get_changelog(tag: str, pkg: str, pkg_path: Path, full: bool = False):
     if not changelog.exists():
         changelog.write_bytes(b"")
     output = changelog
-    exe_name = "git-cliff"
-    # if environ.get("CI", "false") == "true":
-    #     exe_name = (
-    #         (GIT_CLIFF_CONFIG.parent.parent.parent / exe_name).resolve().as_posix()
-    #     )
     args = [
-        exe_name,
+        "git-cliff",
         "--github-repo",
         "nRF24/rf24-rs",
         "--tag-pattern",
@@ -149,6 +143,9 @@ class Args(argparse.Namespace):
 
 
 def main() -> int:
+    if environ.get("CI", "false") == "true":
+        ensure_main_branch()
+
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
         "pkg",

@@ -57,6 +57,7 @@ jobs:
           fail_ci_if_error: true
 
   publish:
+    name: Publish
     runs-on: ubuntu-latest
     if: startswith(github.ref, 'refs/tags')
     permissions:
