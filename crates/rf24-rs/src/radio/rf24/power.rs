@@ -39,8 +39,13 @@ where
         // For nRF24L01+ to go from power down mode to TX or RX mode it must first pass through stand-by mode.
         // There must be a delay of Tpd2standby (see Table 16.) after the nRF24L01+ leaves power down mode before
         // the CE is set high. Tpd2standby can be up to 5ms per the 1.0 datasheet
-        if delay.is_some_and(|val| val > 0) || delay.is_none() {
-            self._delay_impl.delay_ns(delay.unwrap_or(5000000));
+        match delay {
+            Some(d) => {
+                if d > 0 {
+                    self._delay_impl.delay_us(d);
+                }
+            }
+            None => self._delay_impl.delay_us(5000),
         }
         Ok(())
     }

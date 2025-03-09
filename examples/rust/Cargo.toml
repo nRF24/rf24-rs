@@ -2,7 +2,7 @@
 name = "rf24-rs-examples"
 version = "0.1.0"
 edition.workspace = true
-rust-version.workspace = true
+default-run = "getting-started"
 
 [dependencies]
 rf24-rs = {path = "../../crates/rf24-rs"}

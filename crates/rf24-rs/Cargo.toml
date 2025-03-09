@@ -4,11 +4,12 @@ description = "A pure-rust driver for the nRF24L01 wireless transceiver"
 version = "0.1.1"
 repository.workspace = true
 edition.workspace = true
-rust-version.workspace = true
-license-file.workspace = true
+license.workspace = true
+homepage.workspace = true
 exclude = [".github/", "codecov.yml", "docs", "examples"]
 keywords = ["nrf24l01", "wireless", "transceiver", "embedded", "RF24"]
 categories = ["embedded", "no-std"]
+rust-version = "1.65"
 
 [lib]
 name = "rf24"

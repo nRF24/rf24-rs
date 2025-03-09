@@ -4,8 +4,8 @@ description = "A python binding for the rf24-rs project"
 version = "0.1.1"
 repository.workspace = true
 edition.workspace = true
-rust-version.workspace = true
-license-file.workspace = true
+license.workspace = true
+rust-version = "1.77"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 [lib]
