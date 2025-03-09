@@ -1,7 +1,7 @@
 [package]
 name = "rf24-rs"
 description = "A pure-rust driver for the nRF24L01 wireless transceiver"
-version = "0.1.0"
+version = "0.1.1"
 repository.workspace = true
 edition.workspace = true
 rust-version.workspace = true
