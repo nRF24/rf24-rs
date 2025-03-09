@@ -117,7 +117,7 @@ impl RadioConfig {
 
     /// The Power Amplitude (PA) level.
     ///
-    /// See [`RF24.pa_level()`][rf24_py.RF24::pa_level].
+    /// See [`RF24.pa_level()`][rf24_py.RF24.pa_level].
     #[getter]
     pub fn get_pa_level(&self) -> PaLevel {
         PaLevel::from_inner(self.inner.pa_level())
