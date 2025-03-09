@@ -12,12 +12,12 @@ import sys
 class _PkgPaths(NamedTuple):
     include: List[str]
     exclude: List[str]
+    path: Path
 
 
 COMPONENTS = ["major", "minor", "patch"]
-GIT_CLIFF_CONFIG = (
-    Path(__file__).parent.parent.parent / ".config" / "cliff.toml"
-).resolve()
+REPO_ROOT = Path(__file__).parent.parent.parent
+GIT_CLIFF_CONFIG = REPO_ROOT / ".config" / "cliff.toml"
 RELEASE_NOTES = GIT_CLIFF_CONFIG.with_name("ReleaseNotes.md")
 PACKAGES = {
     "rf24-rs": _PkgPaths(
@@ -27,7 +27,10 @@ PACKAGES = {
             "docs/**",
             "examples/python/**",
             "examples/node/**",
+            "bindings/**/*",
+            ".config/*",
         ],
+        path=REPO_ROOT / "crates" / "rf24-rs",
     ),
     "rf24-py": _PkgPaths(
         include=[
@@ -41,7 +44,10 @@ PACKAGES = {
             "docs/**",
             "examples/rust/**",
             "examples/node/**",
+            "bindings/node/**/*",
+            ".config/*",
         ],
+        path=REPO_ROOT / "bindings" / "python",
     ),
     "rf24-node": _PkgPaths(
         include=["crates/**/*.rs", "bindings/node/**"],
@@ -50,7 +56,10 @@ PACKAGES = {
             "docs/**",
             "examples/python/**",
             "examples/rust/**",
+            "bindings/python/**/*",
+            ".config/*",
         ],
+        path=REPO_ROOT / "bindings" / "node",
     ),
 }
 
@@ -91,34 +100,13 @@ def increment_version(pkg: str, bump: str = "patch") -> Tuple[str, str]:
             ["yarn", "version", "--no-git-tag-version", "--new-version", new_ver],
             check=True,
             shell=True,
-            cwd="bindings/node",
+            cwd=str(PACKAGES[pkg].path),
         )
-        print("Updated version in bindings/node/**package.json")
+        print("Updated version in bindings/node/**/package.json")
     return old_ver, new_ver
 
 
-def get_pkg_path(pkg: str) -> Path:
-    """Uses ``cargo pkgid`` to get the path of the specified ``pkg``."""
-    result = subprocess.run(
-        ["cargo", "pkgid", "-p", pkg],
-        check=True,
-        capture_output=True,
-    )
-    pkg_binding_prefix = f"#{pkg}@"
-    for line in result.stdout.splitlines():
-        out = line.decode(encoding="utf-8").strip()
-        if pkg_binding_prefix in out:
-            pkg_path = Path(out.split(pkg_binding_prefix)[0].lstrip("path+file://"))
-            break
-        if "#" in out:
-            pkg_path = Path(out.split("#")[0].lstrip("path+file://"))
-            break
-    else:
-        raise RuntimeError(f"Failed to find path to package {pkg}")
-    return pkg_path
-
-
-def get_changelog(tag: str, pkg: str, pkg_path: Path, full: bool = False):
+def get_changelog(tag: str, pkg: str, full: bool = False):
     """Gets the changelog for the given ``pkg``'s ``tag``.
 
     If ``full`` is true, then this stores the current release's changes in a temp
@@ -127,14 +115,12 @@ def get_changelog(tag: str, pkg: str, pkg_path: Path, full: bool = False):
     If ``full`` is true, then this stores the complete changelog in the package's
     CHANGELOG.md.
     """
-    changelog = pkg_path.joinpath("CHANGELOG.md")
+    changelog = PACKAGES[pkg].path / "CHANGELOG.md"
     if not changelog.exists():
         changelog.write_bytes(b"")
     output = changelog
     args = [
         "git-cliff",
-        "--github-repo",
-        "nRF24/rf24-rs",
         "--tag-pattern",
         f"{pkg}/[0-9]+.[0-9]+.[0-9]+",
         "--tag",
@@ -185,15 +171,11 @@ def main() -> int:
     old_ver, new_ver = increment_version(args.pkg, bump=args.bump)
     print("Current version:", old_ver)
     print("New version:", new_ver)
-    pkg_path = get_pkg_path(args.pkg)
+    tag = f"{args.pkg}/{new_ver}"
     # generate release notes and save them to a file
-    get_changelog(
-        tag=f"{args.pkg}/{new_ver}", pkg=args.pkg, pkg_path=pkg_path, full=False
-    )
+    get_changelog(tag=tag, pkg=args.pkg, full=False)
     # generate complete changelog
-    get_changelog(
-        tag=f"{args.pkg}/{new_ver}", pkg=args.pkg, pkg_path=pkg_path, full=True
-    )
+    get_changelog(tag=tag, pkg=args.pkg, full=True)
 
     if "GITHUB_OUTPUT" in environ:  # create an output variables for use in CI workflow
         with open(environ["GITHUB_OUTPUT"], mode="a") as gh_out:
