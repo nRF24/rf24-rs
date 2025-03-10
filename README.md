@@ -5,10 +5,6 @@
 
 This is a pure-rust driver for the nRF24L01 wireless transceivers.
 
-> [!WARNING]
-> This project is a Work-In-Progress.
-> This warning will be removed when this project is ready for deployment.
-
 ## Supported platforms
 
 This project aims to support the [embedded rust][embedded-rs] ecosystem.
