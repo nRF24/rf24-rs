@@ -1,7 +1,6 @@
 #![cfg(target_os = "linux")]
 use crate::types::{CrcLength, DataRate, PaLevel};
 use pyo3::prelude::*;
-use rf24::radio::EsbConfig;
 
 use std::borrow::Cow;
 
@@ -44,7 +43,7 @@ use std::borrow::Cow;
 #[pyclass(module = "rf24_py")]
 #[derive(Debug, Clone, Copy)]
 pub struct RadioConfig {
-    inner: EsbConfig,
+    inner: rf24::radio::RadioConfig,
     _addr_buf: [u8; 5],
 }
 
@@ -53,7 +52,7 @@ impl RadioConfig {
     #[new]
     pub fn new() -> Self {
         Self {
-            inner: EsbConfig::default(),
+            inner: rf24::radio::RadioConfig::default(),
             _addr_buf: [0u8; 5],
         }
     }
@@ -333,11 +332,11 @@ impl RadioConfig {
 }
 
 impl RadioConfig {
-    pub fn into_inner(&self) -> EsbConfig {
+    pub fn into_inner(&self) -> rf24::radio::RadioConfig {
         self.inner.clone()
     }
 
-    pub fn from_inner(config: EsbConfig) -> Self {
+    pub fn from_inner(config: rf24::radio::RadioConfig) -> Self {
         Self {
             inner: config,
             _addr_buf: [0u8; 5],

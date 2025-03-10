@@ -10,7 +10,7 @@
 
 use crate::types::{CrcLength, DataRate, FifoState, PaLevel, StatusFlags};
 
-use super::EsbConfig;
+use super::RadioConfig;
 
 /// A trait to represent manipulation of data pipes
 /// for an ESB capable transceiver.
@@ -449,7 +449,7 @@ pub trait EsbInit {
 
     /// Initialize the radio's hardware.
     ///
-    /// This is similar to [`EsbInit::with_config()`] (with [`EsbConfig::default()`]),
+    /// This is similar to [`EsbInit::with_config()`] (with [`RadioConfig::default()`]),
     /// but this function also
     ///
     /// - waits 5 milliseconds for radio to finish powering up
@@ -463,10 +463,10 @@ pub trait EsbInit {
 
     /// Reconfigure the radio using the given `config` object.
     ///
-    /// See [`EsbConfig`] for more detail.
+    /// See [`RadioConfig`] for more detail.
     /// This function is a convenience where calling multiple configuration functions may
     /// be cumbersome.
-    fn with_config(&mut self, config: &EsbConfig) -> Result<(), Self::ConfigErrorType>;
+    fn with_config(&mut self, config: &RadioConfig) -> Result<(), Self::ConfigErrorType>;
 }
 
 /// A trait to represent manipulation of an ESB capable transceiver.

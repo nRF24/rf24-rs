@@ -10,7 +10,7 @@
 use anyhow::Result;
 
 use rf24::{
-    radio::{prelude::*, EsbConfig, RF24},
+    radio::{prelude::*, RadioConfig, RF24},
     CrcLength,
 };
 use rf24_rs_examples::debug_err;
@@ -54,12 +54,12 @@ impl App {
     /// Configure the radio for 2 different scenarios and
     /// print the configuration details for each.
     pub fn run(&mut self) -> Result<()> {
-        let normal_context = EsbConfig::default()
+        let normal_context = RadioConfig::default()
             .with_rx_address(1, b"1Node")
             .with_tx_address(b"2Node");
 
         let ble_addr = [0x71, 0x91, 0x7d, 0x6b];
-        let ble_context = EsbConfig::default()
+        let ble_context = RadioConfig::default()
             .with_channel(2) // BLE specs hop/rotate amongst channels 2, 26, and 80
             .with_crc_length(CrcLength::Disabled)
             .with_auto_ack(0)

@@ -2,7 +2,7 @@ use super::{data_rate::set_tx_delay, registers, Feature, Nrf24Error, RF24};
 use crate::{
     radio::{
         prelude::{EsbChannel, EsbFifo, EsbInit, EsbPayloadLength, EsbPipe, EsbPower, EsbStatus},
-        EsbConfig,
+        RadioConfig,
     },
     StatusFlags,
 };
@@ -46,10 +46,10 @@ where
             // MCU may have reset without triggering a power-on-reset in radio.
             self.toggle_features()?;
         }
-        self.with_config(&EsbConfig::default())
+        self.with_config(&RadioConfig::default())
     }
 
-    fn with_config(&mut self, config: &EsbConfig) -> Result<(), Self::ConfigErrorType> {
+    fn with_config(&mut self, config: &RadioConfig) -> Result<(), Self::ConfigErrorType> {
         self.clear_status_flags(StatusFlags::new())?;
         self.power_down()?;
 
