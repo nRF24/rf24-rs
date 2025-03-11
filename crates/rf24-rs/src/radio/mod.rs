@@ -5,4 +5,4 @@ mod rf24;
 pub use rf24::{Nrf24Error, RF24};
 
 mod config;
-pub use config::EsbConfig;
+pub use config::RadioConfig;

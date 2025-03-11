@@ -88,13 +88,13 @@ impl EsbPipeConfig {
 /// An object to configure the radio.
 ///
 /// This struct follows a builder pattern. Since all fields are private, users should
-/// start with the [`EsbConfig::default`] constructor, then mutate the object accordingly.
+/// start with the [`RadioConfig::default`] constructor, then mutate the object accordingly.
 /// ```
 /// let mut config = Config::default();
 /// config = config.with_channel(42);
 /// ```
 #[derive(Debug, Clone, Copy)]
-pub struct EsbConfig {
+pub struct RadioConfig {
     pub(crate) config_reg: Config,
     pub(crate) auto_retries: SetupRetry,
     pub(crate) setup_rf_aw: SetupRfAw,
@@ -105,29 +105,29 @@ pub struct EsbConfig {
     pipes: EsbPipeConfig,
 }
 
-impl Default for EsbConfig {
-    /// Instantiate a [`EsbConfig`] object with library defaults.
+impl Default for RadioConfig {
+    /// Instantiate a [`RadioConfig`] object with library defaults.
     ///
     /// | feature | default value |
     /// |--------:|:--------------|
-    /// | [`EsbConfig::channel()`] | `76` |
-    /// | [`EsbConfig::address_length()`] | `5` |
-    /// | [`EsbConfig::pa_level()`] | [`PaLevel::Max`] |
-    /// | [`EsbConfig::lna_enable()`] | `true` |
-    /// | [`EsbConfig::crc_length()`] | [`CrcLength::Bit16`] |
-    /// | [`EsbConfig::data_rate()`] | [`DataRate::Mbps1`] |
-    /// | [`EsbConfig::payload_length()`] | `32` |
-    /// | [`EsbConfig::dynamic_payloads()`] | `false` |
-    /// | [`EsbConfig::auto_ack()`] | `0x3F` (enabled for pipes 0 - 5) |
-    /// | [`EsbConfig::ack_payloads()`] | `false` |
-    /// | [`EsbConfig::ask_no_ack()`] | `false` |
-    /// | [`EsbConfig::auto_retry_delay()`] | `5` |
-    /// | [`EsbConfig::auto_retry_count()`] | `15` |
-    /// | [`EsbConfig::tx_address()`] | `[0xE7; 5]` |
-    /// | [`EsbConfig::rx_address()`] | See below table about [Default RX addresses](#default-rx-pipes-configuration) |
-    /// | [`EsbConfig::rx_dr()`] | `true` |
-    /// | [`EsbConfig::tx_ds()`] | `true` |
-    /// | [`EsbConfig::tx_df()`] | `true` |
+    /// | [`RadioConfig::channel()`] | `76` |
+    /// | [`RadioConfig::address_length()`] | `5` |
+    /// | [`RadioConfig::pa_level()`] | [`PaLevel::Max`] |
+    /// | [`RadioConfig::lna_enable()`] | `true` |
+    /// | [`RadioConfig::crc_length()`] | [`CrcLength::Bit16`] |
+    /// | [`RadioConfig::data_rate()`] | [`DataRate::Mbps1`] |
+    /// | [`RadioConfig::payload_length()`] | `32` |
+    /// | [`RadioConfig::dynamic_payloads()`] | `false` |
+    /// | [`RadioConfig::auto_ack()`] | `0x3F` (enabled for pipes 0 - 5) |
+    /// | [`RadioConfig::ack_payloads()`] | `false` |
+    /// | [`RadioConfig::ask_no_ack()`] | `false` |
+    /// | [`RadioConfig::auto_retry_delay()`] | `5` |
+    /// | [`RadioConfig::auto_retry_count()`] | `15` |
+    /// | [`RadioConfig::tx_address()`] | `[0xE7; 5]` |
+    /// | [`RadioConfig::rx_address()`] | See below table about [Default RX addresses](#default-rx-pipes-configuration) |
+    /// | [`RadioConfig::rx_dr()`] | `true` |
+    /// | [`RadioConfig::tx_ds()`] | `true` |
+    /// | [`RadioConfig::tx_df()`] | `true` |
     ///
     /// ## Default RX pipes' configuration
     ///
@@ -178,8 +178,8 @@ impl Default for EsbConfig {
     }
 }
 
-impl EsbConfig {
-    /// Returns the value set by [`EsbConfig::with_crc_length()`].
+impl RadioConfig {
+    /// Returns the value set by [`RadioConfig::with_crc_length()`].
     pub const fn crc_length(&self) -> CrcLength {
         self.config_reg.crc_length()
     }
@@ -195,7 +195,7 @@ impl EsbConfig {
         }
     }
 
-    /// Returns the value set by [`EsbConfig::with_data_rate()`].
+    /// Returns the value set by [`RadioConfig::with_data_rate()`].
     pub const fn data_rate(&self) -> DataRate {
         self.setup_rf_aw.data_rate()
     }
@@ -211,7 +211,7 @@ impl EsbConfig {
         }
     }
 
-    /// Returns the value set by [`EsbConfig::with_pa_level()`].
+    /// Returns the value set by [`RadioConfig::with_pa_level()`].
     pub const fn pa_level(&self) -> PaLevel {
         self.setup_rf_aw.pa_level()
     }
@@ -227,7 +227,7 @@ impl EsbConfig {
         }
     }
 
-    /// Returns the value set by [`EsbConfig::with_lna_enable()`].
+    /// Returns the value set by [`RadioConfig::with_lna_enable()`].
     pub const fn lna_enable(&self) -> bool {
         self.setup_rf_aw.lna_enable()
     }
@@ -244,7 +244,7 @@ impl EsbConfig {
         }
     }
 
-    /// Returns the value set by [`EsbConfig::with_address_length()`].
+    /// Returns the value set by [`RadioConfig::with_address_length()`].
     pub const fn address_length(&self) -> u8 {
         self.setup_rf_aw.address_length()
     }
@@ -260,7 +260,7 @@ impl EsbConfig {
         }
     }
 
-    /// Returns the value set by [`EsbConfig::with_channel()`].
+    /// Returns the value set by [`RadioConfig::with_channel()`].
     pub const fn channel(&self) -> u8 {
         self.channel
     }
@@ -279,12 +279,12 @@ impl EsbConfig {
         }
     }
 
-    /// The auto-retry feature's `delay` (set via [`EsbConfig::with_auto_retries()`])
+    /// The auto-retry feature's `delay` (set via [`RadioConfig::with_auto_retries()`])
     pub const fn auto_retry_delay(&self) -> u8 {
         self.auto_retries.ard()
     }
 
-    /// The auto-retry feature's `count` (set via [`EsbConfig::with_auto_retries()`])
+    /// The auto-retry feature's `count` (set via [`RadioConfig::with_auto_retries()`])
     pub const fn auto_retry_count(&self) -> u8 {
         self.auto_retries.arc()
     }
@@ -303,7 +303,7 @@ impl EsbConfig {
         }
     }
 
-    /// Get the value set by [`EsbConfig::rx_dr()`].
+    /// Get the value set by [`RadioConfig::rx_dr()`].
     pub const fn rx_dr(&self) -> bool {
         self.config_reg.rx_dr()
     }
@@ -319,7 +319,7 @@ impl EsbConfig {
         }
     }
 
-    /// Get the value set by [`EsbConfig::tx_ds()`].
+    /// Get the value set by [`RadioConfig::tx_ds()`].
     pub const fn tx_ds(&self) -> bool {
         self.config_reg.tx_ds()
     }
@@ -335,7 +335,7 @@ impl EsbConfig {
         }
     }
 
-    /// Get the value set by [`EsbConfig::tx_df()`].
+    /// Get the value set by [`RadioConfig::tx_df()`].
     pub const fn tx_df(&self) -> bool {
         self.config_reg.tx_df()
     }
@@ -351,7 +351,7 @@ impl EsbConfig {
         }
     }
 
-    /// Return the value set by [`EsbConfig::with_ask_no_ack()`].
+    /// Return the value set by [`RadioConfig::with_ask_no_ack()`].
     pub const fn ask_no_ack(&self) -> bool {
         self.feature.ask_no_ack()
     }
@@ -369,17 +369,17 @@ impl EsbConfig {
         }
     }
 
-    /// Return the value set by [`EsbConfig::with_dynamic_payloads()`].
+    /// Return the value set by [`RadioConfig::with_dynamic_payloads()`].
     ///
     /// This feature is enabled automatically when enabling ACK payloads
-    /// via [`EsbConfig::with_ack_payloads()`].
+    /// via [`RadioConfig::with_ack_payloads()`].
     pub const fn dynamic_payloads(&self) -> bool {
         self.feature.dynamic_payloads()
     }
 
     /// Enable or disable dynamically sized payloads.
     ///
-    /// Enabling this feature nullifies the utility of [`EsbConfig::payload_length()`].
+    /// Enabling this feature nullifies the utility of [`RadioConfig::payload_length()`].
     pub fn with_dynamic_payloads(self, enable: bool) -> Self {
         let new_config = self.feature.with_dynamic_payloads(enable);
         Self {
@@ -388,7 +388,7 @@ impl EsbConfig {
         }
     }
 
-    /// Return the value set by [`EsbConfig::with_auto_ack()`].
+    /// Return the value set by [`RadioConfig::with_auto_ack()`].
     pub const fn auto_ack(&self) -> u8 {
         self.auto_ack
     }
@@ -400,7 +400,7 @@ impl EsbConfig {
     ///
     /// To enable the feature for pipes 0, 1 and 4:
     /// ```
-    /// let config = EsbConfig::default().with_auto_ack(0b010011);
+    /// let config = RadioConfig::default().with_auto_ack(0b010011);
     /// ```
     /// If enabling the feature for any pipe other than 0, then the pipe 0 should also have the
     /// feature enabled because pipe 0 is used to transmit automatic ACK packets in RX mode.
@@ -411,14 +411,14 @@ impl EsbConfig {
         }
     }
 
-    /// Return the value set by [`EsbConfig::with_ack_payloads()`].
+    /// Return the value set by [`RadioConfig::with_ack_payloads()`].
     pub const fn ack_payloads(&self) -> bool {
         self.feature.ack_payloads()
     }
 
     /// Enable or disable custom ACK payloads for auto-ACK packets.
     ///
-    /// ACK payloads require the [`EsbConfig::auto_ack`] and [`EsbConfig::dynamic_payloads`]
+    /// ACK payloads require the [`RadioConfig::auto_ack`] and [`RadioConfig::dynamic_payloads`]
     /// to be enabled. If ACK payloads are enabled, then this function also enables those
     /// features (for all pipes).
     pub fn with_ack_payloads(self, enable: bool) -> Self {
@@ -431,7 +431,7 @@ impl EsbConfig {
         }
     }
 
-    /// Return the value set by [`EsbConfig::with_payload_length()`].
+    /// Return the value set by [`RadioConfig::with_payload_length()`].
     ///
     /// The hardware's maximum payload length is enforced by the hardware specific
     /// implementations of [`EsbPayloadLength::set_payload_length()`](fn@crate::radio::prelude::EsbPayloadLength::set_payload_length).
@@ -452,7 +452,7 @@ impl EsbConfig {
 
     // Close a RX pipe from receiving data.
     //
-    // This is only useful if pipe 1 should be closed instead of open (after [`EsbConfig::default()`]).
+    // This is only useful if pipe 1 should be closed instead of open (after [`RadioConfig::default()`]).
     pub fn close_rx_pipe(self, pipe: u8) -> Self {
         let mut pipes = self.pipes;
         pipes.close_rx_pipe(pipe);
@@ -462,12 +462,12 @@ impl EsbConfig {
     /// Is a specified RX pipe open (`true`) or closed (`false`)?
     ///
     /// The value returned here is controlled by
-    /// [`EsbConfig::with_rx_address()`] (to open a pipe) and [`EsbConfig::close_rx_pipe()`].
+    /// [`RadioConfig::with_rx_address()`] (to open a pipe) and [`RadioConfig::close_rx_pipe()`].
     pub fn is_rx_pipe_enabled(&self, pipe: u8) -> bool {
         self.pipes.rx_pipes_enabled & (1u8 << pipe.min(8)) > 0
     }
 
-    /// Get the address for a specified `pipe` set by [`EsbConfig::with_rx_address()`]
+    /// Get the address for a specified `pipe` set by [`RadioConfig::with_rx_address()`]
     pub fn rx_address(&self, pipe: u8, address: &mut [u8]) {
         self.pipes.get_rx_address(pipe, address);
     }
@@ -478,14 +478,14 @@ impl EsbConfig {
     /// For pipes 2 - 5, the 4 LSBytes are used from address set to pipe 1 with the
     /// MSByte from the given `address`.
     ///
-    /// See also [`EsbConfig::with_tx_address()`].
+    /// See also [`RadioConfig::with_tx_address()`].
     pub fn with_rx_address(self, pipe: u8, address: &[u8]) -> Self {
         let mut pipes = self.pipes;
         pipes.set_rx_address(pipe, address);
         Self { pipes, ..self }
     }
 
-    /// Get the address set by [`EsbConfig::with_tx_address()`]
+    /// Get the address set by [`RadioConfig::with_tx_address()`]
     pub fn tx_address(&self, address: &mut [u8]) {
         let len = address.len().min(5);
         address[..len].copy_from_slice(&self.pipes.tx_address[..len]);
@@ -503,12 +503,12 @@ impl EsbConfig {
 
 #[cfg(test)]
 mod test {
-    use super::EsbConfig;
+    use super::RadioConfig;
     use crate::{CrcLength, DataRate, PaLevel};
 
     #[test]
     fn crc_length() {
-        let mut config = EsbConfig::default();
+        let mut config = RadioConfig::default();
         for len in [CrcLength::Disabled, CrcLength::Bit16, CrcLength::Bit8] {
             config = config.with_crc_length(len);
             assert_eq!(len, config.crc_length());
@@ -517,7 +517,7 @@ mod test {
 
     #[test]
     fn config_irq_flags() {
-        let mut config = EsbConfig::default();
+        let mut config = RadioConfig::default();
         assert!(config.rx_dr());
         assert!(config.tx_ds());
         assert!(config.tx_df());
@@ -529,7 +529,7 @@ mod test {
 
     #[test]
     fn address_length() {
-        let mut config = EsbConfig::default();
+        let mut config = RadioConfig::default();
         for len in 0..10 {
             config = config.with_address_length(len);
             assert_eq!(config.address_length(), len.clamp(2, 5));
@@ -538,7 +538,7 @@ mod test {
 
     #[test]
     fn pa_level() {
-        let mut config = EsbConfig::default();
+        let mut config = RadioConfig::default();
         for level in [PaLevel::Max, PaLevel::High, PaLevel::Low, PaLevel::Min] {
             config = config.with_pa_level(level);
             assert_eq!(config.pa_level(), level);
@@ -550,7 +550,7 @@ mod test {
 
     #[test]
     fn data_rate() {
-        let mut config = EsbConfig::default();
+        let mut config = RadioConfig::default();
         for rate in [DataRate::Kbps250, DataRate::Mbps1, DataRate::Mbps2] {
             config = config.with_data_rate(rate);
             assert_eq!(config.data_rate(), rate);
@@ -559,7 +559,7 @@ mod test {
 
     #[test]
     fn feature_register() {
-        let mut config = EsbConfig::default();
+        let mut config = RadioConfig::default();
         assert_eq!(config.auto_ack(), 0x3F);
         assert!(!config.ack_payloads());
         assert!(!config.dynamic_payloads());
@@ -588,18 +588,18 @@ mod test {
 
     #[test]
     fn payload_length() {
-        let config = EsbConfig::default().with_payload_length(255);
+        let config = RadioConfig::default().with_payload_length(255);
         assert_eq!(config.payload_length(), 255);
     }
 
     #[test]
     fn channel() {
-        let config = EsbConfig::default().with_channel(255);
+        let config = RadioConfig::default().with_channel(255);
         assert_eq!(config.channel(), 125);
     }
     #[test]
     fn auto_retries() {
-        let mut config = EsbConfig::default();
+        let mut config = RadioConfig::default();
         assert_eq!(config.auto_retry_count(), 15);
         assert_eq!(config.auto_retry_delay(), 5);
         config = config.with_auto_retries(20, 3);
@@ -609,7 +609,7 @@ mod test {
 
     #[test]
     fn pipe_addresses() {
-        let mut config = EsbConfig::default();
+        let mut config = RadioConfig::default();
         let mut address = [0xB0; 5];
         config = config.with_tx_address(&address);
         let mut result = [0; 3];
