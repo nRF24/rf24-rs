@@ -23,7 +23,7 @@ build:
       - yarn build:debug
       - yarn docs
     pre_install:
-      - python -m pip install -U pip
+      - python -m pip install --no-cache-dir -U pip
 
 mkdocs:
   configuration: docs/mkdocs.yml
