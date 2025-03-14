@@ -13,16 +13,16 @@ pub struct RadioConfig {
 
 #[napi]
 impl RadioConfig {
-    /// Instantiate a {@link RadioConfig | `RadioConfig`} object with library defaults.
+    /// Instantiate a {@link RadioConfig} object with library defaults.
     ///
     /// | feature | default value |
     /// |--------:|:--------------|
     /// | {@link RadioConfig.channel} | `76` |
     /// | {@link RadioConfig.addressLength} | `5` |
-    /// | {@link RadioConfig.paLevel} | {@link PaLevel.Max | `PaLevel.Max`} |
+    /// | {@link RadioConfig.paLevel} | {@link PaLevel.Max} |
     /// | {@link RadioConfig.lnaEnable} | `true` |
-    /// | {@link RadioConfig.crcLength} | {@link CrcLength.Bit16 | `CrcLength.Bit16`} |
-    /// | {@link RadioConfig.dataRate} | {@link DataRate.Mbps1 | `DataRate.Mbps1`} |
+    /// | {@link RadioConfig.crcLength} | {@link CrcLength.Bit16} |
+    /// | {@link RadioConfig.dataRate} | {@link DataRate.Mbps1} |
     /// | {@link RadioConfig.payloadLength} | `32` |
     /// | {@link RadioConfig.dynamicPayloads} | `false` |
     /// | {@link RadioConfig.autoAck} | `0x3F` (enabled for pipes 0 - 5) |
@@ -31,7 +31,7 @@ impl RadioConfig {
     /// | {@link RadioConfig.autoRetryDelay} | `5` |
     /// | {@link RadioConfig.autoRetryCount} | `15` |
     /// | {@link RadioConfig.txAddress} | `[0xE7, 0xE7, 0xE7, 0xE7, 0xE7]` |
-    /// | {@link RadioConfig.getRxAddress)`} | See below table about [Default RX addresses](#default-rx-pipes-configuration) |
+    /// | {@link RadioConfig.getRxAddress} | See below table about [Default RX addresses](#default-rx-pipes-configuration) |
     /// | {@link RadioConfig.rxDr} | `true` |
     /// | {@link RadioConfig.txDs} | `true` |
     /// | {@link RadioConfig.txDf} | `true` |
@@ -108,7 +108,7 @@ impl RadioConfig {
 
     /// The Cyclical Redundancy Checksum (CRC) length.
     ///
-    /// See {@link RF24.crcLength | `RF24.crcLength`}.
+    /// See {@link RF24.crcLength}.
     #[napi(setter, js_name = "crcLength")]
     pub fn set_crc_length(&mut self, value: CrcLength) {
         self.inner = self.inner.with_crc_length(value.into_inner());
@@ -153,7 +153,7 @@ impl RadioConfig {
 
     /// The Data Rate (over the air).
     ///
-    /// See {@link RF24.dataRate | `RF24.dataRate()`}.
+    /// See {@link RF24.dataRate}.
     #[napi(setter, js_name = "dataRate")]
     pub fn set_data_rate(&mut self, value: DataRate) {
         self.inner = self.inner.with_data_rate(value.into_inner());

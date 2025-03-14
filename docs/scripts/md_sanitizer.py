@@ -12,10 +12,13 @@ from mkdocs.structure.pages import Page
 from mkdocs.structure.files import Files
 from mkdocs.config.defaults import MkDocsConfig
 
-DEFINED_IN_PATTERN = re.compile(r"#+ Defined in\n\nindex\.d\.ts\:\d+")
-SECTIONS_PATTERN = re.compile(r"#+ (Parameters|Returns|Throws)")
+DEFINED_IN_PATTERN = re.compile(r"^Defined in: index\.d\.ts\:\d+\n\n", re.MULTILINE)
+SECTIONS_PATTERN = re.compile(
+    r"#+ (Parameters|Returns|Throws|Default Value|\wet Signature)"
+)
 LIST_MARKER_PATTERN = re.compile("^• ", re.MULTILINE)
 GROUP_API_PATTERN = re.compile(r"^## \w+\s*$", re.MULTILINE)
+DIVIDER = re.compile(r"\*\*\*\n\n", re.MULTILINE)
 
 
 def on_page_markdown(
@@ -25,6 +28,8 @@ def on_page_markdown(
         return markdown
     # change edit_uri metadata since these files are generated.
     page.edit_url = f"{config.repo_url}/{config.edit_uri}typedoc.json"
+    # remove all "***" lines (equivalent to a `<hr> element`)
+    markdown = DIVIDER.sub("", markdown)
     # remove all "Defined in" sections
     markdown = DEFINED_IN_PATTERN.sub("", markdown)
     # replace repeated section headers with <strong> elements

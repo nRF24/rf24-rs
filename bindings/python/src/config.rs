@@ -77,7 +77,7 @@ impl RadioConfig {
     /// The payload length for statically sized payloads.
     ///
     /// This value can not be set larger than 32 bytes.
-    /// See [`RF24.payload_length()`][rf24_py.RF24.payload_length].
+    /// See [`RF24.payload_length`][rf24_py.RF24.payload_length].
     #[getter]
     pub fn get_payload_length(&self) -> u8 {
         self.inner.payload_length()
@@ -103,7 +103,7 @@ impl RadioConfig {
 
     /// The Cyclical Redundancy Checksum (CRC) length.
     ///
-    /// See [`RF24.crc_length()`][rf24_py.RF24.crc_length].
+    /// See [`RF24.crc_length`][rf24_py.RF24.crc_length].
     #[getter]
     pub fn get_crc_length(&self) -> CrcLength {
         CrcLength::from_inner(self.inner.crc_length())
@@ -116,7 +116,7 @@ impl RadioConfig {
 
     /// The Power Amplitude (PA) level.
     ///
-    /// See [`RF24.pa_level()`][rf24_py.RF24.pa_level].
+    /// See [`RF24.pa_level`][rf24_py.RF24.pa_level].
     #[getter]
     pub fn get_pa_level(&self) -> PaLevel {
         PaLevel::from_inner(self.inner.pa_level())
@@ -143,7 +143,7 @@ impl RadioConfig {
 
     /// The Data Rate (over the air).
     ///
-    /// See [`RF24.data_rate()`][rf24_py.RF24.data_rate].
+    /// See [`RF24.data_rate`][rf24_py.RF24.data_rate].
     #[getter]
     pub fn get_data_rate(&self) -> DataRate {
         DataRate::from_inner(self.inner.data_rate())
