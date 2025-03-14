@@ -49,18 +49,20 @@ impl Default for HardwareConfig {
 /// The return type for {@link RF24.getStatusFlags}
 /// and optional parameters for {@link RF24.setStatusFlags}
 /// and {@link RF24.clearStatusFlags}.
-///
-/// These flags default to `true` if not specified for
-/// {@link RF24.setStatusFlags}
-/// or {@link RF24.clearStatusFlags}.
 #[napi(object)]
 #[derive(Default)]
 pub struct StatusFlags {
     /// A flag to describe if RX Data Ready to read.
+    ///
+    /// @defaultValue `false`
     pub rx_dr: Option<bool>,
     /// A flag to describe if TX Data Sent.
+    ///
+    /// @defaultValue `false`
     pub tx_ds: Option<bool>,
     /// A flag to describe if TX Data Failed.
+    ///
+    /// @defaultValue `false`
     pub tx_df: Option<bool>,
 }
 
@@ -98,7 +100,7 @@ pub struct WriteConfig {
     /// Only set this to false if filling the TX FIFO (maximum 3 level stack) before entering
     /// active TX mode. Setting this option to false does not deactivate the radio's CE pin.
     ///
-    /// @defaultValue `true`.
+    /// @defaultValue `true`
     pub start_tx: Option<bool>,
 }
 

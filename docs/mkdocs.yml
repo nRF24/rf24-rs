@@ -89,7 +89,7 @@ extra_css:
   - stylesheets/extra.css
 
 hooks:
-  - scripts/html_sanitizer.py
+  - scripts/md_sanitizer.py
 
 plugins:
   - search
