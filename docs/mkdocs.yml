@@ -13,6 +13,10 @@ nav:
     - Classes:
       - node-api/classes/RF24.md
       - node-api/classes/RadioConfig.md
+      - node-api/classes/FakeBle.md
+      - node-api/classes/BatteryService.md
+      - node-api/classes/TemperatureService.md
+      - node-api/classes/UrlService.md
     - Enumerations:
       - node-api/enumerations/CrcLength.md
       - node-api/enumerations/DataRate.md
@@ -29,6 +33,8 @@ nav:
       - python-api/classes/RF24.md
       - python-api/classes/status-flags.md
       - python-api/classes/config.md
+      - python-api/classes/ble-services.md
+      - python-api/classes/FakeBle.md
     - Enumerations:
       - python-api/enumerations/crc-length.md
       - python-api/enumerations/data-rate.md

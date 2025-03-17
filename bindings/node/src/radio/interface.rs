@@ -2,8 +2,8 @@
 
 use std::time::Duration;
 
-use crate::config::RadioConfig;
-use crate::types::{
+use super::config::RadioConfig;
+use super::types::{
     coerce_to_bool, AvailablePipe, CrcLength, DataRate, FifoState, HardwareConfig, PaLevel,
     StatusFlags, WriteConfig,
 };
@@ -21,7 +21,7 @@ use napi::{bindgen_prelude::Buffer, Error, JsNumber, Result, Status};
 
 use rf24::radio::prelude::*;
 
-struct Delay;
+pub struct Delay;
 
 impl DelayNs for Delay {
     fn delay_ns(&mut self, ns: u32) {
@@ -37,7 +37,7 @@ impl DelayNs for Delay {
 /// This class provides the user facing API to interact with a nRF24L01 transceiver.
 #[napi(js_name = "RF24")]
 pub struct RF24 {
-    inner: rf24::radio::RF24<SpidevDevice, CdevPin, Delay>,
+    pub(crate) inner: rf24::radio::RF24<SpidevDevice, CdevPin, Delay>,
     read_buf: [u8; 32],
 }
 
@@ -160,7 +160,7 @@ impl RF24 {
     #[napi]
     pub fn with_config(&mut self, config: &RadioConfig) -> Result<()> {
         self.inner
-            .with_config(&config.into_inner())
+            .with_config(config.get_inner())
             .map_err(|e| Error::new(Status::GenericFailure, format!("{e:?}")))
     }
 
@@ -549,7 +549,7 @@ impl RF24 {
         self.inner
             .get_crc_length()
             .map_err(|e| Error::new(Status::GenericFailure, format!("{e:?}")))
-            .map(|e| CrcLength::from_inner(e))
+            .map(CrcLength::from_inner)
     }
 
     /// Get/set the {@link CrcLength} used for all outgoing and incoming
@@ -575,7 +575,7 @@ impl RF24 {
         self.inner
             .get_data_rate()
             .map_err(|e| Error::new(Status::GenericFailure, format!("{e:?}")))
-            .map(|e| DataRate::from_inner(e))
+            .map(DataRate::from_inner)
     }
 
     /// Get/set the {@link DataRate} used for all incoming and outgoing transmissions.
@@ -654,7 +654,7 @@ impl RF24 {
         self.inner
             .get_fifo_state(coerce_to_bool(Some(about_tx), false)?)
             .map_err(|e| Error::new(Status::GenericFailure, format!("{e:?}")))
-            .map(|e| FifoState::from_inner(e))
+            .map(FifoState::from_inner)
     }
 
     /// @group Configuration
@@ -663,7 +663,7 @@ impl RF24 {
         self.inner
             .get_pa_level()
             .map_err(|e| Error::new(Status::GenericFailure, format!("{e:?}")))
-            .map(|e| PaLevel::from_inner(e))
+            .map(PaLevel::from_inner)
     }
 
     /// Get/set the Power Amplitude (PA) level used for all transmissions (including
@@ -887,7 +887,7 @@ impl RF24 {
     ///
     /// @group Configuration
     #[napi(setter, js_name = "txDelay")]
-    pub fn set_tx_delay(&mut self, value: u32) -> () {
+    pub fn set_tx_delay(&mut self, value: u32) {
         self.inner.tx_delay = value;
     }
 

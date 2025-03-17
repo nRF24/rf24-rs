@@ -3,12 +3,11 @@
 use napi::{JsNumber, Result};
 
 /// A private helper to implicitly convert JS numbers to boolean values (falling back to a `default` value)
-#[cfg_attr(not(target_os = "linux"), allow(dead_code))]
 pub fn coerce_to_bool(napi_instance: Option<JsNumber>, default: bool) -> Result<bool> {
     if let Some(napi_value) = napi_instance {
         return napi_value.coerce_to_bool()?.get_value();
     }
-    return Ok(default);
+    Ok(default)
 }
 
 /// Optional configuration parameters to fine tune instantiating the {@link RF24} object.
@@ -66,7 +65,10 @@ pub struct StatusFlags {
     pub tx_df: Option<bool>,
 }
 
-#[cfg(target_os = "linux")]
+#[cfg_attr(
+    not(target_os = "linux"),
+    allow(dead_code, reason = "only used on linux")
+)]
 impl StatusFlags {
     pub fn into_inner(self) -> rf24::StatusFlags {
         rf24::StatusFlags::default()
@@ -147,7 +149,6 @@ pub enum PaLevel {
     Max,
 }
 
-#[cfg(target_os = "linux")]
 impl PaLevel {
     pub fn into_inner(self) -> rf24::PaLevel {
         match self {
@@ -179,7 +180,6 @@ pub enum DataRate {
     Kbps250,
 }
 
-#[cfg(target_os = "linux")]
 impl DataRate {
     pub fn into_inner(self) -> rf24::DataRate {
         match self {
@@ -211,7 +211,6 @@ pub enum CrcLength {
     Bit16,
 }
 
-#[cfg(target_os = "linux")]
 impl CrcLength {
     pub fn into_inner(self) -> rf24::CrcLength {
         match self {
@@ -241,7 +240,10 @@ pub enum FifoState {
     Occupied,
 }
 
-#[cfg(target_os = "linux")]
+#[cfg_attr(
+    not(target_os = "linux"),
+    allow(dead_code, reason = "only used on linux")
+)]
 impl FifoState {
     pub fn into_inner(self) -> rf24::FifoState {
         match self {

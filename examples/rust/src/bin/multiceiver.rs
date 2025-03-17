@@ -4,7 +4,7 @@
 //! This example is meant to be run on at least 2 separate nRF24L01 transceivers.
 //! Although, this example can be used on 7 transceivers at most simultaneously.
 //!
-//! See documentation at https://docs.rs/rf24-rs
+//! See documentation at <https://docs.rs/rf24-rs>
 #![no_std]
 
 use anyhow::Result;

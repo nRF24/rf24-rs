@@ -41,7 +41,6 @@ impl StatusFlags {
     }
 }
 
-#[cfg(target_os = "linux")]
 impl StatusFlags {
     pub fn into_inner(self) -> rf24::StatusFlags {
         rf24::StatusFlags::new()
@@ -88,7 +87,6 @@ pub enum PaLevel {
     Max,
 }
 
-#[cfg(target_os = "linux")]
 impl PaLevel {
     pub fn into_inner(self) -> rf24::PaLevel {
         match self {
@@ -122,7 +120,6 @@ pub enum DataRate {
     Kbps250,
 }
 
-#[cfg(target_os = "linux")]
 impl DataRate {
     pub fn into_inner(self) -> rf24::DataRate {
         match self {
@@ -156,7 +153,6 @@ pub enum CrcLength {
     Bit16,
 }
 
-#[cfg(target_os = "linux")]
 impl CrcLength {
     pub fn into_inner(self) -> rf24::CrcLength {
         match self {
@@ -191,7 +187,6 @@ pub enum FifoState {
     Occupied,
 }
 
-#[cfg(target_os = "linux")]
 impl FifoState {
     pub fn into_inner(self) -> rf24::FifoState {
         match self {
