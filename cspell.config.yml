@@ -21,12 +21,14 @@ words:
   - clippy
   - codecov
   - corepack
+  - crossrefs
   - datasheet
   - defmt
   - Doherty
   - dtolnay
   - DYNPD
   - eabi
+  - EDDYSTONE
   - endfor
   - endl
   - endlineno
@@ -85,6 +87,7 @@ words:
   - sdist
   - Spidev
   - startswith
+  - staticmethod
   - struct
   - superfences
   - tasklist
