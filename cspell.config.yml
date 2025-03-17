@@ -21,12 +21,15 @@ words:
   - clippy
   - codecov
   - corepack
+  - crossrefs
   - datasheet
   - defmt
+  - Dmitry
   - Doherty
   - dtolnay
   - DYNPD
   - eabi
+  - EDDYSTONE
   - endfor
   - endl
   - endlineno
@@ -38,6 +41,7 @@ words:
   - gpiocdev
   - gpiochip
   - gpiod
+  - Grinberg
   - HLINE
   - inlinehilite
   - istr
@@ -66,6 +70,7 @@ words:
   - opengpio
   - pkgid
   - pyclass
+  - pyfunction
   - pymdown
   - pymdownx
   - pymethods
@@ -85,6 +90,7 @@ words:
   - sdist
   - Spidev
   - startswith
+  - staticmethod
   - struct
   - superfences
   - tasklist

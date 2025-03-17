@@ -6,6 +6,7 @@ test profile='default':
     cargo llvm-cov --no-report \
     nextest \
     -p rf24-rs \
+    -p rf24ble-rs \
     --lib --tests --color always --profile {{ profile }}
 
 # Clear previous test build artifacts
@@ -46,15 +47,14 @@ docs-build:
 # rust API docs
 [group("docs")]
 docs-rs open='':
-    cargo doc --no-deps --lib -p rf24-rs {{ open }}
+    cargo doc --no-deps --lib -p rf24-rs -p rf24ble-rs {{ open }}
 
-# run clippy and rustfmt (on library only)
+# run clippy and rustfmt (on packages only)
 lint:
-    cargo clippy -p rf24-rs -p rf24-node -p rf24-py --fix --allow-dirty --allow-staged
-    cargo fmt -p rf24-rs -p rf24-node -p rf24-py
+    cargo clippy -p rf24-rs -p rf24ble-rs -p rf24-node -p rf24-py --fix --allow-dirty --allow-staged
+    cargo fmt -p rf24-rs -p rf24ble-rs -p rf24-node -p rf24-py
 
-
-# run clippy and rustfmt (on examples/rust only)
+# run clippy and rustfmt (on examples only)
 lint-examples:
     cargo clippy -p rf24-rs-examples --fix --allow-dirty --allow-staged
     cargo fmt -p rf24-rs-examples

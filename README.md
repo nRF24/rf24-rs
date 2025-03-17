@@ -27,10 +27,16 @@ All packages are developed under the MIT license.
 [rf24-rs-msrv]: https://img.shields.io/crates/msrv/rf24-rs
 [rf24-rs-docs-badge]: https://img.shields.io/docsrs/rf24-rs
 [rf24-rs-docs-link]: https://docs.rs/rf24-rs
+[rf24ble-rs-badge]: https://img.shields.io/crates/v/rf24ble-rs
+[rf24ble-rs-link]: https://crates.io/crates/rf24ble-rs
+[rf24ble-rs-msrv]: https://img.shields.io/crates/msrv/rf24ble-rs
+[rf24ble-rs-docs-badge]: https://img.shields.io/docsrs/rf24ble-rs
+[rf24ble-rs-docs-link]: https://docs.rs/rf24ble-rs
 
 | name | version | API docs | Minimum Supported<br>Rust Version |
 |:-----|:-------:|:--------:|:---------------------------------:|
 | `rf24-rs` | [![Crates.io Version][rf24-rs-badge]][rf24-rs-link] | [![docs.rs][rf24-rs-docs-badge]][rf24-rs-docs-link] | ![Crates.io MSRV][rf24-rs-msrv] |
+| `rf24ble-rs` | [![Crates.io Version][rf24ble-rs-badge]][rf24ble-rs-link] | [![docs.rs][rf24ble-rs-docs-badge]][rf24ble-rs-docs-link] | ![Crates.io MSRV][rf24ble-rs-msrv] |
 
 ### Bindings
 
@@ -83,7 +89,7 @@ Here is the intended roadmap:
     reimplement the same API (using [rust's `trait` feature][rust-traits])
     for use on nRF5x radios.
 
-- [ ] implement a fake BLE API for the nRF24L01 (see [#4](https://github.com/nRF24/rf24-rs/issues/4))
+- [x] implement a fake BLE API for the nRF24L01
 - [ ] implement network layers (OTA compatible with RF24Network and RF24Mesh libraries)
 - [ ] implement ESB support for nRF5x MCUs. This might be guarded under [cargo features][cargo-feat].
 

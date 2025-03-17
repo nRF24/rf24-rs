@@ -15,6 +15,7 @@ embedded-hal = "1.0.0"
 napi = "2.16.13"
 napi-derive = "2.16.13"
 rf24-rs = { path = "../../crates/rf24-rs", features = ["std"] }
+rf24ble-rs = { path = "../../crates/rf24ble-rs", features = ["std"] }
 
 [build-dependencies]
 napi-build = "2.1.4"
