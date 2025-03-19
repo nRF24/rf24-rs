@@ -1,16 +1,26 @@
 # `rf24-py`
 
-The python binding for the [rf24-rs] project (written in rust).
-
-[docs-badge]: https://github.com/nRF24/rf24-rs/actions/workflows/docs.yml/badge.svg
-[docs]: https://rf24-rs.readthedocs.io/en/latest
+[pypi-link]: https://pypi.org/project/rf24-py/
+[pypi-badge]: https://img.shields.io/pypi/v/rf24-py
+[piwheels-badge]: https://img.shields.io/piwheels/v/rf24-py
+[piwheels-link]: https://www.piwheels.org/project/rf24-py/
+[rtd-badge]: https://img.shields.io/readthedocs/rf24-rs
+[docs]: https://rf24-rs.readthedocs.io/en/latest/python-api/
 [rf24-rs]: https://github.com/nRF24/rf24-rs
+[py-min-ver]: https://img.shields.io/badge/python->=3.8-blue
+
+[![PyPI - Version][pypi-badge]][pypi-link]
+[![PiWheels Version][piwheels-badge]][piwheels-link]
+[![Python API][rtd-badge]][docs]
+![Minimum Python Version: >=3.8][py-min-ver]
+
+The python binding for the [rf24-rs] project (written in rust).
 
 This package is only functional on Linux machines.
 Although, installing this package in non-Linux environments will
 provide the typing information used on Linux.
 
-[![Docs][docs-badge]][docs] See the [docs] for more detail about the API.
+See the [docs] for more detail about the API.
 
 ## Install
 
