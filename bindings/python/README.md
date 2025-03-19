@@ -8,11 +8,14 @@
 [docs]: https://rf24-rs.readthedocs.io/en/latest/python-api/
 [rf24-rs]: https://github.com/nRF24/rf24-rs
 [py-min-ver]: https://img.shields.io/badge/python->=3.8-blue
+[changelog-badge]: https://img.shields.io/badge/keep_a_change_log-v1.1.0-ffec3d
+[changelog-link]: https://rf24-rs.readthedocs.io/en/latest/rf24-py-changelog/
 
 [![PyPI - Version][pypi-badge]][pypi-link]
 [![PiWheels Version][piwheels-badge]][piwheels-link]
 [![Python API][rtd-badge]][docs]
 ![Minimum Python Version: >=3.8][py-min-ver]
+ [![CHANGELOG][changelog-badge]][changelog-link]
 
 The python binding for the [rf24-rs] project (written in rust).
 

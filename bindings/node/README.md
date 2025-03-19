@@ -6,10 +6,13 @@
 [npm-badge]: https://img.shields.io/npm/v/%40rf24%2Frf24
 [npm-link]: https://www.npmjs.com/package/@rf24/rf24
 [node-version]: https://img.shields.io/node/v/%40rf24%2Frf24?color=blue
+[changelog-badge]: https://img.shields.io/badge/keep_a_change_log-v1.1.0-ffec3d
+[changelog-link]: https://rf24-rs.readthedocs.io/en/latest/rf24-node-changelog/
 
 [![NPM Version][npm-badge]][npm-link]
 [![Node.js API][rtd-badge]][docs]
 ![Node Current][node-version]
+ [![CHANGELOG][changelog-badge]][changelog-link]
 
 The node.js binding for the [rf24-rs] project (written in rust).
 

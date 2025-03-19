@@ -34,6 +34,10 @@ nav:
       - python-api/enumerations/data-rate.md
       - python-api/enumerations/pa-level.md
       - python-api/enumerations/fifo-state.md
+  - Changes:
+    - rf24-rs: rf24-rs-changelog.md
+    - rf24-py: rf24-py-changelog.md
+    - rf24-node: rf24-node-changelog.md
 
 theme:
   name: material
