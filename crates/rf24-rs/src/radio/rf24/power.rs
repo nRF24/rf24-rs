@@ -91,7 +91,6 @@ mod test {
         let mut radio = RF24::new(pin_mock.clone(), spi_mock.clone(), delay_mock);
         radio.power_up(None).unwrap();
         radio.power_up(None).unwrap();
-        // radio.power_up(Some(0)).unwrap();
         spi_mock.done();
         pin_mock.done();
     }
@@ -116,6 +115,29 @@ mod test {
         let mut radio = RF24::new(pin_mock.clone(), spi_mock.clone(), delay_mock);
         radio.power_up(Some(0)).unwrap();
         assert!(radio.is_powered());
+        spi_mock.done();
+        pin_mock.done();
+    }
+
+    #[test]
+    pub fn power_up_custom_delay() {
+        // Create pin
+        let pin_expectations = [];
+        let mut pin_mock = PinMock::new(&pin_expectations);
+
+        // create delay fn
+        let delay_mock = NoopDelay::new();
+
+        let spi_expectations = spi_test_expects![
+            // get the RF_SETUP register value for each possible result
+            (
+                vec![registers::CONFIG | commands::W_REGISTER, 0xEu8],
+                vec![0xEu8, 0u8],
+            ),
+        ];
+        let mut spi_mock = SpiMock::new(&spi_expectations);
+        let mut radio = RF24::new(pin_mock.clone(), spi_mock.clone(), delay_mock);
+        radio.power_up(Some(5000)).unwrap();
         spi_mock.done();
         pin_mock.done();
     }
