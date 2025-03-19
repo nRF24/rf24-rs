@@ -1,20 +1,30 @@
 # `@rf24/rf24`
 
-The node.js binding for the [rf24-rs] project (written in rust).
-
-[docs-badge]: https://github.com/nRF24/rf24-rs/actions/workflows/docs.yml/badge.svg
-[docs]: https://rf24-rs.readthedocs.io/en/latest
+[rtd-badge]: https://img.shields.io/readthedocs/rf24-rs
+[docs]: https://rf24-rs.readthedocs.io/en/latest/node-api/
 [rf24-rs]: https://github.com/nRF24/rf24-rs
+[npm-badge]: https://img.shields.io/npm/v/%40rf24%2Frf24
+[npm-link]: https://www.npmjs.com/package/@rf24/rf24
+[node-version]: https://img.shields.io/node/v/%40rf24%2Frf24?color=blue
+[changelog-badge]: https://img.shields.io/badge/keep_a_change_log-v1.1.0-ffec3d
+[changelog-link]: https://rf24-rs.readthedocs.io/en/latest/rf24-node-changelog/
+
+[![NPM Version][npm-badge]][npm-link]
+[![Node.js API][rtd-badge]][docs]
+![Node Current][node-version]
+ [![CHANGELOG][changelog-badge]][changelog-link]
+
+The node.js binding for the [rf24-rs] project (written in rust).
 
 This package is only functional on Linux machines.
 Although, installing this package in non-Linux environments will
 provide the typing information used on Linux.
 
-[![Docs][docs-badge]][docs] See the [docs] for more detail about the API.
+See the [docs] for more detail about the API.
 
 ## Install
 
-To install from npmjs.org:
+To install from npmjs.com:
 
 ```text
 npm install @rf24/rf24

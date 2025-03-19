@@ -27,7 +27,7 @@ PACKAGES = {
             "docs/**",
             "examples/python/**",
             "examples/node/**",
-            "bindings/**/*",
+            "bindings/**",
             ".config/*",
         ],
         path=REPO_ROOT / "crates" / "rf24-rs",
@@ -120,7 +120,7 @@ def get_changelog(tag: str, pkg: str, full: bool = False):
     args = [
         "git-cliff",
         "--tag-pattern",
-        f'"{pkg}/[0-9]+.[0-9]+.[0-9]+"',
+        f"{pkg}/*",
         "--tag",
         tag,
         "--config",

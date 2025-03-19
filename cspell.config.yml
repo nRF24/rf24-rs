@@ -66,6 +66,7 @@ words:
   - opengpio
   - pkgid
   - pyclass
+  - pymdown
   - pymdownx
   - pymethods
   - pymodule

@@ -246,7 +246,7 @@ impl RadioConfig {
 
     /// Enable or disable the "RX Data Ready" event triggering the radio's IRQ.
     ///
-    /// See [`StatusFlags.rx_dr`][rf24_py.StatusFlags.rx_dr).
+    /// See [`StatusFlags.rx_dr`][rf24_py.StatusFlags.rx_dr].
     #[getter]
     pub fn get_rx_dr(&self) -> bool {
         self.inner.rx_dr()
@@ -259,7 +259,7 @@ impl RadioConfig {
 
     /// Enable or disable the "TX Data Sent" event triggering the radio's IRQ.
     ///
-    /// See [`StatusFlags.tx_ds`][rf24_py.StatusFlags.tx_ds).
+    /// See [`StatusFlags.tx_ds`][rf24_py.StatusFlags.tx_ds].
     #[getter]
     pub fn get_tx_ds(&self) -> bool {
         self.inner.tx_ds()
@@ -272,7 +272,7 @@ impl RadioConfig {
 
     /// Enable or disable the "TX Data Failed" event triggering the radio's IRQ.
     ///
-    /// See [`StatusFlags.tx_df`][rf24_py.StatusFlags.tx_df).
+    /// See [`StatusFlags.tx_df`][rf24_py.StatusFlags.tx_df].
     #[getter]
     pub fn get_tx_df(&self) -> bool {
         self.inner.tx_df()

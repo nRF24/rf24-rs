@@ -34,10 +34,12 @@ Understanding the meaning of the status byte is publicly exposed via
 - `get_status_flags()`: similar to C++ `whatHappened()` but does not update nor clear the flags.
 - `set_status_flags()`: similar to C++ `maskIRQ()` except the boolean parameters' meaning is not reversed.
 
-    | lang | only trigger on RX_DR events |
-    |:----:|:-----------------------------|
-    | C++  | `radio.maskIRQ(false, true, true)` |
+    | lang | only trigger IRQ pin on RX_DR (received data ready) events |
+    |:----:|:-----------------------------------------------------------|
+    | C++  | `#!cpp radio.maskIRQ(/*tx_ds*/ true, /*tx_df*/ true, /*rx_dr*/ false)` |
     | Rust | `radio.set_status_flags(StatusFlags::default().with_rx_dr(true))` |
+    | Python | `radio.set_status_flags(StatusFlags(rx_dr=True))` |
+    | Node.js | `radio.setStatusFlags({ rxDr: true })` |
 
 In this library, setting and getting the status flags is done with a `StatusFlags` object.
 
@@ -48,15 +50,15 @@ To transmit something, RF24 struct offers
 - `send()`: blocking wrapper around `write()`
 - `write()`: non-blocking uploads to TX FIFO.
 
-   Use `update()` and `get_status_flags()` to determine if transmission was successful or not.
-   The IRQ pin can also be used to trigger calls to `update()` + `get_status_flags()`.
-   See `set_status_flags()` about configuring the IRQ pin.
+    Use `update()` and `get_status_flags()` to determine if transmission was successful or not.
+    The IRQ pin can also be used to trigger calls to `update()` + `get_status_flags()`.
+    See `set_status_flags()` about configuring the IRQ pin.
 
 There will be no equivalents to C++ `writeBlocking()`, `startFastWrite()`, `writeFast()`, `txStandby()`.
 Considering the exposed STATUS byte, these can all be done from the user space (if needed).
 
 Additionally, `send()` does _**not**_ implement a timeout.
-Every member function in the `RF24` struct (except the `new()`) returns a [`Result`][result],
+Any member function in the `RF24` struct that interacts with hardware will return a [`Result`][result],
 so problems with the SPI connections should be detected early in the app lifecycle.
 The rustc compiler will warn users about unhandled [`Result`][result]s.
 In the Python and Node.js bindings, an exception is thrown when hardware misbehavior is detected.
@@ -72,8 +74,7 @@ Using rust's [trait][traits] feature, I plan to have an API structured like so
 flowchart TD
     subgraph radio
     esb("EsbRadio (trait)") --> RF24
-    esb --> nrf51{{RF51}}
-    esb --> nrf52{{RF52}}
+    esb --> nrf5x{{RF5x}}
     end
 
     RF24 --> ble{{FakeBle}}
