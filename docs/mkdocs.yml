@@ -70,7 +70,7 @@ theme:
     # Palette toggle for light mode
     - media: "(prefers-color-scheme: light)"
       scheme: default
-      primary: yellow
+      primary: amber
       accent: cyan
       toggle:
         icon: material/lightbulb-outline
@@ -88,6 +88,12 @@ extra:
   social:
     - icon: fontawesome/brands/github
       link: https://github.com/nRF24/rf24-rs
+    - icon: fontawesome/brands/rust
+      link: https://crates.io/crates/rf24-rs
+    - icon: fontawesome/brands/npm
+      link: https://www.npmjs.com/package/@rf24/rf24
+    - icon: fontawesome/brands/python
+      link: https://pypi.org/project/rf24-py
 
 extra_css:
   - stylesheets/extra.css

@@ -36,7 +36,7 @@ Understanding the meaning of the status byte is publicly exposed via
 
     | lang | only trigger IRQ pin on RX_DR (received data ready) events |
     |:----:|:-----------------------------------------------------------|
-    | C++  | `#!cpp radio.maskIRQ(/*tx_ds*/ true, /*tx_df*/ true, /*rx_dr*/ false)` |
+    | C++  | `radio.maskIRQ(/*tx_ds*/ true, /*tx_df*/ true, /*rx_dr*/ false)` |
     | Rust | `radio.set_status_flags(StatusFlags::default().with_rx_dr(true))` |
     | Python | `radio.set_status_flags(StatusFlags(rx_dr=True))` |
     | Node.js | `radio.setStatusFlags({ rxDr: true })` |

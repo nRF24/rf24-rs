@@ -4,7 +4,7 @@
 //! This example requires no counterpart as
 //! it does not actually transmit nor receive anything.
 //!
-//! See documentation at https://docs.rs/rf24-rs
+//! See documentation at <https://docs.rs/rf24-rs>
 #![no_std]
 
 use anyhow::Result;

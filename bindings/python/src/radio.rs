@@ -201,7 +201,7 @@ impl RF24 {
     /// Other parameters:
     ///     ask_no_ack: A flag to disable the auto-ack feature for the given payload in `buf`.
     ///         This has no effect if auto-ack is disabled or
-    ///         [RF24.allow_ask_no_ack] is not enabled.
+    ///         [`RF24.allow_ask_no_ack`][rf24_py.RF24.allow_ask_no_ack] is not enabled.
     #[pyo3(
         signature = (buf, ask_no_ack = 0i32),
         text_signature = "(buf: bytes | bytearray, ask_no_ack: bool | int = False) -> bool",

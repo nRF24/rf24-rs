@@ -22,7 +22,7 @@
 //!
 //! The `~` is just a divider between the vertical header and the signal counts.
 //!
-//! See documentation at https://docs.rs/rf24-rs
+//! See documentation at <https://docs.rs/rf24-rs>
 #![no_std]
 
 use anyhow::Result;
