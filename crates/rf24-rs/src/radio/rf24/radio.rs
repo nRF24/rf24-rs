@@ -60,9 +60,9 @@ where
             // write() also clears the status flags and asserts the CE pin
             return Ok(false);
         }
-        self._delay_impl.delay_ns(10000);
+        self._delay_impl.delay_us(10);
         // now block until we get a tx_ds or tx_df event
-        while self._status.into_bits() & 0x30 == 0 {
+        while self._status.into_bits() & (mnemonics::MASK_MAX_RT | mnemonics::MASK_TX_DS) == 0 {
             self.spi_read(0, commands::NOP)?;
         }
         Ok(self._status.tx_ds())
@@ -161,7 +161,7 @@ where
             return Ok(false);
         }
         self.rewrite()?;
-        self._delay_impl.delay_ns(10000);
+        self._delay_impl.delay_us(10);
         // now block until a tx_ds or tx_df event occurs
         while self._status.into_bits() & 0x30 == 0 {
             self.spi_read(0, commands::NOP)?;
