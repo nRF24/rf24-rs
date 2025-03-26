@@ -5,7 +5,7 @@ set windows-shell := ["powershell.exe", "-NoLogo", "-Command"]
 test profile='default':
     cargo llvm-cov --no-report \
     nextest \
-    --manifest-path crates/rf24-rs/Cargo.toml \
+    -p rf24-rs \
     --lib --tests --color always --profile {{ profile }}
 
 # Clear previous test build artifacts
@@ -46,20 +46,15 @@ docs-build:
 # rust API docs
 [group("docs")]
 docs-rs open='':
-    cargo doc --no-deps --lib --manifest-path crates/rf24-rs/Cargo.toml {{ open }}
+    cargo doc --no-deps --lib -p rf24-rs {{ open }}
 
 # run clippy and rustfmt (on library only)
 lint:
-    cargo clippy --allow-staged --allow-dirty --fix
-    cargo fmt
+    cargo clippy -p rf24-rs -p rf24-node -p rf24-py --fix --allow-dirty --allow-staged
+    cargo fmt -p rf24-rs -p rf24-node -p rf24-py
 
 
 # run clippy and rustfmt (on examples/rust only)
 lint-examples:
-    cargo clippy \
-    --manifest-path examples/rust/Cargo.toml \
-    --features linux \
-    --allow-staged \
-    --allow-dirty \
-    --fix
-    cargo fmt --manifest-path examples/rust/Cargo.toml
+    cargo clippy -p rf24-rs-examples --fix --allow-dirty --allow-staged
+    cargo fmt -p rf24-rs-examples
