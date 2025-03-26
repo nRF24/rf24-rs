@@ -1,5 +1,5 @@
-#![cfg(target_os = "linux")]
-use crate::types::{coerce_to_bool, CrcLength, DataRate, PaLevel};
+#![allow(clippy::new_without_default)]
+use super::types::{coerce_to_bool, CrcLength, DataRate, PaLevel};
 
 use napi::{bindgen_prelude::Buffer, JsNumber, Result};
 
@@ -374,8 +374,8 @@ impl RadioConfig {
 }
 
 impl RadioConfig {
-    pub fn into_inner(&self) -> rf24::radio::RadioConfig {
-        self.inner.clone()
+    pub fn get_inner(&self) -> &rf24::radio::RadioConfig {
+        &self.inner
     }
 
     pub fn from_inner(config: rf24::radio::RadioConfig) -> Self {

@@ -2,8 +2,8 @@
 use std::borrow::Cow;
 use std::time::Duration;
 
-use crate::config::RadioConfig;
-use crate::types::{CrcLength, DataRate, FifoState, PaLevel, StatusFlags};
+use super::config::RadioConfig;
+use super::types::{CrcLength, DataRate, FifoState, PaLevel, StatusFlags};
 use embedded_hal::{delay::DelayNs, digital::OutputPin};
 use linux_embedded_hal::{
     gpio_cdev::{chips, LineRequestFlags},
@@ -148,7 +148,7 @@ impl RF24 {
     ///     network settings.
     pub fn with_config(&mut self, config: &RadioConfig) -> PyResult<()> {
         self.inner
-            .with_config(&config.into_inner())
+            .with_config(config.get_inner())
             .map_err(|e| PyRuntimeError::new_err(format!("{e:?}")))
     }
 
@@ -498,7 +498,7 @@ impl RF24 {
         self.inner
             .get_crc_length()
             .map_err(|e| PyRuntimeError::new_err(format!("{e:?}")))
-            .map(|e| CrcLength::from_inner(e))
+            .map(CrcLength::from_inner)
     }
 
     /// Set the [`DataRate`][rf24_py.DataRate] used for all incoming and outgoing
@@ -515,7 +515,7 @@ impl RF24 {
         self.inner
             .get_data_rate()
             .map_err(|e| PyRuntimeError::new_err(format!("{e:?}")))
-            .map(|e| DataRate::from_inner(e))
+            .map(DataRate::from_inner)
     }
 
     /// Is there a payload available in the RX FIFO?
@@ -561,7 +561,7 @@ impl RF24 {
         self.inner
             .get_fifo_state(about_tx != 0)
             .map_err(|e| PyRuntimeError::new_err(format!("{e:?}")))
-            .map(|e| FifoState::from_inner(e))
+            .map(FifoState::from_inner)
     }
 
     /// Set/get the Power Amplitude (PA) level used for all transmissions (including
@@ -578,7 +578,7 @@ impl RF24 {
         self.inner
             .get_pa_level()
             .map_err(|e| PyRuntimeError::new_err(format!("{e:?}")))
-            .map(|e| PaLevel::from_inner(e))
+            .map(PaLevel::from_inner)
     }
 
     /// Set/get the statically sized payload length.
@@ -758,7 +758,7 @@ impl RF24 {
     ///     after calling [`as_tx()`][rf24_py.RF24.as_tx]
     ///     and before transmitting.
     #[setter]
-    pub fn set_tx_delay(&mut self, value: u32) -> () {
+    pub fn set_tx_delay(&mut self, value: u32) {
         self.inner.tx_delay = value;
     }
 
@@ -775,6 +775,7 @@ impl RF24 {
     #[pyo3(signature = (flags = None))]
     pub fn set_status_flags(&mut self, flags: Option<StatusFlags>) -> PyResult<()> {
         let flags = flags.map(|f| f.into_inner());
+        #[allow(clippy::unwrap_or_default)]
         self.inner
             .set_status_flags(flags.unwrap_or(rf24::StatusFlags::new()))
             .map_err(|e| PyRuntimeError::new_err(format!("{e:?}")))
@@ -787,6 +788,7 @@ impl RF24 {
     #[pyo3(signature = (flags = None))]
     pub fn clear_status_flags(&mut self, flags: Option<StatusFlags>) -> PyResult<()> {
         let flags = flags.map(|f| f.into_inner());
+        #[allow(clippy::unwrap_or_default)]
         self.inner
             .clear_status_flags(flags.unwrap_or(rf24::StatusFlags::new()))
             .map_err(|e| PyRuntimeError::new_err(format!("{e:?}")))
