@@ -81,25 +81,13 @@ where
 #[cfg(test)]
 mod test {
     extern crate std;
-    use crate::radio::prelude::EsbPipe;
-    use crate::radio::rf24::commands;
-    use crate::spi_test_expects;
-
-    use super::{registers, RF24};
-    use embedded_hal_mock::eh1::delay::NoopDelay;
-    use embedded_hal_mock::eh1::digital::Mock as PinMock;
-    use embedded_hal_mock::eh1::spi::{Mock as SpiMock, Transaction as SpiTransaction};
+    use super::{registers, EsbPipe};
+    use crate::{radio::rf24::commands, spi_test_expects, test::mk_radio};
+    use embedded_hal_mock::eh1::spi::Transaction as SpiTransaction;
     use std::vec;
 
     #[test]
     pub fn open_rx_pipe5() {
-        // Create pin
-        let pin_expectations = [];
-        let mut pin_mock = PinMock::new(&pin_expectations);
-
-        // create delay fn
-        let delay_mock = NoopDelay::new();
-
         let spi_expectations = spi_test_expects![
             // open_rx_pipe(5)
             (
@@ -113,24 +101,17 @@ mod test {
                 vec![0xEu8, 0u8],
             ),
         ];
-        let mut spi_mock = SpiMock::new(&spi_expectations);
-        let mut radio = RF24::new(pin_mock.clone(), spi_mock.clone(), delay_mock);
+        let mocks = mk_radio(&[], &spi_expectations);
+        let (mut radio, mut spi, mut ce_pin) = (mocks.0, mocks.1, mocks.2);
         let address = [0x55u8; 5];
         radio.open_rx_pipe(9, &address).unwrap();
         radio.open_rx_pipe(5, &address).unwrap();
-        spi_mock.done();
-        pin_mock.done();
+        spi.done();
+        ce_pin.done();
     }
 
     #[test]
     pub fn open_tx_pipe() {
-        // Create pin
-        let pin_expectations = [];
-        let mut pin_mock = PinMock::new(&pin_expectations);
-
-        // create delay fn
-        let delay_mock = NoopDelay::new();
-
         let mut expected_buf = [0x55u8; 6];
         expected_buf[0] = registers::TX_ADDR | commands::W_REGISTER;
         let mut p0_buf = [0x55u8; 6];
@@ -143,24 +124,17 @@ mod test {
             (expected_buf.to_vec(), response.clone().to_vec()),
             (p0_buf.to_vec(), response.to_vec()),
         ];
-        let mut spi_mock = SpiMock::new(&spi_expectations);
-        let mut radio = RF24::new(pin_mock.clone(), spi_mock.clone(), delay_mock);
+        let mocks = mk_radio(&[], &spi_expectations);
+        let (mut radio, mut spi, mut ce_pin) = (mocks.0, mocks.1, mocks.2);
         let address = [0x55u8; 5];
         radio.open_tx_pipe(&address).unwrap();
         radio.close_rx_pipe(9).unwrap();
-        spi_mock.done();
-        pin_mock.done();
+        spi.done();
+        ce_pin.done();
     }
 
     #[test]
     pub fn set_address_length() {
-        // Create pin
-        let pin_expectations = [];
-        let mut pin_mock = PinMock::new(&pin_expectations);
-
-        // create delay fn
-        let delay_mock = NoopDelay::new();
-
         let spi_expectations = spi_test_expects![
             // for 2 byte addresses
             // write the SETUP_AW register value
@@ -195,8 +169,8 @@ mod test {
             // read the SETUP_AW register value
             (vec![registers::SETUP_AW, 0u8], vec![0xEu8, 3u8]),
         ];
-        let mut spi_mock = SpiMock::new(&spi_expectations);
-        let mut radio = RF24::new(pin_mock.clone(), spi_mock.clone(), delay_mock);
+        let mocks = mk_radio(&[], &spi_expectations);
+        let (mut radio, mut spi, mut ce_pin) = (mocks.0, mocks.1, mocks.2);
         radio.set_address_length(2).unwrap();
         assert_eq!(radio.get_address_length().unwrap(), 2u8);
         radio.set_address_length(3).unwrap();
@@ -205,7 +179,7 @@ mod test {
         assert_eq!(radio.get_address_length().unwrap(), 4u8);
         radio.set_address_length(5).unwrap();
         assert_eq!(radio.get_address_length().unwrap(), 5u8);
-        spi_mock.done();
-        pin_mock.done();
+        spi.done();
+        ce_pin.done();
     }
 }

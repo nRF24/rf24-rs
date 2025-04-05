@@ -30,7 +30,7 @@ pub(crate) struct Config {
 }
 
 impl Config {
-    const CRC_MASK: u8 = 0b1100;
+    pub(crate) const CRC_MASK: u8 = 0b1100;
 
     pub const fn crc_length(&self) -> CrcLength {
         CrcLength::from_bits(self.into_bits() & Self::CRC_MASK)

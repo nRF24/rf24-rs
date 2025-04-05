@@ -1,5 +1,8 @@
 use super::{commands, mnemonics, registers, Nrf24Error, RF24};
-use crate::{radio::prelude::*, StatusFlags};
+use crate::{
+    radio::prelude::{EsbFifo, EsbPayloadLength, EsbPipe, EsbRadio, EsbStatus},
+    StatusFlags,
+};
 use embedded_hal::{delay::DelayNs, digital::OutputPin, spi::SpiDevice};
 
 impl<SPI, DO, DELAY> EsbRadio for RF24<SPI, DO, DELAY>
@@ -188,25 +191,17 @@ where
 #[cfg(test)]
 mod test {
     extern crate std;
-    use super::{commands, registers, RF24};
-    use crate::radio::{prelude::*, rf24::mnemonics};
-    use crate::spi_test_expects;
-    use embedded_hal_mock::eh1::delay::NoopDelay;
-    use embedded_hal_mock::eh1::digital::{
-        Mock as PinMock, State as PinState, Transaction as PinTransaction,
+    use super::{commands, mnemonics, registers, EsbPipe, EsbRadio};
+    use crate::{spi_test_expects, test::mk_radio};
+    use embedded_hal_mock::eh1::{
+        digital::{State as PinState, Transaction as PinTransaction},
+        spi::Transaction as SpiTransaction,
     };
-    use embedded_hal_mock::eh1::spi::{Mock as SpiMock, Transaction as SpiTransaction};
     use std::vec;
 
     #[test]
     pub fn as_rx() {
-        // Create pin
-        let pin_expectations = [PinTransaction::set(PinState::High)];
-        let mut pin_mock = PinMock::new(&pin_expectations);
-
-        // create delay fn
-        let delay_mock = NoopDelay::new();
-
+        let ce_expectations = [PinTransaction::set(PinState::High)];
         let spi_expectations = spi_test_expects![
             // assert PRIM_RX flag
             (
@@ -225,21 +220,16 @@ mod test {
                 vec![0xEu8, 0u8],
             ),
         ];
-        let mut spi_mock = SpiMock::new(&spi_expectations);
-        let mut radio = RF24::new(pin_mock.clone(), spi_mock.clone(), delay_mock);
+        let mocks = mk_radio(&ce_expectations, &spi_expectations);
+        let (mut radio, mut spi, mut ce_pin) = (mocks.0, mocks.1, mocks.2);
         radio.as_rx().unwrap();
-        spi_mock.done();
-        pin_mock.done();
+        spi.done();
+        ce_pin.done();
     }
 
     #[test]
     pub fn as_rx_open_pipe0() {
-        // Create pin
-        let pin_expectations = [PinTransaction::set(PinState::High)];
-        let mut pin_mock = PinMock::new(&pin_expectations);
-
-        // create delay fn
-        let delay_mock = NoopDelay::new();
+        let ce_expectations = [PinTransaction::set(PinState::High)];
 
         let mut buf_expected = [0x55u8; 6];
         buf_expected[0] = registers::RX_ADDR_P0 | commands::W_REGISTER;
@@ -269,24 +259,18 @@ mod test {
             // write cached _pipe0_rx_addr
             (buf_expected.to_vec(), vec![0xEu8, 0u8, 0u8, 0u8, 0u8, 0u8]),
         ];
-        let mut spi_mock = SpiMock::new(&spi_expectations);
-        let mut radio = RF24::new(pin_mock.clone(), spi_mock.clone(), delay_mock);
+        let mocks = mk_radio(&ce_expectations, &spi_expectations);
+        let (mut radio, mut spi, mut ce_pin) = (mocks.0, mocks.1, mocks.2);
         let address = [0x55u8; 5];
         radio.open_rx_pipe(0, &address).unwrap();
         radio.as_rx().unwrap();
-        spi_mock.done();
-        pin_mock.done();
+        spi.done();
+        ce_pin.done();
     }
 
     #[test]
     pub fn as_tx() {
-        // Create pin
-        let pin_expectations = [PinTransaction::set(PinState::Low)];
-        let mut pin_mock = PinMock::new(&pin_expectations);
-
-        // create delay fn
-        let delay_mock = NoopDelay::new();
-
+        let ce_expectations = [PinTransaction::set(PinState::Low)];
         let spi_expectations = spi_test_expects![
             // flush_tx() of artifact ACK payloads
             (vec![commands::FLUSH_TX], vec![0xEu8]),
@@ -302,27 +286,22 @@ mod test {
                 vec![0xEu8, 0u8],
             ),
         ];
-        let mut spi_mock = SpiMock::new(&spi_expectations);
-        let mut radio = RF24::new(pin_mock.clone(), spi_mock.clone(), delay_mock);
+        let mocks = mk_radio(&ce_expectations, &spi_expectations);
+        let (mut radio, mut spi, mut ce_pin) = (mocks.0, mocks.1, mocks.2);
         radio._feature = radio._feature.with_ack_payloads(true);
         radio.as_tx().unwrap();
-        spi_mock.done();
-        pin_mock.done();
+        spi.done();
+        ce_pin.done();
     }
 
     #[test]
     pub fn send() {
-        // Create pin
-        let pin_expectations = [
+        let ce_expectations = [
             PinTransaction::set(PinState::Low),
             PinTransaction::set(PinState::High),
             PinTransaction::set(PinState::Low),
             PinTransaction::set(PinState::Low),
         ];
-        let mut pin_mock = PinMock::new(&pin_expectations);
-
-        // create delay fn
-        let delay_mock = NoopDelay::new();
 
         let mut buf = [0u8; 33];
         buf[0] = commands::W_TX_PAYLOAD;
@@ -358,27 +337,20 @@ mod test {
             // flush_tx()
             (vec![commands::FLUSH_TX], vec![0xEu8]),
         ];
-        let mut spi_mock = SpiMock::new(&spi_expectations);
-        let mut radio = RF24::new(pin_mock.clone(), spi_mock.clone(), delay_mock);
+        let mocks = mk_radio(&ce_expectations, &spi_expectations);
+        let (mut radio, mut spi, mut ce_pin) = (mocks.0, mocks.1, mocks.2);
         let payload = [0x55; 8];
         assert!(radio.send(&payload, false).unwrap());
         // again using simulated full TX FIFO
         assert!(!radio.send(&payload, false).unwrap());
         radio._config_reg = radio._config_reg.as_rx(); // simulate RX mode
         assert!(radio.send(&payload, false).is_err());
-        spi_mock.done();
-        pin_mock.done();
+        spi.done();
+        ce_pin.done();
     }
 
     #[test]
     fn ask_no_ack() {
-        // Create pin
-        let pin_expectations = [];
-        let mut pin_mock = PinMock::new(&pin_expectations);
-
-        // create delay fn
-        let delay_mock = NoopDelay::new();
-
         let mut buf = [0u8; 33];
         buf[0] = commands::W_TX_PAYLOAD_NO_ACK;
         let payload = [0x55; 8];
@@ -408,24 +380,18 @@ mod test {
             // write dynamically sized payload
             (dyn_buf.to_vec(), vec![0u8; 9]),
         ];
-        let mut spi_mock = SpiMock::new(&spi_expectations);
-        let mut radio = RF24::new(pin_mock.clone(), spi_mock.clone(), delay_mock);
+        let mocks = mk_radio(&[], &spi_expectations);
+        let (mut radio, mut spi, mut ce_pin) = (mocks.0, mocks.1, mocks.2);
         assert!(radio.write(&payload, true, false).unwrap());
         // upload a dynamically sized payload
         radio._feature = radio._feature.with_dynamic_payloads(true);
         assert!(radio.write(&payload, true, false).unwrap());
-        spi_mock.done();
-        pin_mock.done();
+        spi.done();
+        ce_pin.done();
     }
 
     #[test]
     pub fn read() {
-        // Create pin
-        let pin_expectations = [];
-        let mut pin_mock = PinMock::new(&pin_expectations);
-
-        // create delay fn
-        let delay_mock = NoopDelay::new();
         let mut buf_static = [0u8; 33];
         buf_static[0] = commands::R_RX_PAYLOAD;
         let mut buf_dynamic = [0x55u8; 33];
@@ -456,8 +422,8 @@ mod test {
                 vec![0xEu8, 0u8],
             ),
         ];
-        let mut spi_mock = SpiMock::new(&spi_expectations);
-        let mut radio = RF24::new(pin_mock.clone(), spi_mock.clone(), delay_mock);
+        let mocks = mk_radio(&[], &spi_expectations);
+        let (mut radio, mut spi, mut ce_pin) = (mocks.0, mocks.1, mocks.2);
         let mut payload = [0u8; 32];
         assert_eq!(32u8, radio.read(&mut payload, None).unwrap());
         assert_eq!(payload, [0x55u8; 32]);
@@ -465,22 +431,16 @@ mod test {
         radio._feature = radio._feature.with_dynamic_payloads(true);
         assert_eq!(32u8, radio.read(&mut payload, None).unwrap());
         assert_eq!(payload, [0xAA; 32]);
-        spi_mock.done();
-        pin_mock.done();
+        spi.done();
+        ce_pin.done();
     }
 
     #[test]
     pub fn resend() {
-        // Create pin
-        let pin_expectations = [
+        let ce_expectations = [
             PinTransaction::set(PinState::Low),
             PinTransaction::set(PinState::High),
         ];
-        let mut pin_mock = PinMock::new(&pin_expectations);
-
-        // create delay fn
-        let delay_mock = NoopDelay::new();
-
         let spi_expectations = spi_test_expects![
             // clear the tx_df and tx_ds events
             (
@@ -495,32 +455,25 @@ mod test {
             // spoof a tx_ds event from a NOP write
             (vec![commands::NOP], vec![0xE | mnemonics::MASK_TX_DS]),
         ];
-        let mut spi_mock = SpiMock::new(&spi_expectations);
-        let mut radio = RF24::new(pin_mock.clone(), spi_mock.clone(), delay_mock);
+        let mocks = mk_radio(&ce_expectations, &spi_expectations);
+        let (mut radio, mut spi, mut ce_pin) = (mocks.0, mocks.1, mocks.2);
         assert!(radio.resend().unwrap());
         radio._config_reg = radio._config_reg.as_rx(); // simulate RX mode
         assert!(!radio.resend().unwrap());
-        spi_mock.done();
-        pin_mock.done();
+        spi.done();
+        ce_pin.done();
     }
 
     #[test]
     pub fn get_last_arc() {
-        // Create pin
-        let pin_expectations = [];
-        let mut pin_mock = PinMock::new(&pin_expectations);
-
-        // create delay fn
-        let delay_mock = NoopDelay::new();
-
         let spi_expectations = spi_test_expects![
             // get the ARC value from OBSERVE_TX register
             (vec![registers::OBSERVE_TX, 0u8], vec![0xEu8, 0xFFu8]),
         ];
-        let mut spi_mock = SpiMock::new(&spi_expectations);
-        let mut radio = RF24::new(pin_mock.clone(), spi_mock.clone(), delay_mock);
+        let mocks = mk_radio(&[], &spi_expectations);
+        let (mut radio, mut spi, mut ce_pin) = (mocks.0, mocks.1, mocks.2);
         assert_eq!(radio.get_last_arc().unwrap(), 15u8);
-        spi_mock.done();
-        pin_mock.done();
+        spi.done();
+        ce_pin.done();
     }
 }

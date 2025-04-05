@@ -238,54 +238,39 @@ where
 #[cfg(test)]
 mod test {
     extern crate std;
-    use super::{commands, registers, RF24};
-    use crate::radio::rf24::mnemonics;
-    use crate::spi_test_expects;
-    use embedded_hal_mock::eh1::delay::NoopDelay;
-    use embedded_hal_mock::eh1::digital::{
-        Mock as PinMock, State as PinState, Transaction as PinTransaction,
+    use super::{commands, mnemonics, registers};
+    use crate::{spi_test_expects, test::mk_radio};
+    use embedded_hal_mock::eh1::{
+        digital::{State as PinState, Transaction as PinTransaction},
+        spi::Transaction as SpiTransaction,
     };
-    use embedded_hal_mock::eh1::spi::{Mock as SpiMock, Transaction as SpiTransaction};
     use std::vec;
 
     #[test]
     pub fn test_rpd() {
-        // Create pin
-        let pin_expectations = [];
-        let mut pin_mock = PinMock::new(&pin_expectations);
-
-        // create delay fn
-        let delay_mock = NoopDelay::new();
-
         let spi_expectations = spi_test_expects![
             // get the RPD register value
             (vec![registers::RPD, 0u8], vec![0xEu8, 0xFFu8]),
         ];
-        let mut spi_mock = SpiMock::new(&spi_expectations);
-        let mut radio = RF24::new(pin_mock.clone(), spi_mock.clone(), delay_mock);
+        let mocks = mk_radio(&[], &spi_expectations);
+        let (mut radio, mut spi, mut ce_pin) = (mocks.0, mocks.1, mocks.2);
         assert!(radio.rpd().unwrap());
-        spi_mock.done();
-        pin_mock.done();
+        spi.done();
+        ce_pin.done();
     }
 
     pub fn start_carrier_wave_parametrized(is_plus_variant: bool) {
-        // Create pin
-        let mut pin_expectations = [
+        let mut ce_expectations = [
             PinTransaction::set(PinState::Low),
             PinTransaction::set(PinState::High),
         ]
         .to_vec();
         if is_plus_variant {
-            pin_expectations.extend([
+            ce_expectations.extend([
                 PinTransaction::set(PinState::Low),
                 PinTransaction::set(PinState::High),
             ]);
         }
-
-        let mut pin_mock = PinMock::new(&pin_expectations);
-
-        // create delay fn
-        let delay_mock = NoopDelay::new();
 
         let mut buf = [0xFFu8; 33];
         buf[0] = commands::W_TX_PAYLOAD;
@@ -368,12 +353,12 @@ mod test {
             ]);
         }
 
-        let mut spi_mock = SpiMock::new(&spi_expectations);
-        let mut radio = RF24::new(pin_mock.clone(), spi_mock.clone(), delay_mock);
+        let mocks = mk_radio(&ce_expectations, &spi_expectations);
+        let (mut radio, mut spi, mut ce_pin) = (mocks.0, mocks.1, mocks.2);
         radio._feature = radio._feature.with_is_plus_variant(is_plus_variant);
         radio.start_carrier_wave(crate::PaLevel::Max, 0xFF).unwrap();
-        spi_mock.done();
-        pin_mock.done();
+        spi.done();
+        ce_pin.done();
     }
 
     #[test]
@@ -388,17 +373,12 @@ mod test {
 
     #[test]
     pub fn stop_carrier_wave() {
-        // Create pin
-        let pin_expectations = [
+        let ce_expectations = [
             PinTransaction::set(PinState::Low),
             // CE is set LOW twice due to how it behaves during transmission of
             // constant carrier wave. See comment in start_carrier_wave()
             PinTransaction::set(PinState::Low),
         ];
-        let mut pin_mock = PinMock::new(&pin_expectations);
-
-        // create delay fn
-        let delay_mock = NoopDelay::new();
 
         let spi_expectations = spi_test_expects![
             // power_down()
@@ -413,22 +393,15 @@ mod test {
                 vec![0xEu8, 0u8],
             ),
         ];
-        let mut spi_mock = SpiMock::new(&spi_expectations);
-        let mut radio = RF24::new(pin_mock.clone(), spi_mock.clone(), delay_mock);
+        let mocks = mk_radio(&ce_expectations, &spi_expectations);
+        let (mut radio, mut spi, mut ce_pin) = (mocks.0, mocks.1, mocks.2);
         radio.stop_carrier_wave().unwrap();
-        spi_mock.done();
-        pin_mock.done();
+        spi.done();
+        ce_pin.done();
     }
 
     #[test]
     pub fn set_lna() {
-        // Create pin
-        let pin_expectations = [];
-        let mut pin_mock = PinMock::new(&pin_expectations);
-
-        // create delay fn
-        let delay_mock = NoopDelay::new();
-
         let spi_expectations = spi_test_expects![
             // clear the LNA_CUR flag in RF-SETUP
             (vec![registers::RF_SETUP, 0u8], vec![0xEu8, 1u8]),
@@ -437,10 +410,10 @@ mod test {
                 vec![0xEu8, 0u8],
             ),
         ];
-        let mut spi_mock = SpiMock::new(&spi_expectations);
-        let mut radio = RF24::new(pin_mock.clone(), spi_mock.clone(), delay_mock);
+        let mocks = mk_radio(&[], &spi_expectations);
+        let (mut radio, mut spi, mut ce_pin) = (mocks.0, mocks.1, mocks.2);
         radio.set_lna(false).unwrap();
-        spi_mock.done();
-        pin_mock.done();
+        spi.done();
+        ce_pin.done();
     }
 }

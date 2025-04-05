@@ -25,8 +25,8 @@ where
 
     fn get_data_rate(&mut self) -> Result<DataRate, Self::DataRateErrorType> {
         self.spi_read(1, registers::RF_SETUP)?;
-        let da_bin = self._buf[1] & (0x28);
-        if da_bin == 0x28 {
+        let da_bin = self._buf[1] & DataRate::MASK;
+        if da_bin == DataRate::MASK {
             return Err(Nrf24Error::BinaryCorruption);
         }
         Ok(DataRate::from_bits(da_bin))
@@ -34,9 +34,9 @@ where
 
     fn set_data_rate(&mut self, data_rate: DataRate) -> Result<(), Self::DataRateErrorType> {
         self.tx_delay = set_tx_delay(data_rate);
-        let da_bin = data_rate.into_bits();
         self.spi_read(1, registers::RF_SETUP)?;
-        let out = self._buf[1] & !0x28 | da_bin;
+        let da_bin = data_rate.into_bits();
+        let out = self._buf[1] & !DataRate::MASK | da_bin;
         self.spi_write_byte(registers::RF_SETUP, out)
     }
 }
@@ -46,34 +46,25 @@ where
 #[cfg(test)]
 mod test {
     extern crate std;
-    use crate::radio::prelude::EsbDataRate;
-    use crate::radio::rf24::commands;
-    use crate::{spi_test_expects, DataRate};
-
-    use super::{registers, RF24};
-    use embedded_hal_mock::eh1::delay::NoopDelay;
-    use embedded_hal_mock::eh1::digital::Mock as PinMock;
-    use embedded_hal_mock::eh1::spi::{Mock as SpiMock, Transaction as SpiTransaction};
+    use super::{registers, DataRate, EsbDataRate};
+    use crate::{radio::rf24::commands, spi_test_expects, test::mk_radio};
+    use embedded_hal_mock::eh1::spi::Transaction as SpiTransaction;
     use std::vec;
 
     #[test]
     pub fn get_data_rate() {
-        // Create pin
-        let pin_expectations = [];
-        let mut pin_mock = PinMock::new(&pin_expectations);
-
-        // create delay fn
-        let delay_mock = NoopDelay::new();
-
         let spi_expectations = spi_test_expects![
             // get the RF_SETUP register value for each possible result
             (vec![registers::RF_SETUP, 0u8], vec![0xEu8, 0u8]),
             (vec![registers::RF_SETUP, 0u8], vec![0xEu8, 8u8]),
             (vec![registers::RF_SETUP, 8u8], vec![0xEu8, 0x20u8]),
-            (vec![registers::RF_SETUP, 0x20u8], vec![0xEu8, 0x28u8]),
+            (
+                vec![registers::RF_SETUP, 0x20u8],
+                vec![0xEu8, DataRate::MASK]
+            ),
         ];
-        let mut spi_mock = SpiMock::new(&spi_expectations);
-        let mut radio = RF24::new(pin_mock.clone(), spi_mock.clone(), delay_mock);
+        let mocks = mk_radio(&[], &spi_expectations);
+        let (mut radio, mut spi, mut ce_pin) = (mocks.0, mocks.1, mocks.2);
         assert_eq!(radio.get_data_rate(), Ok(DataRate::Mbps1));
         assert_eq!(radio.get_data_rate(), Ok(DataRate::Mbps2));
         assert_eq!(radio.get_data_rate(), Ok(DataRate::Kbps250));
@@ -81,43 +72,36 @@ mod test {
             radio.get_data_rate(),
             Err(crate::radio::Nrf24Error::BinaryCorruption)
         );
-        spi_mock.done();
-        pin_mock.done();
+        spi.done();
+        ce_pin.done();
     }
 
     #[test]
     pub fn set_data_rate() {
-        // Create pin
-        let pin_expectations = [];
-        let mut pin_mock = PinMock::new(&pin_expectations);
-
-        // create delay fn
-        let delay_mock = NoopDelay::new();
-
         let spi_expectations = spi_test_expects![
             // set the RF_SETUP register value for each possible enumeration of CrcLength
-            (vec![registers::RF_SETUP, 0u8], vec![0xEu8, 0x28u8]),
+            (vec![registers::RF_SETUP, 0u8], vec![0xEu8, DataRate::MASK]),
             (
                 vec![registers::RF_SETUP | commands::W_REGISTER, 0u8],
                 vec![0xEu8, 0u8],
             ),
-            (vec![registers::RF_SETUP, 0u8], vec![0xEu8, 0x28u8]),
+            (vec![registers::RF_SETUP, 0u8], vec![0xEu8, DataRate::MASK]),
             (
                 vec![registers::RF_SETUP | commands::W_REGISTER, 0x8u8],
                 vec![0xEu8, 0u8],
             ),
-            (vec![registers::RF_SETUP, 0u8], vec![0xEu8, 0x28u8]),
+            (vec![registers::RF_SETUP, 0u8], vec![0xEu8, DataRate::MASK]),
             (
                 vec![registers::RF_SETUP | commands::W_REGISTER, 0x20u8],
                 vec![0xEu8, 0u8],
             ),
         ];
-        let mut spi_mock = SpiMock::new(&spi_expectations);
-        let mut radio = RF24::new(pin_mock.clone(), spi_mock.clone(), delay_mock);
+        let mocks = mk_radio(&[], &spi_expectations);
+        let (mut radio, mut spi, mut ce_pin) = (mocks.0, mocks.1, mocks.2);
         radio.set_data_rate(DataRate::Mbps1).unwrap();
         radio.set_data_rate(DataRate::Mbps2).unwrap();
         radio.set_data_rate(DataRate::Kbps250).unwrap();
-        spi_mock.done();
-        pin_mock.done();
+        spi.done();
+        ce_pin.done();
     }
 }
