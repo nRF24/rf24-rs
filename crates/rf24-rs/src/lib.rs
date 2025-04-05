@@ -74,6 +74,13 @@ pub mod radio;
 
 #[cfg(test)]
 mod test {
+    use crate::radio::RF24;
+    use embedded_hal_mock::eh1::{
+        delay::NoopDelay,
+        digital::{Mock as PinMock, Transaction as PinTransaction},
+        spi::{Mock as SpiMock, Transaction as SpiTransaction},
+    };
+
     /// Takes an indefinite repetition of a tuple of 2 vectors: `(expected_data, response_data)`
     /// and generates an array of `SpiTransaction`s.
     ///
@@ -89,5 +96,26 @@ mod test {
                 )*
             ]
         }
+    }
+
+    /// A tuple struct to encapsulate objects used to mock [`RF24`],
+    pub struct MockRadio(
+        pub RF24<SpiMock<u8>, PinMock, NoopDelay>,
+        pub SpiMock<u8>,
+        pub PinMock,
+    );
+
+    /// Create a mock objects using the given expectations.
+    ///
+    /// The `spi_expectations` parameter
+    pub fn mk_radio(
+        ce_expectations: &[PinTransaction],
+        spi_expectations: &[SpiTransaction<u8>],
+    ) -> MockRadio {
+        let spi = SpiMock::new(spi_expectations);
+        let ce_pin = PinMock::new(ce_expectations);
+        let delay_impl = NoopDelay;
+        let radio = RF24::new(ce_pin.clone(), spi.clone(), delay_impl);
+        MockRadio(radio, spi, ce_pin)
     }
 }

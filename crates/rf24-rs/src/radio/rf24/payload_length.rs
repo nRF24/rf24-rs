@@ -56,14 +56,9 @@ where
 #[cfg(test)]
 mod test {
     extern crate std;
-    use crate::radio::prelude::{EsbAutoAck, EsbPayloadLength};
-    use crate::radio::Nrf24Error;
-    use crate::spi_test_expects;
-
-    use super::{commands, registers, RF24};
-    use embedded_hal_mock::eh1::delay::NoopDelay;
-    use embedded_hal_mock::eh1::digital::Mock as PinMock;
-    use embedded_hal_mock::eh1::spi::{Mock as SpiMock, Transaction as SpiTransaction};
+    use super::{commands, registers, EsbPayloadLength, Nrf24Error};
+    use crate::{radio::prelude::EsbAutoAck, spi_test_expects, test::mk_radio};
+    use embedded_hal_mock::eh1::spi::Transaction as SpiTransaction;
     use std::vec;
 
     const EN_ACK_PAY: u8 = 1 << 1;
@@ -71,12 +66,6 @@ mod test {
 
     #[test]
     fn dynamic_payloads() {
-        let pin_expectations = [];
-        let mut pin_mock = PinMock::new(&pin_expectations);
-
-        // create delay fn
-        let delay_mock = NoopDelay::new();
-
         let spi_expectations = spi_test_expects![
             // set_dynamic_payloads(true)
             (vec![registers::FEATURE, 0u8], vec![0xEu8, 0u8],),
@@ -106,8 +95,8 @@ mod test {
                 vec![0xEu8, 0],
             ),
         ];
-        let mut spi_mock = SpiMock::new(&spi_expectations);
-        let mut radio = RF24::new(pin_mock.clone(), spi_mock.clone(), delay_mock);
+        let mocks = mk_radio(&[], &spi_expectations);
+        let (mut radio, mut spi, mut ce_pin) = (mocks.0, mocks.1, mocks.2);
         radio.set_dynamic_payloads(true).unwrap();
         assert!(radio.get_dynamic_payloads());
         assert_eq!(
@@ -118,19 +107,12 @@ mod test {
         radio.set_dynamic_payloads(false).unwrap();
         assert!(!radio.get_dynamic_payloads());
         assert!(!radio.get_ack_payloads());
-        spi_mock.done();
-        pin_mock.done();
+        spi.done();
+        ce_pin.done();
     }
 
     #[test]
     pub fn set_payload_length() {
-        // Create pin
-        let pin_expectations = [];
-        let mut pin_mock = PinMock::new(&pin_expectations);
-
-        // create delay fn
-        let delay_mock = NoopDelay::new();
-
         let spi_expectations = spi_test_expects![
             // set payload length to 32 bytes on all pipes
             (
@@ -160,11 +142,11 @@ mod test {
             // get payload length for all pipe 0 (because all pipes will use the same static length)
             (vec![registers::RX_PW_P0, 0u8], vec![0xEu8, 32u8]),
         ];
-        let mut spi_mock = SpiMock::new(&spi_expectations);
-        let mut radio = RF24::new(pin_mock.clone(), spi_mock.clone(), delay_mock);
+        let mocks = mk_radio(&[], &spi_expectations);
+        let (mut radio, mut spi, mut ce_pin) = (mocks.0, mocks.1, mocks.2);
         radio.set_payload_length(76).unwrap();
         assert_eq!(radio.get_payload_length().unwrap(), 32u8);
-        spi_mock.done();
-        pin_mock.done();
+        spi.done();
+        ce_pin.done();
     }
 }

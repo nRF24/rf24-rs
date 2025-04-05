@@ -82,13 +82,9 @@ where
 #[cfg(test)]
 mod test {
     extern crate std;
-    use crate::radio::prelude::{EsbAutoAck, EsbPayloadLength};
-    use crate::spi_test_expects;
-
-    use super::{commands, registers, RF24};
-    use embedded_hal_mock::eh1::delay::NoopDelay;
-    use embedded_hal_mock::eh1::digital::Mock as PinMock;
-    use embedded_hal_mock::eh1::spi::{Mock as SpiMock, Transaction as SpiTransaction};
+    use super::{commands, registers, EsbAutoAck};
+    use crate::{radio::prelude::EsbPayloadLength, spi_test_expects, test::mk_radio};
+    use embedded_hal_mock::eh1::spi::Transaction as SpiTransaction;
     use std::vec;
 
     const EN_ACK_PAY: u8 = 1 << 1;
@@ -96,12 +92,6 @@ mod test {
 
     #[test]
     pub fn allow_ack_payloads() {
-        // Create pin
-        let pin_expectations = [];
-        let mut pin_mock = PinMock::new(&pin_expectations);
-
-        // create delay fn
-        let delay_mock = NoopDelay::new();
         let mut ack_buf = [0x55; 3];
         let valid_pipe = 2;
         ack_buf[0] = commands::W_ACK_PAYLOAD | valid_pipe;
@@ -150,8 +140,8 @@ mod test {
                 vec![0xEu8, 0u8],
             ),
         ];
-        let mut spi_mock = SpiMock::new(&spi_expectations);
-        let mut radio = RF24::new(pin_mock.clone(), spi_mock.clone(), delay_mock);
+        let mocks = mk_radio(&[], &spi_expectations);
+        let (mut radio, mut spi, mut ce_pin) = (mocks.0, mocks.1, mocks.2);
         radio.set_ack_payloads(true).unwrap();
         // do again for region coverage (should result in Ok non-op)
         radio.set_ack_payloads(true).unwrap();
@@ -168,19 +158,12 @@ mod test {
         radio.set_auto_ack_pipe(false, 0).unwrap();
         // disable pipe 1 for region coverage
         radio.set_auto_ack_pipe(false, 1).unwrap();
-        spi_mock.done();
-        pin_mock.done();
+        spi.done();
+        ce_pin.done();
     }
 
     #[test]
     pub fn set_auto_ack() {
-        // Create pin
-        let pin_expectations = [];
-        let mut pin_mock = PinMock::new(&pin_expectations);
-
-        // create delay fn
-        let delay_mock = NoopDelay::new();
-
         let spi_expectations = spi_test_expects![
             // enable ACK payloads
             // read/write FEATURE register
@@ -214,25 +197,18 @@ mod test {
             // read RX_PL_WID
             (vec![commands::R_RX_PL_WID, 0u8], vec![0xEu8, 32]),
         ];
-        let mut spi_mock = SpiMock::new(&spi_expectations);
-        let mut radio = RF24::new(pin_mock.clone(), spi_mock.clone(), delay_mock);
+        let mocks = mk_radio(&[], &spi_expectations);
+        let (mut radio, mut spi, mut ce_pin) = (mocks.0, mocks.1, mocks.2);
         radio.set_ack_payloads(true).unwrap();
         assert!(radio.get_ack_payloads());
         radio.set_auto_ack(false).unwrap();
         assert_eq!(radio.get_dynamic_payload_length().unwrap(), 32u8);
-        spi_mock.done();
-        pin_mock.done();
+        spi.done();
+        ce_pin.done();
     }
 
     #[test]
     pub fn allow_ask_no_ack() {
-        // Create pin
-        let pin_expectations = [];
-        let mut pin_mock = PinMock::new(&pin_expectations);
-
-        // create delay fn
-        let delay_mock = NoopDelay::new();
-
         let spi_expectations = spi_test_expects![
             // disable EN_DYN_ACK flag in FEATURE register
             (vec![registers::FEATURE, 0u8], vec![0u8, EN_ACK_PAY]),
@@ -241,10 +217,10 @@ mod test {
                 vec![0xEu8, 0u8],
             ),
         ];
-        let mut spi_mock = SpiMock::new(&spi_expectations);
-        let mut radio = RF24::new(pin_mock.clone(), spi_mock.clone(), delay_mock);
+        let mocks = mk_radio(&[], &spi_expectations);
+        let (mut radio, mut spi, mut ce_pin) = (mocks.0, mocks.1, mocks.2);
         radio.allow_ask_no_ack(true).unwrap();
-        spi_mock.done();
-        pin_mock.done();
+        spi.done();
+        ce_pin.done();
     }
 }

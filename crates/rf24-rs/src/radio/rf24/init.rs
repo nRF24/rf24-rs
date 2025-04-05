@@ -109,23 +109,16 @@ where
 #[cfg(test)]
 mod test {
     extern crate std;
-    use super::{registers, RF24};
-    use crate::radio::{prelude::*, rf24::commands};
-    use crate::{spi_test_expects, DataRate, PaLevel};
-    use embedded_hal_mock::eh1::delay::NoopDelay;
-    use embedded_hal_mock::eh1::digital::{
-        Mock as PinMock, State as PinState, Transaction as PinTransaction,
+    use super::{registers, EsbInit};
+    use crate::{radio::rf24::commands, spi_test_expects, test::mk_radio, DataRate, PaLevel};
+    use embedded_hal_mock::eh1::{
+        digital::{State as PinState, Transaction as PinTransaction},
+        spi::Transaction as SpiTransaction,
     };
-    use embedded_hal_mock::eh1::spi::{Mock as SpiMock, Transaction as SpiTransaction};
     use std::vec;
 
     pub fn init_parametrized(corrupted_binary: bool, is_plus_variant: bool, no_por: bool) {
-        // Create pin
-        let mut pin_expectations = [PinTransaction::set(PinState::Low)].to_vec();
-
-        // create delay fn
-        let delay_mock = NoopDelay::new();
-
+        let mut ce_expectations = [PinTransaction::set(PinState::Low)].to_vec();
         let mut spi_expectations = spi_test_expects![
             // power_down()
             (
@@ -147,7 +140,7 @@ mod test {
                 vec![registers::CONFIG, 0u8],
                 vec![0xEu8, 0xCu8]
             ),]);
-            pin_expectations.extend([PinTransaction::set(PinState::Low)]);
+            ce_expectations.extend([PinTransaction::set(PinState::Low)]);
 
             // check for plus_variant
             spi_expectations.extend(spi_test_expects![
@@ -350,9 +343,8 @@ mod test {
             ]);
         }
 
-        let mut pin_mock = PinMock::new(&pin_expectations);
-        let mut spi_mock = SpiMock::new(&spi_expectations);
-        let mut radio = RF24::new(pin_mock.clone(), spi_mock.clone(), delay_mock);
+        let mocks = mk_radio(&ce_expectations, &spi_expectations);
+        let (mut radio, mut spi, mut ce_pin) = (mocks.0, mocks.1, mocks.2);
         let result = radio.init();
         if corrupted_binary {
             assert!(result.is_err());
@@ -360,8 +352,8 @@ mod test {
             assert!(result.is_ok());
         }
         assert_eq!(radio.is_plus_variant(), is_plus_variant);
-        spi_mock.done();
-        pin_mock.done();
+        spi.done();
+        ce_pin.done();
     }
 
     #[test]

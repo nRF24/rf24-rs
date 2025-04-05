@@ -44,6 +44,8 @@ impl defmt::Format for PaLevel {
 }
 
 impl PaLevel {
+    pub(crate) const MASK: u8 = 6;
+
     pub(crate) const fn into_bits(self) -> u8 {
         match self {
             PaLevel::Min => 0,
@@ -85,6 +87,8 @@ pub enum DataRate {
 }
 
 impl DataRate {
+    pub(crate) const MASK: u8 = 0x28;
+
     pub(crate) const fn into_bits(self) -> u8 {
         match self {
             DataRate::Mbps1 => 0,
