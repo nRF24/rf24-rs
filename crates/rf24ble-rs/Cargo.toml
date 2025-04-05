@@ -1,0 +1,29 @@
+[package]
+name = "rf24ble-rs"
+description = "A fake BLE implementation for the nRF24L01"
+version = "0.0.0"
+repository.workspace = true
+homepage.workspace = true
+edition.workspace = true
+license.workspace = true
+exclude = [".github/", "codecov.yml", "docs", "examples"]
+keywords = ["nrf24l01", "wireless", "transceiver", "embedded", "BLE"]
+categories = ["embedded", "no-std"]
+rust-version = "1.70"
+
+[lib]
+name = "rf24ble"
+
+[dependencies]
+rf24-rs = { path = "../rf24-rs", version = "0.2.0" }
+bitfield-struct = "0.9.3"
+defmt = {version = "0.3.10", optional = true}
+embedded-hal = "1.0.0"
+
+[dev-dependencies]
+embedded-hal-mock = "0.11.1"
+
+[features]
+defmt = ["dep:defmt"]
+std = []
+default = []

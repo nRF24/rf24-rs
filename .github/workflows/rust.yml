@@ -12,9 +12,9 @@ on:
       - .github/workflows/rust.yml
     tags:
       - 'rf24-rs/*'
+      - 'rf24ble-rs/*'
       # - 'rf24network-rs/*'
       # - 'rf24mesh-rs/*'
-      # - 'rf24ble-rs/*'
   pull_request:
     branches: [main]
     paths:

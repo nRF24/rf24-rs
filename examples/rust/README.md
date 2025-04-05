@@ -30,3 +30,4 @@ The provided examples names (value passed to the `--bin` option) are
 - `irq-config`
 - `scanner`
 - `quick-config`
+- `fake-ble`

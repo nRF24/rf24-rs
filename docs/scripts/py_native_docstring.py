@@ -87,11 +87,16 @@ class NativeDocstring(griffe.Extension):
         """Prepend a docstring from the native module"""
         if isinstance(node, griffe.ObjectNode):
             return  # any docstring fetched from pure python should be adequate
-        if not isinstance(node.parent, ast.ClassDef):  # type: ignore[attr-defined]
-            return  # we're only concerned with class methods here
         func_parent = node.parent  # type: ignore[attr-defined]
-        native_cls = getattr(self.native, func_parent.name)
-        native_obj = getattr(native_cls, node.name)
+        if not (
+            isinstance(func_parent, ast.ClassDef) or isinstance(func_parent, ast.Module)
+        ):
+            return  # we're only concerned with class methods or module-scoped functions
+        if isinstance(func_parent, ast.ClassDef):
+            native_cls = getattr(self.native, func_parent.name)
+            native_obj = getattr(native_cls, node.name)
+        elif isinstance(func_parent, ast.Module):
+            native_obj = getattr(self.native, node.name)
         native_doc: str = native_obj.__doc__ or ""
         if node.decorator_list:
             for dec in node.decorator_list:

@@ -13,6 +13,15 @@ nav:
     - Classes:
       - node-api/classes/RF24.md
       - node-api/classes/RadioConfig.md
+      - BLE classes:
+        - node-api/classes/FakeBle.md
+        - node-api/classes/BlePayload.md
+        - Service Data classes:
+          - node-api/classes/BatteryService.md
+          - node-api/classes/TemperatureService.md
+          - node-api/classes/UrlService.md
+    - Functions:
+      - node-api/functions/bleConfig.md
     - Enumerations:
       - node-api/enumerations/CrcLength.md
       - node-api/enumerations/DataRate.md
@@ -29,6 +38,15 @@ nav:
       - python-api/classes/RF24.md
       - python-api/classes/status-flags.md
       - python-api/classes/config.md
+      - BLE classes:
+        - python-api/classes/FakeBle.md
+        - python-api/classes/BlePayload.md
+        - Service Data classes:
+          - python-api/classes/BatteryService.md
+          - python-api/classes/TemperatureService.md
+          - python-api/classes/UrlService.md
+    - Functions:
+      - python-api/functions/ble-config.md
     - Enumerations:
       - python-api/enumerations/crc-length.md
       - python-api/enumerations/data-rate.md
@@ -36,6 +54,7 @@ nav:
       - python-api/enumerations/fifo-state.md
   - Changes:
     - rf24-rs: rf24-rs-changelog.md
+    - rf24ble-rs: rf24ble-rs-changelog.md
     - rf24-py: rf24-py-changelog.md
     - rf24-node: rf24-node-changelog.md
 
