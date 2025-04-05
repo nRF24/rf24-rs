@@ -32,6 +32,18 @@ PACKAGES = {
         ],
         path=REPO_ROOT / "crates" / "rf24-rs",
     ),
+    "rf24ble-rs": _PkgPaths(
+        include=["crates/rf24ble-rs/**"],
+        exclude=[
+            ".github/**",
+            "docs/**",
+            "examples/python/**",
+            "examples/node/**",
+            "bindings/**",
+            ".config/*",
+        ],
+        path=REPO_ROOT / "crates" / "rf24ble-rs",
+    ),
     "rf24-py": _PkgPaths(
         include=[
             "crates/**/*.rs",

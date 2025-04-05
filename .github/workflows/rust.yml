@@ -12,9 +12,9 @@ on:
       - .github/workflows/rust.yml
     tags:
       - 'rf24-rs/*'
+      - 'rf24ble-rs/*'
       # - 'rf24network-rs/*'
       # - 'rf24mesh-rs/*'
-      # - 'rf24ble-rs/*'
   pull_request:
     branches: [main]
     paths:
@@ -66,8 +66,15 @@ jobs:
       - uses: actions/checkout@v4
         with:
           persist-credentials: false
+      - name: Get pkg from tag
+        id: pkg
+        shell: bash
+        run: |
+          tag=${{ github.ref_name }}
+          pkg=$(echo "$tag" | sed -E 's;([^/]+)/.*;\1;')
+          echo "name=$pkg" >> "$GITHUB_OUTPUT"
       - name: Install Rust
         run: rustup update stable --no-self-update
-      - run: cargo publish -p rf24-rs
+      - run: cargo publish -p ${{ steps.pkg.outputs.name }}
         env:
           CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
