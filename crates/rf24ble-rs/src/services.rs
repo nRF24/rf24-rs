@@ -18,7 +18,7 @@ const EDDYSTONE_UUID: u16 = 0xFEAA;
 /// Some common traits related to BLE service data structs.
 pub mod prelude {
     /// A trait to define the factory method of constructing BLE service data from a buffer.
-    pub trait FromBuffer {
+    pub(super) trait FromBuffer {
         fn from_buffer(buf: &[u8]) -> Self;
     }
 

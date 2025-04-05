@@ -24,3 +24,9 @@ Original research was done by [Dmitry Grinberg and his write-up (including C
 source code) can be found here][fake-ble-research].
 As this technique can prove invaluable in certain project designs, the code
 here has been adapted to work with Rust.
+
+## Example
+
+See the [example located in the nRF24/rf24-rs repository][ble-example].
+
+[ble-example]: https://github.com/nRF24/rf24-rs/blob/main/examples/rust/src/bin/fake_ble.rs

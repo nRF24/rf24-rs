@@ -14,6 +14,20 @@ use super::services::BlePayload;
 /// !!! note "See also"
 ///     This implementation is subject to
 ///     [Limitations](https://docs.rs/rf24ble-rs/latest/rf24ble/index.html#limitations).
+///
+///     Use {@link bleConfig} to properly configure the radio for
+///     BLE compatibility.
+///
+///     ```ts
+///     import { bleConfig, FakeBle, RF24 } from "@rf24/rf24";
+///
+///     const radio = new RF24(22, 0);
+///     radio.begin();
+///     radio.withConfig(bleConfig());
+///     const ble = new FakeBle(radio);
+///
+///     radio.printDetails();
+///     ```
 #[napi]
 pub struct FakeBle {
     radio: Reference<RF24>,

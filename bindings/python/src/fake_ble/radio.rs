@@ -13,6 +13,20 @@ use super::services::BlePayload;
 /// See also:
 ///     This implementation is subject to
 ///     [Limitations](https://docs.rs/rf24ble-rs/latest/rf24ble/index.html#limitations).
+///
+///     Use [`ble_config()`][rf24_py.ble_config] to properly configure the radio for
+///     BLE compatibility.
+///
+///     ```py
+///     from rf24_py import RF24, FakeBle, ble_config
+///
+///     radio = RF24(22, 0)
+///     radio.begin()
+///     radio.with_config(ble_config())
+///     ble = FakeBle(radio)
+///
+///     radio.print_details()
+///     ```
 #[pyclass(module = "rf24_py")]
 pub struct FakeBle {
     radio: Py<RF24>,

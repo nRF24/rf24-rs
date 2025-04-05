@@ -66,6 +66,20 @@ pub fn ble_config() -> RadioConfig {
 /// A struct that implements BLE functionality.
 ///
 /// This implementation is subject to [Limitations](index.html#limitations).
+///
+/// Use [`ble_config()`] to properly configure the radio for BLE compatibility.
+///
+/// ```ignore
+/// use rf24::radio::{prelude::*, RF24};
+/// use rf24ble::{ble_config, radio::FakeBle};
+///
+/// let mut radio = RF24::new(ce_pin, spi_device, delay_impl);
+/// radio.init()?;
+/// radio.withConfig(&ble_config())?;
+/// let mut ble = FakeBle::new();
+///
+/// radio.print_details()?;
+/// ```
 pub struct FakeBle {
     pub(crate) name: [u8; 12],
     /// Enable or disable the inclusion of the radio's PA level in advertisements.
@@ -142,7 +156,7 @@ impl FakeBle {
 
     /// How many bytes are available in an advertisement payload?
     ///
-    /// The `hypothetical` parameter shall be the same value passed to [`FakeBle::send()`].
+    /// The `hypothetical` parameter shall be the same `buf` value passed to [`FakeBle::send()`].
     ///
     /// In addition to the given `hypothetical` payload length, this function also
     /// accounts for the current state of [`FakeBle::get_name()`] and

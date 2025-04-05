@@ -55,6 +55,7 @@ words:
   - mkdocs
   - mkdocstrings
   - mosi
+  - MSRV
   - msvc
   - multiceiver
   - musleabihf
