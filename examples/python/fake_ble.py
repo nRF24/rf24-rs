@@ -105,6 +105,7 @@ class App:
 
         url_service = UrlService()
         url_service.data = "https://www.google.com"
+        url_service.pa_level = -20
         buffer = url_service.buffer
 
         print(

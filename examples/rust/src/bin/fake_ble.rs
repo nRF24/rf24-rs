@@ -146,6 +146,7 @@ impl App {
 
         let mut url_service = UrlService::new();
         url_service.set_data("https://www.google.com");
+        url_service.set_pa_level(-20);
         let buf = url_service.buffer();
 
         println!(
