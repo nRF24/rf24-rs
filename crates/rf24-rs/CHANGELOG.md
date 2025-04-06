@@ -6,6 +6,24 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 <!-- markdownlint-disable MD024 -->
 
+## [rf24-rs/0.2.1] - 2025-04-06
+
+### <!-- 7 -->🚦 Tests
+
+- Improve `rf24-rs` tests by @2bndy5 in [#26](https://github.com/nRF24/rf24-rs/pull/26)
+
+### <!-- 8 --> 📝 Documentation
+
+- Various doc updates by @2bndy5 in [#22](https://github.com/nRF24/rf24-rs/pull/22)
+
+### <!-- 9 --> 🗨️ Changed
+
+- Improve readability in rf24-rs sources by @2bndy5 in [`f468315`](https://github.com/nRF24/rf24-rs/commit/f4683153d72bd67b0a7707a3a922a0d03b852164)
+
+[rf24-rs/0.2.1]: https://github.com/nRF24/rf24-rs/compare/rf24-rs/0.2.0...rf24-rs/0.2.1
+
+Full commit diff: [`rf24-rs/0.2.0...rf24-rs/0.2.1`][rf24-rs/0.2.1]
+
 ## [rf24-rs/0.2.0] - 2025-03-11
 
 ### <!-- 10 --> 💥 Breaking Changes
