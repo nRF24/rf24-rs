@@ -242,7 +242,7 @@ impl FakeBle {
             offset += len;
         }
 
-        if payload_length > 28 {
+        if payload_length > BlePayload::MAX_BLE_PAYLOAD_SIZE as usize {
             return None;
         }
 
