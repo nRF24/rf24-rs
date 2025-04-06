@@ -289,6 +289,8 @@ pub struct BlePayload {
 }
 
 impl BlePayload {
+    pub(crate) const MAX_BLE_PAYLOAD_SIZE: u8 = 27;
+
     pub fn from_bytes(buf: &mut [u8], channel: u8) -> Option<Self> {
         use prelude::FromBuffer;
 
@@ -296,11 +298,11 @@ impl BlePayload {
         let coefficient = (BleChannels::index_of(channel).unwrap_or_default() as u8 + 37) | 0x40;
         whiten(buf, coefficient);
 
-        let len = buf[1] as usize;
-        if len > 27 {
+        let len = buf[1];
+        if len > Self::MAX_BLE_PAYLOAD_SIZE {
             return None;
         }
-        let len = len + 2;
+        let len = len as usize + 2;
 
         let mut crc = [0u8; 3];
         crc.copy_from_slice(&buf[len..len + 3]);
