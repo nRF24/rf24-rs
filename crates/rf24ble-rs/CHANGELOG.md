@@ -6,6 +6,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 <!-- markdownlint-disable MD024 -->
 
+## [rf24ble-rs/0.1.1] - 2025-04-06
+
+### <!-- 4 --> 🛠️ Fixed
+
+- Use const for max BLE payload size by @2bndy5 in [#30](https://github.com/nRF24/rf24-rs/pull/30)
+
+[rf24ble-rs/0.1.1]: https://github.com/nRF24/rf24-rs/compare/rf24ble-rs/0.1.0...rf24ble-rs/0.1.1
+
+Full commit diff: [`rf24ble-rs/0.1.0...rf24ble-rs/0.1.1`][rf24ble-rs/0.1.1]
+
 ## [rf24ble-rs/0.1.0] - 2025-04-06
 
 ### <!-- 1 --> 🚀 Added
@@ -15,6 +25,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### <!-- 9 --> 🗨️ Changed
 
 - Bump version to 0.2.1 by @2bndy5 in [`f266b96`](https://github.com/nRF24/rf24-rs/commit/f266b9695f1c492cce1ea7720a6df4fde298c338)
+- Bump version to 0.1.0 by @2bndy5 in [`1513ada`](https://github.com/nRF24/rf24-rs/commit/1513ada7aa678588ef153cbe1511021efeb7b286)
 
 [rf24ble-rs/0.1.0]: https://github.com/nRF24/rf24-rs/compare/f8863cc36d66708bfa0fb2fb1a219c7b2f97f7d6...rf24ble-rs/0.1.0
 
