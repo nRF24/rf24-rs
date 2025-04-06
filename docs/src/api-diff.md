@@ -77,7 +77,7 @@ flowchart TD
     esb --> nrf5x{{RF5x}}
     end
 
-    RF24 --> ble{{FakeBle}}
+    RF24 --> ble[FakeBle]
     radio --> net{{RF24Network}}
     net --> mesh{{RF24Mesh}}
 ```
