@@ -25,7 +25,7 @@ updates:
         patterns:
           - "*"
   - package-ecosystem: npm
-    directories: ['**/package.json']
+    directory: /
     schedule:
       interval: "weekly"
     groups:
