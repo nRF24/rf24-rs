@@ -90,6 +90,12 @@ protect_breaking_commits = true
 commit_preprocessors = [
     # remove issue numbers from commits
     { pattern = '\((\w+\s)?#([0-9]+)\)', replace = "" },
+    # re-title vague version bump commits (for older bump commits)
+    { pattern = 'chore\(([a-z0-9-]+)\): bump version to ', replace = 'build: bump $1 to v' },
+    # reassign bump commits to deps category (for older bump commits)
+    { pattern = 'chore: bump rf24', replace = 'build: bump rf24' },
+    # wrap package names in backticks
+    { pattern = '(rf24[a-z]*\-[a-z]+)', replace = '`$1`' },
 ]
 # regex for parsing and grouping commits
 commit_parsers = [

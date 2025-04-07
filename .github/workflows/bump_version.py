@@ -15,62 +15,57 @@ class _PkgPaths(NamedTuple):
     path: Path
 
 
+IN_CI = environ.get("CI", "false") == "true"
 COMPONENTS = ["major", "minor", "patch"]
 REPO_ROOT = Path(__file__).parent.parent.parent.resolve()
 GIT_CLIFF_CONFIG = REPO_ROOT / ".config" / "cliff.toml"
 RELEASE_NOTES = GIT_CLIFF_CONFIG.with_name("ReleaseNotes.md")
+COMMON_EXCLUDES = [
+    ".github/**/*",
+    "docs/**/*",
+    "examples/**/*",
+    ".config/*",
+    "README.md",
+    ".gitattributes",
+    ".gitignore",
+    "justfile",
+    ".pre-commit-config.yaml",
+    "crates/README.md",
+    "package.json",
+    "codecov.yml",
+    "Cargo.toml",
+    "cspell.config.yml",
+    "CHANGELOG.md",
+]
 PACKAGES = {
     "rf24-rs": _PkgPaths(
-        include=["crates/rf24-rs/**"],
+        include=["crates/rf24-rs/**/*"],
         exclude=[
-            ".github/**",
-            "docs/**",
-            "examples/python/**",
-            "examples/node/**",
-            "bindings/**",
-            ".config/*",
+            "crates/rf24ble-rs/**/*",
+            "bindings/**/*",
+            "yarn.lock",
+            *COMMON_EXCLUDES,
         ],
         path=REPO_ROOT / "crates" / "rf24-rs",
     ),
     "rf24ble-rs": _PkgPaths(
         include=["crates/rf24ble-rs/**"],
         exclude=[
-            ".github/**",
-            "docs/**",
-            "examples/python/**",
-            "examples/node/**",
-            "bindings/**",
-            ".config/*",
+            "crates/rf24-rs/**/*",
+            "bindings/**/*",
+            "yarn.lock",
+            *COMMON_EXCLUDES,
         ],
         path=REPO_ROOT / "crates" / "rf24ble-rs",
     ),
     "rf24-py": _PkgPaths(
-        include=[
-            "crates/**/*.rs",
-            "binding/python/**",
-            "pyproject.toml",
-            "rf24_py.pyi",
-        ],
-        exclude=[
-            ".github/**",
-            "docs/**",
-            "examples/rust/**",
-            "examples/node/**",
-            "bindings/node/**/*",
-            ".config/*",
-        ],
+        include=[],
+        exclude=["bindings/node/**/*", "yarn.lock", *COMMON_EXCLUDES],
         path=REPO_ROOT / "bindings" / "python",
     ),
     "rf24-node": _PkgPaths(
-        include=["crates/**/*.rs", "bindings/node/**"],
-        exclude=[
-            ".github/**",
-            "docs/**",
-            "examples/python/**",
-            "examples/rust/**",
-            "bindings/python/**/*",
-            ".config/*",
-        ],
+        include=[],
+        exclude=["bindings/python/**", *COMMON_EXCLUDES],
         path=REPO_ROOT / "bindings" / "node",
     ),
 }
@@ -92,8 +87,11 @@ def ensure_main_branch():
 
 def increment_version(pkg: str, bump: str = "patch") -> Tuple[str, str]:
     """Increment the given ``pkg`` version based on specified ``bump`` component."""
+    args = ["cargo", "set-version", "-p", pkg, "--bump", bump]
+    if not IN_CI:
+        args.append("--dry-run")
     result = subprocess.run(
-        ["cargo", "set-version", "-p", pkg, "--bump", bump],
+        args,
         check=True,
         capture_output=True,
     )
@@ -106,7 +104,7 @@ def increment_version(pkg: str, bump: str = "patch") -> Tuple[str, str]:
             break
     else:
         raise RuntimeError(f"Failed to get version change of {pkg} package")
-    if pkg == "rf24-node":
+    if pkg == "rf24-node" and IN_CI:
         subprocess.run(
             ["yarn", "version", "--no-git-tag-version", "--new-version", new_ver],
             check=True,
@@ -125,7 +123,8 @@ def get_changelog(tag: str, pkg: str, full: bool = False):
     If ``full`` is true, then this stores the complete changelog in the package's
     CHANGELOG.md.
     """
-    changelog = PACKAGES[pkg].path / "CHANGELOG.md"
+    paths = PACKAGES[pkg]
+    changelog = paths.path / "CHANGELOG.md"
     if not changelog.exists():
         changelog.write_bytes(b"")
     output = changelog
@@ -133,23 +132,20 @@ def get_changelog(tag: str, pkg: str, full: bool = False):
         "git-cliff",
         "--tag-pattern",
         f"{pkg}/*",
-        "--tag",
-        tag,
         "--config",
         str(GIT_CLIFF_CONFIG),
     ]
+    if IN_CI:
+        args.extend(["--tag", tag])
     if not full:
-        args.append("--unreleased")
+        args.extend(["--strip", "header", "--unreleased"])
         output = RELEASE_NOTES
     args.extend(["--output", str(output)])
-    if not full:
-        args.extend(["--strip", "header"])
-    paths = PACKAGES[pkg]
     if paths.include:
         args.extend(["--include-path", *paths.include])
     if paths.exclude:
         args.extend(["--exclude-path", *paths.exclude])
-    subprocess.run(args, check=True)
+    subprocess.run(args, check=True, env=environ)
     print("Updated" if full else "Generated", str(output))
 
 
@@ -159,7 +155,7 @@ class Args(argparse.Namespace):
 
 
 def main() -> int:
-    if environ.get("CI", "false") == "true":
+    if IN_CI:
         ensure_main_branch()
 
     parser = argparse.ArgumentParser(description=__doc__)
@@ -179,7 +175,8 @@ def main() -> int:
 
     old_ver, new_ver = increment_version(args.pkg, bump=args.bump)
     print("Current version:", old_ver)
-    print("New version:", new_ver)
+    if IN_CI:
+        print("New version:", new_ver)
     tag = f"{args.pkg}/{new_ver}"
     # generate release notes and save them to a file
     get_changelog(tag=tag, pkg=args.pkg, full=False)

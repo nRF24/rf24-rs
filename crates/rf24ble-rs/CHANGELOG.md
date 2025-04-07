@@ -12,6 +12,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Use const for max BLE payload size by @2bndy5 in [#30](https://github.com/nRF24/rf24-rs/pull/30)
 
+### <!-- 6 --> 📦 Dependency updates
+
+- Bump `rf24ble-rs` to v0.1.1 by @2bndy5 in [`3094968`](https://github.com/nRF24/rf24-rs/commit/3094968d17f63dea1594b0438534319f3aac5e89)
+
 [rf24ble-rs/0.1.1]: https://github.com/nRF24/rf24-rs/compare/rf24ble-rs/0.1.0...rf24ble-rs/0.1.1
 
 Full commit diff: [`rf24ble-rs/0.1.0...rf24ble-rs/0.1.1`][rf24ble-rs/0.1.1]
@@ -22,10 +26,10 @@ Full commit diff: [`rf24ble-rs/0.1.0...rf24ble-rs/0.1.1`][rf24ble-rs/0.1.1]
 
 - Add fake BLE API for nRF24L01 by @2bndy5 in [#25](https://github.com/nRF24/rf24-rs/pull/25)
 
-### <!-- 9 --> 🗨️ Changed
+### <!-- 6 --> 📦 Dependency updates
 
-- Bump version to 0.2.1 by @2bndy5 in [`f266b96`](https://github.com/nRF24/rf24-rs/commit/f266b9695f1c492cce1ea7720a6df4fde298c338)
-- Bump version to 0.1.0 by @2bndy5 in [`1513ada`](https://github.com/nRF24/rf24-rs/commit/1513ada7aa678588ef153cbe1511021efeb7b286)
+- Bump `rf24-rs` to v0.2.1 by @2bndy5 in [`f266b96`](https://github.com/nRF24/rf24-rs/commit/f266b9695f1c492cce1ea7720a6df4fde298c338)
+- Bump `rf24ble-rs` to v0.1.0 by @2bndy5 in [`1513ada`](https://github.com/nRF24/rf24-rs/commit/1513ada7aa678588ef153cbe1511021efeb7b286)
 
 [rf24ble-rs/0.1.0]: https://github.com/nRF24/rf24-rs/compare/f8863cc36d66708bfa0fb2fb1a219c7b2f97f7d6...rf24ble-rs/0.1.0
 
