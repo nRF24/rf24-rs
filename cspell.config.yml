@@ -45,6 +45,7 @@ words:
   - HLINE
   - inlinehilite
   - istr
+  - justfile
   - Kbps
   - libgpiod
   - linenums
@@ -96,3 +97,4 @@ words:
   - superfences
   - tasklist
   - twemoji
+  - yarnrc
