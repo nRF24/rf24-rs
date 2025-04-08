@@ -62,9 +62,11 @@ jobs:
       - name: Build binding (debug)
         run: yarn build:debug
       - name: Lint examples
-        run: yarn examples-lint
+        run: yarn lint
+      - name: Format examples
+        run: yarn format:examples
       - name: Compile examples
-        run: yarn examples-build
+        run: yarn build:examples
 
   conventional-commit:
     if: github.event_name == 'pull_request'

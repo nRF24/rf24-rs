@@ -220,7 +220,7 @@ jobs:
       - name: List packages
         run: ls -R ./bindings/node/npm
         shell: bash
-      - run: yarn format
+      - run: yarn format:index
       - name: Publish
         working-directory: bindings/node
         run: |

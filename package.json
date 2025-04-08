@@ -7,13 +7,14 @@
     ],
     "scripts": {
         "docs": "cd docs && yarn build",
-        "examples-build": "cd examples/node && yarn build",
-        "examples-lint": "cd examples/node && yarn lint",
         "artifacts": "cd bindings/node && yarn artifacts",
         "build": "cd bindings/node && yarn build",
         "build:debug": "cd bindings/node && yarn build:debug",
+        "build:examples": "cd examples/node && yarn build",
+        "lint": "cd examples/node && yarn lint",
         "universal": "cd bindings/node && yarn universal",
-        "format": "yarn run prettier --write examples/node/*/*.{ts,js} bindings/node/index.*"
+        "format:index": "cd bindings/node && yarn run prettier --write index.*",
+        "format:examples": "cd examples/node && yarn run prettier --write */*.{ts,js}"
     },
     "packageManager": "yarn@4.8.1"
 }
