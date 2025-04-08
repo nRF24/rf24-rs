@@ -50,8 +50,6 @@ jobs:
           node-version: 20.x
       - run: yarn install
         if: inputs.package == 'rf24-node'
-      - run: yarn global add @napi-rs/cli
-        if: inputs.package == 'rf24-node'
 
       - name: increment version
         id: inc-ver
