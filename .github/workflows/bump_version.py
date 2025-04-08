@@ -108,9 +108,10 @@ def increment_version(pkg: str, bump: str = "patch") -> Tuple[str, str]:
         raise RuntimeError(f"Failed to get version change of {pkg} package")
     if pkg == "rf24-node" and IN_CI:
         subprocess.run(
-            ["yarn", "version", "--no-git-tag-version", "--new-version", new_ver],
-            check=True,
-            cwd=str(PACKAGES[pkg].path),
+            ["yarn", "version", new_ver], check=True, cwd=str(PACKAGES[pkg].path)
+        )
+        subprocess.run(
+            ["yarn", "run", "napi", "version"], check=True, cwd=str(PACKAGES[pkg].path)
         )
         print("Updated version in bindings/node/**/package.json")
     return old_ver, new_ver
