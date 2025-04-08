@@ -44,7 +44,7 @@ To compile them to Javascript, run the following commands:
 
 ```text
 yarn install
-yarn examples-build
+yarn build:examples
 ```
 
 Afterwards the Javascript files are located "examples/node/js".
