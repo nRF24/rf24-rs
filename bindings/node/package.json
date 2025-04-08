@@ -8,6 +8,17 @@
     "type": "git",
     "url": "git+https://github.com/nRF24/rf24-rs.git"
   },
+  "homepage": "https://rf24-rs.rtfd.io/en/latest/node-api/",
+  "bugs": {
+    "url": "https://github.com/nRF24/rf24-rs/issues"
+  },
+  "funding": [
+    "https://github.com/sponsors/2bndy5",
+    "https://www.paypal.me/Brendan884"
+  ],
+  "os": [
+    "linux"
+  ],
   "napi": {
     "name": "rf24",
     "triples": {
@@ -45,7 +56,7 @@
     "universal": "napi universal",
     "version": "napi version"
   },
-  "packageManager": "yarn@1.22.22+sha512.a6b2f7906b721bba3d67d4aff083df04dad64c399707841b7acf00f6b133b7ac24255f2652fa22ae3534329dc6180534e98d17432037ff6fd140556e2bb3137e",
+  "packageManager": "yarn@4.8.1",
   "keywords": [
     "nrf24l01",
     "nRF24L01+",
@@ -55,6 +66,7 @@
     "driver",
     "radio",
     "transceiver",
-    "RF24"
+    "RF24",
+    "BLE"
   ]
 }

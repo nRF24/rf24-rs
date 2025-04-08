@@ -44,6 +44,7 @@ PACKAGES = {
             "crates/rf24ble-rs/**/*",
             "bindings/**/*",
             "yarn.lock",
+            ".yarnrc.yml",
             *COMMON_EXCLUDES,
         ],
         path=REPO_ROOT / "crates" / "rf24-rs",
@@ -54,13 +55,14 @@ PACKAGES = {
             "crates/rf24-rs/**/*",
             "bindings/**/*",
             "yarn.lock",
+            ".yarnrc.yml",
             *COMMON_EXCLUDES,
         ],
         path=REPO_ROOT / "crates" / "rf24ble-rs",
     ),
     "rf24-py": _PkgPaths(
         include=[],
-        exclude=["bindings/node/**/*", "yarn.lock", *COMMON_EXCLUDES],
+        exclude=["bindings/node/**/*", "yarn.lock", ".yarnrc.yml", *COMMON_EXCLUDES],
         path=REPO_ROOT / "bindings" / "python",
     ),
     "rf24-node": _PkgPaths(
