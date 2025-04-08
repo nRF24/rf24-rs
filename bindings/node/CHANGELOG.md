@@ -6,6 +6,27 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 <!-- markdownlint-disable MD024 -->
 
+## [rf24-node/0.2.2] - 2025-04-08
+
+### <!-- 6 --> 📦 Dependency updates
+
+- Upgrade to yarn modern by @2bndy5 in [#33](https://github.com/nRF24/rf24-rs/pull/33)
+- Bump the npm group across 1 directory with 2 updates by @dependabot[bot] in [#34](https://github.com/nRF24/rf24-rs/pull/34)
+- Update defmt requirement from 0.3.10 to 1.0.1 in the cargo group by @dependabot[bot] in [#31](https://github.com/nRF24/rf24-rs/pull/31)
+- Bump `rf24ble-rs` to v0.1.2 by @2bndy5 in [`33fe013`](https://github.com/nRF24/rf24-rs/commit/33fe0130101feb42aaa49aa5b88ac928034ec261)
+
+### <!-- 8 --> 📝 Documentation
+
+- Update `rf24-node` README by @2bndy5 in [`85ce48a`](https://github.com/nRF24/rf24-rs/commit/85ce48a87aadb16189bd08285e96b767c410a8f1)
+
+### <!-- 9 --> 🗨️ Changed
+
+- Regenerate change logs by @2bndy5 in [`581751a`](https://github.com/nRF24/rf24-rs/commit/581751af27d074797b4749572f05e9f8b3548e21)
+
+[rf24-node/0.2.2]: https://github.com/nRF24/rf24-rs/compare/rf24-node/0.2.1...rf24-node/0.2.2
+
+Full commit diff: [`rf24-node/0.2.1...rf24-node/0.2.2`][rf24-node/0.2.2]
+
 ## [rf24-node/0.2.1] - 2025-04-06
 
 ### <!-- 4 --> 🛠️ Fixed

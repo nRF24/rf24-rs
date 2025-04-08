@@ -1,6 +1,6 @@
 {
   "name": "@rf24/rf24-win32-ia32-msvc",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/nRF24/rf24-rs.git"
