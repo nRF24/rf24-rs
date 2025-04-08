@@ -6,6 +6,20 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 <!-- markdownlint-disable MD024 -->
 
+## [rf24ble-rs/0.1.2] - 2025-04-08
+
+### <!-- 6 --> 📦 Dependency updates
+
+- Update defmt requirement from 0.3.10 to 1.0.1 in the cargo group by @dependabot[bot] in [#31](https://github.com/nRF24/rf24-rs/pull/31)
+
+### <!-- 9 --> 🗨️ Changed
+
+- Regenerate change logs by @2bndy5 in [`581751a`](https://github.com/nRF24/rf24-rs/commit/581751af27d074797b4749572f05e9f8b3548e21)
+
+[rf24ble-rs/0.1.2]: https://github.com/nRF24/rf24-rs/compare/rf24ble-rs/0.1.1...rf24ble-rs/0.1.2
+
+Full commit diff: [`rf24ble-rs/0.1.1...rf24ble-rs/0.1.2`][rf24ble-rs/0.1.2]
+
 ## [rf24ble-rs/0.1.1] - 2025-04-06
 
 ### <!-- 4 --> 🛠️ Fixed
