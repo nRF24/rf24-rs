@@ -249,7 +249,7 @@ __metadata:
   resolution: "@rf24/docs@workspace:docs"
   dependencies:
     typedoc: "npm:^0.28.2"
-    typedoc-plugin-markdown: "npm:^4.6.1"
+    typedoc-plugin-markdown: "npm:^4.6.2"
     typescript: "npm:^5.8.3"
   languageName: unknown
   linkType: soft
@@ -279,7 +279,7 @@ __metadata:
   resolution: "@rf24/rf24@workspace:bindings/node"
   dependencies:
     "@napi-rs/cli": "npm:^2.18.4"
-    "@types/node": "npm:^22.14.0"
+    "@types/node": "npm:^22.14.1"
     prettier: "npm:3.5.3"
   languageName: unknown
   linkType: soft
@@ -359,12 +359,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/node@npm:^22.14.0":
-  version: 22.14.0
-  resolution: "@types/node@npm:22.14.0"
+"@types/node@npm:^22.14.1":
+  version: 22.14.1
+  resolution: "@types/node@npm:22.14.1"
   dependencies:
     undici-types: "npm:~6.21.0"
-  checksum: 10c0/9d79f3fa1af9c2c869514f419c4a4905b34c10e12915582fd1784868ac4e74c6d306cf5eb47ef889b6750ab85a31be96618227b86739c4a3e0b1c15063f384c6
+  checksum: 10c0/d49c4d00403b1c2348cf0701b505fd636d80aabe18102105998dc62fdd36dcaf911e73c7a868c48c21c1022b825c67b475b65b1222d84b704d8244d152bb7f86
   languageName: node
   linkType: hard
 
@@ -2072,12 +2072,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"typedoc-plugin-markdown@npm:^4.6.1":
-  version: 4.6.1
-  resolution: "typedoc-plugin-markdown@npm:4.6.1"
+"typedoc-plugin-markdown@npm:^4.6.2":
+  version: 4.6.2
+  resolution: "typedoc-plugin-markdown@npm:4.6.2"
   peerDependencies:
     typedoc: 0.28.x
-  checksum: 10c0/3a2262ef2e3ad6fa494f0d421838a471fcaf6a5fa8a6f71feb2c78fda028ecce43f283aa1f87c12a1a7685e44731b9eb52552684c64e07a5f5223c5553c81d51
+  checksum: 10c0/0b0a8a174dfc9a0dee08878cf94b6e564612f3477e664d7254b0bf2703fcff14b496ad5de431cd5ec9773f128764043971b196ab3c9c8fdc66dda4eb0e6ff7f8
   languageName: node
   linkType: hard
 

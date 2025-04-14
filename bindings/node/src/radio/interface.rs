@@ -136,6 +136,7 @@ impl RF24 {
     ///
     /// This is the same as {@link RF24.withConfig},
     /// but this function also
+    ///
     /// - detects if the radio is a plus variant ({@link RF24.isPlusVariant})
     /// - checks for data corruption across the SPI lines (MOSI, MISO, SCLK)
     ///
