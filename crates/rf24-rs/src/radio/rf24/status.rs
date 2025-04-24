@@ -1,7 +1,7 @@
 use embedded_hal::{delay::DelayNs, digital::OutputPin, spi::SpiDevice};
 
 use crate::{
-    radio::{prelude::EsbStatus, Nrf24Error, RF24},
+    radio::{prelude::EsbStatus, RF24},
     types::StatusFlags,
 };
 
@@ -13,9 +13,7 @@ where
     DO: OutputPin,
     DELAY: DelayNs,
 {
-    type StatusErrorType = Nrf24Error<SPI::Error, DO::Error>;
-
-    fn set_status_flags(&mut self, flags: StatusFlags) -> Result<(), Self::StatusErrorType> {
+    fn set_status_flags(&mut self, flags: StatusFlags) -> Result<(), Self::Error> {
         self.spi_read(1, registers::CONFIG)?;
         self.config_reg = ConfigReg::from_bits(
             self.buf[1] & !StatusFlags::IRQ_MASK | (!flags.into_bits() & StatusFlags::IRQ_MASK),
@@ -23,11 +21,11 @@ where
         self.spi_write_byte(registers::CONFIG, self.config_reg.into_bits())
     }
 
-    fn clear_status_flags(&mut self, flags: StatusFlags) -> Result<(), Self::StatusErrorType> {
+    fn clear_status_flags(&mut self, flags: StatusFlags) -> Result<(), Self::Error> {
         self.spi_write_byte(registers::STATUS, flags.into_bits() & StatusFlags::IRQ_MASK)
     }
 
-    fn update(&mut self) -> Result<(), Self::StatusErrorType> {
+    fn update(&mut self) -> Result<(), Self::Error> {
         self.spi_read(0, commands::NOP)
     }
 

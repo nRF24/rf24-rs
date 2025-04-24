@@ -1,6 +1,6 @@
 use embedded_hal::{delay::DelayNs, digital::OutputPin, spi::SpiDevice};
 
-use crate::radio::{prelude::EsbPipe, Nrf24Error, RF24};
+use crate::radio::{prelude::EsbPipe, RF24};
 
 use super::registers;
 
@@ -10,9 +10,7 @@ where
     DO: OutputPin,
     DELAY: DelayNs,
 {
-    type PipeErrorType = Nrf24Error<SPI::Error, DO::Error>;
-
-    fn open_rx_pipe(&mut self, pipe: u8, address: &[u8]) -> Result<(), Self::PipeErrorType> {
+    fn open_rx_pipe(&mut self, pipe: u8, address: &[u8]) -> Result<(), Self::Error> {
         if pipe > 5 {
             return Ok(());
         }
@@ -42,13 +40,13 @@ where
         self.spi_write_byte(registers::EN_RXADDR, out)
     }
 
-    fn open_tx_pipe(&mut self, address: &[u8]) -> Result<(), Self::PipeErrorType> {
+    fn open_tx_pipe(&mut self, address: &[u8]) -> Result<(), Self::Error> {
         self.spi_write_buf(registers::TX_ADDR, address)?;
         self.spi_write_buf(registers::RX_ADDR_P0, address)
     }
 
     /// If the given `pipe` number is  not in range [0, 5], then this function does nothing.
-    fn close_rx_pipe(&mut self, pipe: u8) -> Result<(), Self::PipeErrorType> {
+    fn close_rx_pipe(&mut self, pipe: u8) -> Result<(), Self::Error> {
         if pipe > 5 {
             return Ok(());
         }
@@ -61,14 +59,14 @@ where
         Ok(())
     }
 
-    fn set_address_length(&mut self, length: u8) -> Result<(), Self::PipeErrorType> {
+    fn set_address_length(&mut self, length: u8) -> Result<(), Self::Error> {
         let width = length.clamp(2, 5);
         self.spi_write_byte(registers::SETUP_AW, width - 2)?;
         self.feature.set_address_length(width);
         Ok(())
     }
 
-    fn get_address_length(&mut self) -> Result<u8, Self::PipeErrorType> {
+    fn get_address_length(&mut self) -> Result<u8, Self::Error> {
         self.spi_read(1, registers::SETUP_AW)?;
         let addr_length = self.buf[1].min(0xFD) + 2;
         self.feature.set_address_length(addr_length);

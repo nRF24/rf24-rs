@@ -2,7 +2,11 @@ use crate::{
     data_manipulation::{crc24_ble, reverse_bits, whiten},
     services::BlePayload,
 };
-use embedded_hal::{delay::DelayNs, digital::OutputPin, spi::SpiDevice};
+use embedded_hal::{
+    delay::DelayNs,
+    digital::{ErrorKind as OutputPinError, OutputPin},
+    spi::{ErrorKind as SpiError, SpiDevice},
+};
 use rf24::{
     radio::{
         prelude::{EsbChannel, EsbPaLevel, EsbRadio},
@@ -183,7 +187,7 @@ impl FakeBle {
     pub fn hop_channel<SPI, DO, DELAY>(
         &self,
         radio: &mut RF24<SPI, DO, DELAY>,
-    ) -> Result<(), Nrf24Error<SPI::Error, DO::Error>>
+    ) -> Result<(), Nrf24Error<SpiError, OutputPinError>>
     where
         SPI: SpiDevice,
         DO: OutputPin,
@@ -284,7 +288,7 @@ impl FakeBle {
         &self,
         radio: &mut RF24<SPI, DO, DELAY>,
         buf: &[u8],
-    ) -> Result<bool, Nrf24Error<SPI::Error, DO::Error>>
+    ) -> Result<bool, Nrf24Error<SpiError, OutputPinError>>
     where
         SPI: SpiDevice,
         DO: OutputPin,
@@ -325,7 +329,7 @@ impl FakeBle {
     pub fn read<SPI, DO, DELAY>(
         &self,
         radio: &mut RF24<SPI, DO, DELAY>,
-    ) -> Result<Option<BlePayload>, Nrf24Error<SPI::Error, DO::Error>>
+    ) -> Result<Option<BlePayload>, Nrf24Error<SpiError, OutputPinError>>
     where
         SPI: SpiDevice,
         DO: OutputPin,
