@@ -3,7 +3,7 @@ use embedded_hal::{delay::DelayNs, digital::OutputPin, spi::SpiDevice};
 use crate::radio::{prelude::EsbFifo, RF24};
 use crate::FifoState;
 
-use super::{commands, registers};
+use super::{commands, registers, Nrf24Error};
 
 impl<SPI, DO, DELAY> EsbFifo for RF24<SPI, DO, DELAY>
 where
@@ -42,9 +42,10 @@ where
         let offset = about_tx as u8 * 4;
         let status = (self.buf[1] & (3 << offset)) >> offset;
         match status {
+            0 => Ok(FifoState::Occupied),
             1 => Ok(FifoState::Empty),
             2 => Ok(FifoState::Full),
-            _ => Ok(FifoState::Occupied),
+            _ => Err(Nrf24Error::BinaryCorruption),
         }
     }
 }
@@ -55,7 +56,7 @@ where
 mod test {
     extern crate std;
     use super::{commands, registers, EsbFifo, FifoState};
-    use crate::{spi_test_expects, test::mk_radio};
+    use crate::{radio::Nrf24Error, spi_test_expects, test::mk_radio};
     use embedded_hal_mock::eh1::spi::Transaction as SpiTransaction;
     use std::vec;
 
@@ -111,6 +112,8 @@ mod test {
             (vec![registers::FIFO_STATUS, 1u8], vec![0xEu8, 2u8]),
             // read FIFO register value with occupied RX FIFO_STATUS
             (vec![registers::FIFO_STATUS, 2u8], vec![0xEu8, 0u8]),
+            // read FIFO register value with binary corruption over MISO
+            (vec![registers::FIFO_STATUS, 0], vec![0xEu8, 3]),
         ];
         let mocks = mk_radio(&[], &spi_expectations);
         let (mut radio, mut spi, mut ce_pin) = (mocks.0, mocks.1, mocks.2);
@@ -120,6 +123,10 @@ mod test {
         assert_eq!(radio.get_fifo_state(false), Ok(FifoState::Empty));
         assert_eq!(radio.get_fifo_state(false), Ok(FifoState::Full));
         assert_eq!(radio.get_fifo_state(false), Ok(FifoState::Occupied));
+        assert_eq!(
+            radio.get_fifo_state(false),
+            Err(Nrf24Error::BinaryCorruption)
+        );
         spi.done();
         ce_pin.done();
     }
