@@ -173,6 +173,10 @@ impl RF24 {
     }
 
     /// Put the radio into active RX mode.
+    ///
+    /// This function will restore the cached RX address set to pipe 0.
+    /// This is done because the [`RF24.as_tx()`][rf24_py.RF24.as_tx] will
+    /// appropriate the RX address on pipe 0 for auto-ack purposes.
     pub fn as_rx(&mut self) -> PyResult<()> {
         self.inner
             .as_rx()
@@ -186,6 +190,16 @@ impl RF24 {
     /// Note:
     ///     This function will also flush the TX FIFO when ACK payloads are enabled
     ///     (via [`RF24.ack_payloads`][rf24_py.RF24.ack_payloads]).
+    ///
+    /// This must be called at least once before calling
+    /// [`RF24.send()`][rf24_py.RF24.send] or
+    /// [`RF24.write()`][rf24_py.RF24.write].
+    /// Conventionally, this should be called before setting the TX address via
+    /// [`RF24.open_tx_pipe()`][rf24_py.RF24.open_tx_pipe].
+    ///
+    /// For auto-ack purposes, this function will also restore the cached
+    /// TX address (passed to [`RF24.open_tx_pipe()`][rf24_py.RF24.open_tx_pipe])
+    /// to the RX pipe 0.
     pub fn as_tx(&mut self) -> PyResult<()> {
         self.inner
             .as_tx()

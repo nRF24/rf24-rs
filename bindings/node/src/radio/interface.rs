@@ -196,6 +196,10 @@ impl RF24 {
 
     /// Put the radio into active RX mode.
     ///
+    /// This function will restore the cached RX address set to pipe 0.
+    /// This is done because the {@link RF24.asTx} will
+    /// appropriate the RX address on pipe 0 for auto-ack purposes.
+    ///
     /// @group Basic
     #[napi]
     pub fn as_rx(&mut self) -> Result<()> {
@@ -211,6 +215,15 @@ impl RF24 {
     /// > [!NOTE]
     /// > This function will also flush the TX FIFO when ACK payloads are enabled
     /// > (via {@link RF24.ackPayloads}).
+    ///
+    /// This must be called at least once before calling
+    /// {@link RF24.send) or {@link RF24.write).
+    /// Conventionally, this should be called before setting the TX address via
+    /// {@link RF24.openTxPipe).
+    ///
+    /// For auto-ack purposes, this function will also restore the cached
+    /// TX address (passed to {@link RF24.openTxPipe))
+    /// to the RX pipe 0.
     ///
     /// @group Basic
     #[napi]

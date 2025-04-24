@@ -459,14 +459,21 @@ pub trait EsbRadio: RadioErrorType {
     ///
     /// Conventionally, this should be called after setting the RX addresses via
     /// [`EsbPipe::open_rx_pipe()`]
+    ///
+    /// This function will restore the cached RX address set to pipe 0.
+    /// This is done because the [`EsbRadio::as_tx()`] will appropriate the
+    /// RX address on pipe 0 for auto-ack purposes.
     fn as_rx(&mut self) -> Result<(), Self::Error>;
 
     /// Put the radio into inactive TX mode.
     ///
     /// This must be called at least once before calling [`EsbRadio::send()`] or
     /// [`EsbRadio::write()`].
-    /// Conventionally, this should be called after setting the TX address via
+    /// Conventionally, this should be called before setting the TX address via
     /// [`EsbPipe::open_tx_pipe()`].
+    ///
+    /// For auto-ack purposes, this function will also restore the cached
+    /// TX address (passed to [`EsbPipe::open_tx_pipe()`]) to the RX pipe 0.
     fn as_tx(&mut self) -> Result<(), Self::Error>;
 
     /// Is the radio in RX mode?
