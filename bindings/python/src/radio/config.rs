@@ -44,7 +44,7 @@ use std::borrow::Cow;
 #[derive(Debug, Clone, Copy)]
 pub struct RadioConfig {
     inner: rf24::radio::RadioConfig,
-    _addr_buf: [u8; 5],
+    addr_buf: [u8; 5],
 }
 
 #[pymethods]
@@ -53,7 +53,7 @@ impl RadioConfig {
     pub fn new() -> Self {
         Self {
             inner: rf24::radio::RadioConfig::default(),
-            _addr_buf: [0u8; 5],
+            addr_buf: [0u8; 5],
         }
     }
 
@@ -305,8 +305,8 @@ impl RadioConfig {
 
     /// Get the address for a specified `pipe` set by [`RadioConfig.set_rx_address()`][rf24_py.RadioConfig.set_rx_address].
     pub fn get_rx_address(&mut self, pipe: u8) -> Cow<[u8]> {
-        self.inner.rx_address(pipe, &mut self._addr_buf);
-        Cow::from(&self._addr_buf)
+        self.inner.rx_address(pipe, &mut self.addr_buf);
+        Cow::from(&self.addr_buf)
     }
 
     /// Set the TX address.
@@ -314,8 +314,8 @@ impl RadioConfig {
     /// Only pipe 0 can be used for TX operations (including auto-ACK packets during RX operations).
     #[getter]
     pub fn get_tx_address(&mut self) -> Cow<[u8]> {
-        self.inner.tx_address(&mut self._addr_buf);
-        Cow::from(&self._addr_buf)
+        self.inner.tx_address(&mut self.addr_buf);
+        Cow::from(&self.addr_buf)
     }
 
     #[setter]
@@ -339,7 +339,7 @@ impl RadioConfig {
     pub fn from_inner(config: rf24::radio::RadioConfig) -> Self {
         Self {
             inner: config,
-            _addr_buf: [0u8; 5],
+            addr_buf: [0u8; 5],
         }
     }
 }

@@ -258,7 +258,7 @@ mod test {
                 vec![registers::STATUS | commands::W_REGISTER, 0x70u8],
                 vec![0xEu8, 0u8],
             ),
-            // write cached _pipe0_rx_addr
+            // write cached pipe0_rx_addr
             (buf_expected.to_vec(), vec![0xEu8, 0u8, 0u8, 0u8, 0u8, 0u8]),
         ];
         let mocks = mk_radio(&ce_expectations, &spi_expectations);

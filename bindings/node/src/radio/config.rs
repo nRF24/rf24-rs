@@ -8,7 +8,7 @@ use napi::{bindgen_prelude::Buffer, JsNumber, Result};
 #[derive(Debug, Clone, Copy)]
 pub struct RadioConfig {
     inner: rf24::radio::RadioConfig,
-    _addr_buf: [u8; 5],
+    addr_buf: [u8; 5],
 }
 
 #[napi]
@@ -53,7 +53,7 @@ impl RadioConfig {
     pub fn new() -> Self {
         Self {
             inner: rf24::radio::RadioConfig::default(),
-            _addr_buf: [0u8; 5],
+            addr_buf: [0u8; 5],
         }
     }
 
@@ -344,8 +344,8 @@ impl RadioConfig {
     /// Get the address for a specified `pipe` set by {@link RadioConfig.setRxAddress}.
     #[napi]
     pub fn get_rx_address(&mut self, pipe: u8) -> Buffer {
-        self.inner.rx_address(pipe, &mut self._addr_buf);
-        Buffer::from(self._addr_buf.to_vec())
+        self.inner.rx_address(pipe, &mut self.addr_buf);
+        Buffer::from(self.addr_buf.to_vec())
     }
 
     /// Set the TX address.
@@ -359,8 +359,8 @@ impl RadioConfig {
 
     #[napi(getter, js_name = "txAddress")]
     pub fn get_tx_address(&mut self) -> Buffer {
-        self.inner.tx_address(&mut self._addr_buf);
-        Buffer::from(self._addr_buf.to_vec())
+        self.inner.tx_address(&mut self.addr_buf);
+        Buffer::from(self.addr_buf.to_vec())
     }
 
     /// Close a RX pipe from receiving data.
@@ -381,7 +381,7 @@ impl RadioConfig {
     pub fn from_inner(config: rf24::radio::RadioConfig) -> Self {
         Self {
             inner: config,
-            _addr_buf: [0u8; 5],
+            addr_buf: [0u8; 5],
         }
     }
 }
