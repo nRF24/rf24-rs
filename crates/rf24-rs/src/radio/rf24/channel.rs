@@ -1,5 +1,5 @@
 use super::registers;
-use crate::radio::{prelude::EsbChannel, Nrf24Error, RF24};
+use crate::radio::{prelude::EsbChannel, RF24};
 use embedded_hal::{delay::DelayNs, digital::OutputPin, spi::SpiDevice};
 
 impl<SPI, DO, DELAY> EsbChannel for RF24<SPI, DO, DELAY>
@@ -8,16 +8,14 @@ where
     DO: OutputPin,
     DELAY: DelayNs,
 {
-    type ChannelErrorType = Nrf24Error<SPI::Error, DO::Error>;
-
     /// The nRF24L01 support 126 channels. The specified `channel` is
     /// clamped to the range [0, 125].
-    fn set_channel(&mut self, channel: u8) -> Result<(), Self::ChannelErrorType> {
+    fn set_channel(&mut self, channel: u8) -> Result<(), Self::Error> {
         self.spi_write_byte(registers::RF_CH, channel.min(125))
     }
 
     /// See also [`RF24::set_channel()`].
-    fn get_channel(&mut self) -> Result<u8, Self::ChannelErrorType> {
+    fn get_channel(&mut self) -> Result<u8, Self::Error> {
         self.spi_read(1, registers::RF_CH)?;
         Ok(self._buf[1])
     }

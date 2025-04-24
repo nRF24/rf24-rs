@@ -1,7 +1,7 @@
 use embedded_hal::{delay::DelayNs, digital::OutputPin, spi::SpiDevice};
 
 use super::registers;
-use crate::radio::{prelude::EsbPaLevel, Nrf24Error, RF24};
+use crate::radio::{prelude::EsbPaLevel, RF24};
 use crate::PaLevel;
 
 impl<SPI, DO, DELAY> EsbPaLevel for RF24<SPI, DO, DELAY>
@@ -10,14 +10,12 @@ where
     DO: OutputPin,
     DELAY: DelayNs,
 {
-    type PaLevelErrorType = Nrf24Error<SPI::Error, DO::Error>;
-
-    fn get_pa_level(&mut self) -> Result<PaLevel, Self::PaLevelErrorType> {
+    fn get_pa_level(&mut self) -> Result<PaLevel, Self::Error> {
         self.spi_read(1, registers::RF_SETUP)?;
         Ok(PaLevel::from_bits(self._buf[1] & PaLevel::MASK))
     }
 
-    fn set_pa_level(&mut self, pa_level: PaLevel) -> Result<(), Self::PaLevelErrorType> {
+    fn set_pa_level(&mut self, pa_level: PaLevel) -> Result<(), Self::Error> {
         self.spi_read(1, registers::RF_SETUP)?;
         let out = self._buf[1] & !PaLevel::MASK | pa_level.into_bits();
         self.spi_write_byte(registers::RF_SETUP, out)

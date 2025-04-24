@@ -9,9 +9,7 @@ where
     DO: OutputPin,
     DELAY: DelayNs,
 {
-    type PayloadLengthErrorType = Nrf24Error<SPI::Error, DO::Error>;
-
-    fn set_payload_length(&mut self, length: u8) -> Result<(), Self::PayloadLengthErrorType> {
+    fn set_payload_length(&mut self, length: u8) -> Result<(), Self::Error> {
         let len = length.clamp(1, 32);
         for i in 0..6 {
             self.spi_write_byte(registers::RX_PW_P0 + i, len)?;
@@ -20,12 +18,12 @@ where
         Ok(())
     }
 
-    fn get_payload_length(&mut self) -> Result<u8, Self::PayloadLengthErrorType> {
+    fn get_payload_length(&mut self) -> Result<u8, Self::Error> {
         self.spi_read(1, registers::RX_PW_P0)?;
         Ok(self._buf[1])
     }
 
-    fn set_dynamic_payloads(&mut self, enable: bool) -> Result<(), Self::PayloadLengthErrorType> {
+    fn set_dynamic_payloads(&mut self, enable: bool) -> Result<(), Self::Error> {
         self.spi_read(1, registers::FEATURE)?;
         self._feature =
             Feature::from_bits(self._feature.into_bits() & !Feature::REG_MASK | self._buf[1])
@@ -42,7 +40,7 @@ where
         self._feature.dynamic_payloads()
     }
 
-    fn get_dynamic_payload_length(&mut self) -> Result<u8, Self::PayloadLengthErrorType> {
+    fn get_dynamic_payload_length(&mut self) -> Result<u8, Self::Error> {
         self.spi_read(1, commands::R_RX_PL_WID)?;
         if self._buf[1] > 32 {
             return Err(Nrf24Error::BinaryCorruption);

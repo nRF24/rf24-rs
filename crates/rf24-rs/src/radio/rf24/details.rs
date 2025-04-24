@@ -1,4 +1,4 @@
-use super::{Nrf24Error, RF24};
+use super::RF24;
 use crate::radio::prelude::EsbDetails;
 use embedded_hal::{delay::DelayNs, digital::OutputPin, spi::SpiDevice};
 
@@ -18,11 +18,9 @@ where
     DO: OutputPin,
     DELAY: DelayNs,
 {
-    type DetailsErrorType = Nrf24Error<SPI::Error, DO::Error>;
-
     #[cfg(feature = "defmt")]
     #[cfg(target_os = "none")]
-    fn print_details(&mut self) -> Result<(), Self::DetailsErrorType> {
+    fn print_details(&mut self) -> Result<(), Self::Error> {
         defmt::println!("Is a plus variant_________{=bool}", self.is_plus_variant());
 
         let channel = self.get_channel()?;
@@ -157,13 +155,13 @@ where
     }
 
     #[cfg(not(any(feature = "defmt", feature = "std")))]
-    fn print_details(&mut self) -> Result<(), Self::DetailsErrorType> {
+    fn print_details(&mut self) -> Result<(), Self::Error> {
         Ok(())
     }
 
     #[cfg(not(target_os = "none"))]
     #[cfg(feature = "std")]
-    fn print_details(&mut self) -> Result<(), Self::DetailsErrorType> {
+    fn print_details(&mut self) -> Result<(), Self::Error> {
         use crate::radio::rf24::Config;
 
         std::println!("Is a plus variant_________{}", self.is_plus_variant());

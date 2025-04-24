@@ -14,11 +14,9 @@ where
     DO: OutputPin,
     DELAY: DelayNs,
 {
-    type ConfigErrorType = Nrf24Error<SPI::Error, DO::Error>;
-
     /// Initialize the radio's hardware using the [`SpiDevice`] and [`OutputPin`] given
     /// to [`RF24::new()`].
-    fn init(&mut self) -> Result<(), Self::ConfigErrorType> {
+    fn init(&mut self) -> Result<(), Self::Error> {
         // Must allow the radio time to settle else configuration bits will not necessarily stick.
         // This is actually only required following power up but some settling time also appears to
         // be required after resets too. For full coverage, we'll always assume the worst.
@@ -49,7 +47,7 @@ where
         self.with_config(&RadioConfig::default())
     }
 
-    fn with_config(&mut self, config: &RadioConfig) -> Result<(), Self::ConfigErrorType> {
+    fn with_config(&mut self, config: &RadioConfig) -> Result<(), Self::Error> {
         self.clear_status_flags(StatusFlags::new())?;
         self.power_down()?;
 

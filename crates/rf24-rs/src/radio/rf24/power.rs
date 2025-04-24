@@ -1,6 +1,10 @@
-use embedded_hal::{delay::DelayNs, digital::OutputPin, spi::SpiDevice};
+use embedded_hal::{
+    delay::DelayNs,
+    digital::{Error, OutputPin},
+    spi::SpiDevice,
+};
 
-use crate::radio::{prelude::EsbPower, Nrf24Error, RF24};
+use crate::radio::{prelude::EsbPower, RF24};
 
 use super::registers;
 
@@ -10,8 +14,6 @@ where
     DO: OutputPin,
     DELAY: DelayNs,
 {
-    type PowerErrorType = Nrf24Error<SPI::Error, DO::Error>;
-
     /// After calling [`EsbRadio::as_rx()`](fn@crate::radio::prelude::EsbRadio::as_rx),
     /// a non-PA/LNA radio will consume about
     /// 13.5mA at [`PaLevel::MAX`](type@crate::types::PaLevel::Max).
@@ -21,14 +23,14 @@ where
     /// will consume about 26uA (.026mA).
     /// In full power down mode (a sleep state), the radio will consume approximately
     /// 900nA (.0009mA).
-    fn power_down(&mut self) -> Result<(), Self::PowerErrorType> {
-        self.ce_pin.set_low().map_err(Nrf24Error::Gpo)?; // Guarantee CE is low on powerDown
+    fn power_down(&mut self) -> Result<(), Self::Error> {
+        self.ce_pin.set_low().map_err(|e| e.kind())?; // Guarantee CE is low on powerDown
         self._config_reg = self._config_reg.with_power(false);
         self.spi_write_byte(registers::CONFIG, self._config_reg.into_bits())?;
         Ok(())
     }
 
-    fn power_up(&mut self, delay: Option<u32>) -> Result<(), Self::PowerErrorType> {
+    fn power_up(&mut self, delay: Option<u32>) -> Result<(), Self::Error> {
         // if not powered up then power up and wait for the radio to initialize
         if self._config_reg.power() {
             return Ok(());

@@ -21,9 +21,7 @@ where
     DO: OutputPin,
     DELAY: DelayNs,
 {
-    type DataRateErrorType = Nrf24Error<SPI::Error, DO::Error>;
-
-    fn get_data_rate(&mut self) -> Result<DataRate, Self::DataRateErrorType> {
+    fn get_data_rate(&mut self) -> Result<DataRate, Self::Error> {
         self.spi_read(1, registers::RF_SETUP)?;
         let da_bin = self._buf[1] & DataRate::MASK;
         if da_bin == DataRate::MASK {
@@ -32,7 +30,7 @@ where
         Ok(DataRate::from_bits(da_bin))
     }
 
-    fn set_data_rate(&mut self, data_rate: DataRate) -> Result<(), Self::DataRateErrorType> {
+    fn set_data_rate(&mut self, data_rate: DataRate) -> Result<(), Self::Error> {
         self.tx_delay = set_tx_delay(data_rate);
         self.spi_read(1, registers::RF_SETUP)?;
         let da_bin = data_rate.into_bits();

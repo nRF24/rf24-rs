@@ -1,9 +1,13 @@
-use super::{commands, mnemonics, registers, Nrf24Error, RF24};
+use super::{commands, mnemonics, registers, RF24};
 use crate::{
     radio::prelude::{EsbFifo, EsbPayloadLength, EsbPipe, EsbRadio, EsbStatus},
     StatusFlags,
 };
-use embedded_hal::{delay::DelayNs, digital::OutputPin, spi::SpiDevice};
+use embedded_hal::{
+    delay::DelayNs,
+    digital::{Error, OutputPin},
+    spi::SpiDevice,
+};
 
 impl<SPI, DO, DELAY> EsbRadio for RF24<SPI, DO, DELAY>
 where
@@ -11,13 +15,11 @@ where
     DO: OutputPin,
     DELAY: DelayNs,
 {
-    type RadioErrorType = Nrf24Error<SPI::Error, DO::Error>;
-
-    fn as_rx(&mut self) -> Result<(), Self::RadioErrorType> {
+    fn as_rx(&mut self) -> Result<(), Self::Error> {
         self._config_reg = self._config_reg.as_rx();
         self.spi_write_byte(registers::CONFIG, self._config_reg.into_bits())?;
         self.clear_status_flags(StatusFlags::new())?;
-        self.ce_pin.set_high().map_err(Nrf24Error::Gpo)?;
+        self.ce_pin.set_high().map_err(|e| e.kind())?;
 
         // Restore the pipe0 address, if exists
         if let Some(addr) = self._pipe0_rx_addr {
@@ -31,8 +33,8 @@ where
         Ok(())
     }
 
-    fn as_tx(&mut self) -> Result<(), Self::RadioErrorType> {
-        self.ce_pin.set_low().map_err(Nrf24Error::Gpo)?;
+    fn as_tx(&mut self) -> Result<(), Self::Error> {
+        self.ce_pin.set_low().map_err(|e| e.kind())?;
 
         self._delay_impl.delay_ns(self.tx_delay * 1000);
         if self._feature.ack_payloads() {
@@ -55,8 +57,8 @@ where
     ///
     /// This function calls [`RF24::flush_tx()`] upon entry, but it does not
     /// deactivate the radio's CE pin upon exit.
-    fn send(&mut self, buf: &[u8], ask_no_ack: bool) -> Result<bool, Self::RadioErrorType> {
-        self.ce_pin.set_low().map_err(Nrf24Error::Gpo)?;
+    fn send(&mut self, buf: &[u8], ask_no_ack: bool) -> Result<bool, Self::Error> {
+        self.ce_pin.set_low().map_err(|e| e.kind())?;
         // this function only handles 1 payload at a time
         self.flush_tx()?; // flush the TX FIFO to ensure we are sending the given buf
         if !self.write(buf, ask_no_ack, true)? {
@@ -81,15 +83,10 @@ where
     /// microseconds when using this function, thus non-blocking behavior.
     ///
     /// </div>
-    fn write(
-        &mut self,
-        buf: &[u8],
-        ask_no_ack: bool,
-        start_tx: bool,
-    ) -> Result<bool, Self::RadioErrorType> {
+    fn write(&mut self, buf: &[u8], ask_no_ack: bool, start_tx: bool) -> Result<bool, Self::Error> {
         if self.is_rx() {
             // check if in RX mode to prevent improper radio usage
-            return Err(Self::RadioErrorType::NotAsTxError);
+            return Err(Self::Error::NotAsTxError);
         }
         self.clear_status_flags(StatusFlags::from_bits(
             mnemonics::MASK_MAX_RT | mnemonics::MASK_TX_DS,
@@ -116,7 +113,7 @@ where
         }
         self.spi_transfer(buf_len + 1)?;
         if start_tx {
-            self.ce_pin.set_high().map_err(Nrf24Error::Gpo)?;
+            self.ce_pin.set_high().map_err(|e| e.kind())?;
         }
         Ok(true)
     }
@@ -139,7 +136,7 @@ where
     ///   padding for the data saved to the `buf` parameter's object.
     ///   The nRF24L01 will repeatedly use the last byte from the last
     ///   payload even when [`RF24::read()`] is called with an empty RX FIFO.
-    fn read(&mut self, buf: &mut [u8], len: Option<u8>) -> Result<u8, Self::RadioErrorType> {
+    fn read(&mut self, buf: &mut [u8], len: Option<u8>) -> Result<u8, Self::Error> {
         let buf_len =
             (buf.len().min(32) as u8).min(len.unwrap_or(if self._feature.dynamic_payloads() {
                 self.get_dynamic_payload_length()?
@@ -158,7 +155,7 @@ where
         Ok(buf_len)
     }
 
-    fn resend(&mut self) -> Result<bool, Self::RadioErrorType> {
+    fn resend(&mut self) -> Result<bool, Self::Error> {
         if self.is_rx() {
             // if in RX  mode, prevent infinite loop below
             return Ok(false);
@@ -172,15 +169,16 @@ where
         Ok(self._status.tx_ds())
     }
 
-    fn rewrite(&mut self) -> Result<(), Self::RadioErrorType> {
-        self.ce_pin.set_low().map_err(Nrf24Error::Gpo)?;
+    fn rewrite(&mut self) -> Result<(), Self::Error> {
+        self.ce_pin.set_low().map_err(|e| e.kind())?;
         let flags = StatusFlags::from_bits(mnemonics::MASK_TX_DS | mnemonics::MASK_MAX_RT);
         self.clear_status_flags(flags)?;
         self.spi_read(0, commands::REUSE_TX_PL)?;
-        self.ce_pin.set_high().map_err(Nrf24Error::Gpo)
+        self.ce_pin.set_high().map_err(|e| e.kind())?;
+        Ok(())
     }
 
-    fn get_last_arc(&mut self) -> Result<u8, Self::RadioErrorType> {
+    fn get_last_arc(&mut self) -> Result<u8, Self::Error> {
         self.spi_read(1, registers::OBSERVE_TX)?;
         Ok(self._buf[1] & 0xF)
     }

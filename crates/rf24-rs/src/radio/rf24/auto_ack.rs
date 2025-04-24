@@ -1,6 +1,6 @@
 use embedded_hal::{delay::DelayNs, digital::OutputPin, spi::SpiDevice};
 
-use crate::radio::{prelude::EsbAutoAck, Nrf24Error, RF24};
+use crate::radio::{prelude::EsbAutoAck, RF24};
 
 use super::{commands, registers, Feature};
 
@@ -10,9 +10,7 @@ where
     DO: OutputPin,
     DELAY: DelayNs,
 {
-    type AutoAckErrorType = Nrf24Error<SPI::Error, DO::Error>;
-
-    fn set_ack_payloads(&mut self, enable: bool) -> Result<(), Self::AutoAckErrorType> {
+    fn set_ack_payloads(&mut self, enable: bool) -> Result<(), Self::Error> {
         if self._feature.ack_payloads() != enable {
             self.spi_read(1, registers::FEATURE)?;
             self._feature =
@@ -36,7 +34,7 @@ where
         self._feature.ack_payloads()
     }
 
-    fn set_auto_ack(&mut self, enable: bool) -> Result<(), Self::AutoAckErrorType> {
+    fn set_auto_ack(&mut self, enable: bool) -> Result<(), Self::Error> {
         self.spi_write_byte(registers::EN_AA, 0x3F * enable as u8)?;
         // accommodate ACK payloads feature
         if !enable && self._feature.ack_payloads() {
@@ -45,7 +43,7 @@ where
         Ok(())
     }
 
-    fn set_auto_ack_pipe(&mut self, enable: bool, pipe: u8) -> Result<(), Self::AutoAckErrorType> {
+    fn set_auto_ack_pipe(&mut self, enable: bool, pipe: u8) -> Result<(), Self::Error> {
         if pipe > 5 {
             return Ok(());
         }
@@ -58,12 +56,12 @@ where
         self.spi_write_byte(registers::EN_AA, reg_val & !mask | (mask * enable as u8))
     }
 
-    fn allow_ask_no_ack(&mut self, enable: bool) -> Result<(), Self::AutoAckErrorType> {
+    fn allow_ask_no_ack(&mut self, enable: bool) -> Result<(), Self::Error> {
         self.spi_read(1, registers::FEATURE)?;
         self.spi_write_byte(registers::FEATURE, self._buf[1] & !1 | enable as u8)
     }
 
-    fn write_ack_payload(&mut self, pipe: u8, buf: &[u8]) -> Result<bool, Self::AutoAckErrorType> {
+    fn write_ack_payload(&mut self, pipe: u8, buf: &[u8]) -> Result<bool, Self::Error> {
         if self._feature.ack_payloads() && pipe <= 5 {
             let len = buf.len().min(32);
             self.spi_write_buf(commands::W_ACK_PAYLOAD | pipe, &buf[..len])?;
@@ -72,7 +70,7 @@ where
         Ok(false)
     }
 
-    fn set_auto_retries(&mut self, delay: u8, count: u8) -> Result<(), Self::AutoAckErrorType> {
+    fn set_auto_retries(&mut self, delay: u8, count: u8) -> Result<(), Self::Error> {
         self.spi_write_byte(registers::SETUP_RETR, count.min(15) | (delay.min(15) << 4))
     }
 }

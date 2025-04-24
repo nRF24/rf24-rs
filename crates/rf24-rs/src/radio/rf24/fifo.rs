@@ -1,6 +1,6 @@
 use embedded_hal::{delay::DelayNs, digital::OutputPin, spi::SpiDevice};
 
-use crate::radio::{prelude::EsbFifo, Nrf24Error, RF24};
+use crate::radio::{prelude::EsbFifo, RF24};
 use crate::FifoState;
 
 use super::{commands, registers};
@@ -11,14 +11,12 @@ where
     DO: OutputPin,
     DELAY: DelayNs,
 {
-    type FifoErrorType = Nrf24Error<SPI::Error, DO::Error>;
-
-    fn available(&mut self) -> Result<bool, Self::FifoErrorType> {
+    fn available(&mut self) -> Result<bool, Self::Error> {
         self.spi_read(1, registers::FIFO_STATUS)?;
         Ok(self._buf[1] & 1 == 0)
     }
 
-    fn available_pipe(&mut self, pipe: &mut u8) -> Result<bool, Self::FifoErrorType> {
+    fn available_pipe(&mut self, pipe: &mut u8) -> Result<bool, Self::Error> {
         if self.available()? {
             // RX FIFO is not empty
             // get last used pipe
@@ -30,16 +28,16 @@ where
     }
 
     /// Use this to discard all 3 layers in the radio's RX FIFO.
-    fn flush_rx(&mut self) -> Result<(), Self::FifoErrorType> {
+    fn flush_rx(&mut self) -> Result<(), Self::Error> {
         self.spi_read(0, commands::FLUSH_RX)
     }
 
     /// Use this to discard all 3 layers in the radio's TX FIFO.
-    fn flush_tx(&mut self) -> Result<(), Self::FifoErrorType> {
+    fn flush_tx(&mut self) -> Result<(), Self::Error> {
         self.spi_read(0, commands::FLUSH_TX)
     }
 
-    fn get_fifo_state(&mut self, about_tx: bool) -> Result<FifoState, Self::FifoErrorType> {
+    fn get_fifo_state(&mut self, about_tx: bool) -> Result<FifoState, Self::Error> {
         self.spi_read(1, registers::FIFO_STATUS)?;
         let offset = about_tx as u8 * 4;
         let status = (self._buf[1] & (3 << offset)) >> offset;
