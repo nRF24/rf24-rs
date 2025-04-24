@@ -12,17 +12,17 @@ where
 {
     fn get_crc_length(&mut self) -> Result<CrcLength, Self::Error> {
         self.spi_read(1, registers::CONFIG)?;
-        if self._buf[1] & Config::CRC_MASK == 4 {
+        if self.buf[1] & Config::CRC_MASK == 4 {
             return Err(Nrf24Error::BinaryCorruption);
         }
-        self._config_reg = Config::from_bits(self._buf[1]);
-        Ok(self._config_reg.crc_length())
+        self.config_reg = Config::from_bits(self.buf[1]);
+        Ok(self.config_reg.crc_length())
     }
 
     fn set_crc_length(&mut self, crc_length: CrcLength) -> Result<(), Self::Error> {
         self.spi_read(1, registers::CONFIG)?;
-        self._config_reg = self._config_reg.with_crc_length(crc_length);
-        self.spi_write_byte(registers::CONFIG, self._config_reg.into_bits())
+        self.config_reg = self.config_reg.with_crc_length(crc_length);
+        self.spi_write_byte(registers::CONFIG, self.config_reg.into_bits())
     }
 }
 

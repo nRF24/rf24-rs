@@ -25,18 +25,18 @@ where
     /// 900nA (.0009mA).
     fn power_down(&mut self) -> Result<(), Self::Error> {
         self.ce_pin.set_low().map_err(|e| e.kind())?; // Guarantee CE is low on powerDown
-        self._config_reg = self._config_reg.with_power(false);
-        self.spi_write_byte(registers::CONFIG, self._config_reg.into_bits())?;
+        self.config_reg = self.config_reg.with_power(false);
+        self.spi_write_byte(registers::CONFIG, self.config_reg.into_bits())?;
         Ok(())
     }
 
     fn power_up(&mut self, delay: Option<u32>) -> Result<(), Self::Error> {
         // if not powered up then power up and wait for the radio to initialize
-        if self._config_reg.power() {
+        if self.config_reg.power() {
             return Ok(());
         }
-        self._config_reg = self._config_reg.with_power(true);
-        self.spi_write_byte(registers::CONFIG, self._config_reg.into_bits())?;
+        self.config_reg = self.config_reg.with_power(true);
+        self.spi_write_byte(registers::CONFIG, self.config_reg.into_bits())?;
 
         // For nRF24L01+ to go from power down mode to TX or RX mode it must first pass through stand-by mode.
         // There must be a delay of Tpd2standby (see Table 16.) after the nRF24L01+ leaves power down mode before
@@ -44,17 +44,17 @@ where
         match delay {
             Some(d) => {
                 if d > 0 {
-                    self._delay_impl.delay_us(d);
+                    self.delay_impl.delay_us(d);
                 }
             }
-            None => self._delay_impl.delay_us(5000),
+            None => self.delay_impl.delay_us(5000),
         }
         Ok(())
     }
 
     /// Is the radio powered up?
     fn is_powered(&self) -> bool {
-        self._config_reg.power()
+        self.config_reg.power()
     }
 }
 

@@ -11,14 +11,14 @@ where
     DELAY: DelayNs,
 {
     fn set_ack_payloads(&mut self, enable: bool) -> Result<(), Self::Error> {
-        if self._feature.ack_payloads() != enable {
+        if self.feature.ack_payloads() != enable {
             self.spi_read(1, registers::FEATURE)?;
-            self._feature =
-                Feature::from_bits(self._feature.into_bits() & !Feature::REG_MASK | self._buf[1])
+            self.feature =
+                Feature::from_bits(self.feature.into_bits() & !Feature::REG_MASK | self.buf[1])
                     .with_ack_payloads(enable);
             self.spi_write_byte(
                 registers::FEATURE,
-                self._feature.into_bits() & Feature::REG_MASK,
+                self.feature.into_bits() & Feature::REG_MASK,
             )?;
 
             if enable {
@@ -31,13 +31,13 @@ where
     }
 
     fn get_ack_payloads(&self) -> bool {
-        self._feature.ack_payloads()
+        self.feature.ack_payloads()
     }
 
     fn set_auto_ack(&mut self, enable: bool) -> Result<(), Self::Error> {
         self.spi_write_byte(registers::EN_AA, 0x3F * enable as u8)?;
         // accommodate ACK payloads feature
-        if !enable && self._feature.ack_payloads() {
+        if !enable && self.feature.ack_payloads() {
             self.set_ack_payloads(false)?;
         }
         Ok(())
@@ -49,8 +49,8 @@ where
         }
         self.spi_read(1, registers::EN_AA)?;
         let mask = 1 << pipe;
-        let reg_val = self._buf[1];
-        if !enable && self._feature.ack_payloads() && pipe == 0 {
+        let reg_val = self.buf[1];
+        if !enable && self.feature.ack_payloads() && pipe == 0 {
             self.set_ack_payloads(enable)?;
         }
         self.spi_write_byte(registers::EN_AA, reg_val & !mask | (mask * enable as u8))
@@ -58,14 +58,14 @@ where
 
     fn allow_ask_no_ack(&mut self, enable: bool) -> Result<(), Self::Error> {
         self.spi_read(1, registers::FEATURE)?;
-        self.spi_write_byte(registers::FEATURE, self._buf[1] & !1 | enable as u8)
+        self.spi_write_byte(registers::FEATURE, self.buf[1] & !1 | enable as u8)
     }
 
     fn write_ack_payload(&mut self, pipe: u8, buf: &[u8]) -> Result<bool, Self::Error> {
-        if self._feature.ack_payloads() && pipe <= 5 {
+        if self.feature.ack_payloads() && pipe <= 5 {
             let len = buf.len().min(32);
             self.spi_write_buf(commands::W_ACK_PAYLOAD | pipe, &buf[..len])?;
-            return Ok(!self._status.tx_full());
+            return Ok(!self.status.tx_full());
         }
         Ok(false)
     }

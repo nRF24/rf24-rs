@@ -18,15 +18,15 @@ where
         if pipe < 2 {
             // Clamp the address length used: min(self._address_length, address.len());
             // This means that we only write the bytes that were passed
-            let width = address.len().min(self._feature.address_length() as usize);
+            let width = address.len().min(self.feature.address_length() as usize);
 
             // If this is pipe 0, cache the address.  This is needed because
             // open_tx_pipe() will overwrite the pipe 0 address, so
             // as_rx() will have to restore it.
             if pipe == 0 {
-                let mut cached_addr = self._pipe0_rx_addr.unwrap_or_default();
+                let mut cached_addr = self.pipe0_rx_addr.unwrap_or_default();
                 cached_addr[..width].copy_from_slice(&address[..width]);
-                self._pipe0_rx_addr = Some(cached_addr);
+                self.pipe0_rx_addr = Some(cached_addr);
             }
             self.spi_write_buf(registers::RX_ADDR_P0 + pipe, &address[..width])?;
         }
@@ -36,11 +36,13 @@ where
         }
 
         self.spi_read(1, registers::EN_RXADDR)?;
-        let out = self._buf[1] | (1 << pipe);
+        let out = self.buf[1] | (1 << pipe);
         self.spi_write_byte(registers::EN_RXADDR, out)
     }
 
     fn open_tx_pipe(&mut self, address: &[u8]) -> Result<(), Self::Error> {
+        let len = address.len().min(self.feature.address_length() as usize);
+        self.tx_addr[0..len].copy_from_slice(&address[0..len]);
         self.spi_write_buf(registers::TX_ADDR, address)?;
         self.spi_write_buf(registers::RX_ADDR_P0, address)
     }
@@ -51,10 +53,10 @@ where
             return Ok(());
         }
         self.spi_read(1, registers::EN_RXADDR)?;
-        let out = self._buf[1] & !(1 << pipe);
+        let out = self.buf[1] & !(1 << pipe);
         self.spi_write_byte(registers::EN_RXADDR, out)?;
         if pipe == 0 {
-            self._pipe0_rx_addr = None;
+            self.pipe0_rx_addr = None;
         }
         Ok(())
     }
@@ -62,14 +64,14 @@ where
     fn set_address_length(&mut self, length: u8) -> Result<(), Self::Error> {
         let width = length.clamp(2, 5);
         self.spi_write_byte(registers::SETUP_AW, width - 2)?;
-        self._feature.set_address_length(width);
+        self.feature.set_address_length(width);
         Ok(())
     }
 
     fn get_address_length(&mut self) -> Result<u8, Self::Error> {
         self.spi_read(1, registers::SETUP_AW)?;
-        let addr_length = self._buf[1].min(0xFD) + 2;
-        self._feature.set_address_length(addr_length);
+        let addr_length = self.buf[1].min(0xFD) + 2;
+        self.feature.set_address_length(addr_length);
         Ok(addr_length)
     }
 }

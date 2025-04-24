@@ -92,20 +92,21 @@ pub struct RF24<SPI, DO, DELAY> {
     /// </div>
     ///
     pub tx_delay: u32,
-    _spi: SPI,
+    spi: SPI,
     /// The CE pin for the radio.
     ///
     /// This really only exposed for advanced manipulation of active TX mode.
     /// It is strongly recommended to enter RX or TX mode using [`RF24::as_rx()`] and
     /// [`RF24::as_tx()`] because those methods guarantee proper radio usage.
     pub ce_pin: DO,
-    _delay_impl: DELAY,
-    _buf: [u8; 33],
-    _status: StatusFlags,
-    _config_reg: Config,
-    _feature: Feature,
-    _pipe0_rx_addr: Option<[u8; 5]>,
-    _payload_length: u8,
+    delay_impl: DELAY,
+    buf: [u8; 33],
+    status: StatusFlags,
+    config_reg: Config,
+    feature: Feature,
+    pipe0_rx_addr: Option<[u8; 5]>,
+    tx_addr: [u8; 5],
+    payload_length: u8,
 }
 
 impl<SPI, DO, DELAY> RF24<SPI, DO, DELAY>
@@ -124,25 +125,26 @@ where
         RF24 {
             tx_delay: 250,
             ce_pin,
-            _spi: spi,
-            _delay_impl: delay_impl,
-            _status: StatusFlags::from_bits(0),
-            _buf: [0u8; 33],
-            _pipe0_rx_addr: None,
-            _feature: Feature::from_bits(0)
+            spi,
+            delay_impl,
+            status: StatusFlags::from_bits(0),
+            buf: [0u8; 33],
+            pipe0_rx_addr: None,
+            tx_addr: [0xE7; 5],
+            feature: Feature::from_bits(0)
                 .with_address_length(5)
                 .with_is_plus_variant(true),
             // 16 bit CRC, enable all IRQ, and power down as TX
-            _config_reg: Config::from_bits(0xC),
-            _payload_length: 32,
+            config_reg: Config::from_bits(0xC),
+            payload_length: 32,
         }
     }
 
     fn spi_transfer(&mut self, len: u8) -> Result<(), Nrf24Error<SpiError, OutputPinError>> {
-        self._spi
-            .transfer_in_place(&mut self._buf[..len as usize])
+        self.spi
+            .transfer_in_place(&mut self.buf[..len as usize])
             .map_err(|e| e.kind())?;
-        self._status = StatusFlags::from_bits(self._buf[0]);
+        self.status = StatusFlags::from_bits(self.buf[0]);
         Ok(())
     }
 
@@ -156,7 +158,7 @@ where
         len: u8,
         command: u8,
     ) -> Result<(), Nrf24Error<SpiError, OutputPinError>> {
-        self._buf[0] = command;
+        self.buf[0] = command;
         self.spi_transfer(len + 1)
     }
 
@@ -165,8 +167,8 @@ where
         command: u8,
         byte: u8,
     ) -> Result<(), Nrf24Error<SpiError, OutputPinError>> {
-        self._buf[0] = command | commands::W_REGISTER;
-        self._buf[1] = byte;
+        self.buf[0] = command | commands::W_REGISTER;
+        self.buf[1] = byte;
         self.spi_transfer(2)
     }
 
@@ -175,17 +177,17 @@ where
         command: u8,
         buf: &[u8],
     ) -> Result<(), Nrf24Error<SpiError, OutputPinError>> {
-        self._buf[0] = command | commands::W_REGISTER;
+        self.buf[0] = command | commands::W_REGISTER;
         let buf_len = buf.len();
-        self._buf[1..(buf_len + 1)].copy_from_slice(&buf[..buf_len]);
+        self.buf[1..(buf_len + 1)].copy_from_slice(&buf[..buf_len]);
         self.spi_transfer(buf_len as u8 + 1)
     }
 
     /// A private function to write a special SPI command specific to older
     /// non-plus variants of the nRF24L01 radio module. It has no effect on plus variants.
     fn toggle_features(&mut self) -> Result<(), Nrf24Error<SpiError, OutputPinError>> {
-        self._buf[0] = commands::ACTIVATE;
-        self._buf[1] = 0x73;
+        self.buf[0] = commands::ACTIVATE;
+        self.buf[1] = 0x73;
         self.spi_transfer(2)
     }
 
@@ -194,12 +196,12 @@ where
     /// The bool that this function returns is only valid _after_ calling
     /// [`init()`](fn@crate::radio::prelude::EsbInit::init).
     pub fn is_plus_variant(&self) -> bool {
-        self._feature.is_plus_variant()
+        self.feature.is_plus_variant()
     }
 
     pub fn rpd(&mut self) -> Result<bool, Nrf24Error<SpiError, OutputPinError>> {
         self.spi_read(1, registers::RPD)?;
-        Ok(self._buf[1] & 1 == 1)
+        Ok(self.buf[1] & 1 == 1)
     }
 
     pub fn start_carrier_wave(
@@ -209,8 +211,8 @@ where
     ) -> Result<(), Nrf24Error<SpiError, OutputPinError>> {
         self.as_tx()?;
         self.spi_read(1, registers::RF_SETUP)?;
-        self.spi_write_byte(registers::RF_SETUP, self._buf[1] | 0x90)?;
-        if self._feature.is_plus_variant() {
+        self.spi_write_byte(registers::RF_SETUP, self.buf[1] | 0x90)?;
+        if self.feature.is_plus_variant() {
             self.set_auto_ack(false)?;
             self.set_auto_retries(0, 0)?;
             let buf = [0xFF; 32];
@@ -227,8 +229,8 @@ where
         self.set_pa_level(level)?;
         self.set_channel(channel)?;
         self.ce_pin.set_high().map_err(|e| e.kind())?;
-        if self._feature.is_plus_variant() {
-            self._delay_impl.delay_ns(1000000); // datasheet says 1 ms is ok in this instance
+        if self.feature.is_plus_variant() {
+            self.delay_impl.delay_ns(1000000); // datasheet says 1 ms is ok in this instance
             self.rewrite()?;
         }
         Ok(())
@@ -243,7 +245,7 @@ where
          */
         self.power_down()?; // per datasheet recommendation (just to be safe)
         self.spi_read(1, registers::RF_SETUP)?;
-        self.spi_write_byte(registers::RF_SETUP, self._buf[1] & !0x90)?;
+        self.spi_write_byte(registers::RF_SETUP, self.buf[1] & !0x90)?;
         self.ce_pin.set_low().map_err(|e| e.kind())?;
         Ok(())
     }
@@ -258,7 +260,7 @@ where
     /// the LNA feature is always enabled.
     pub fn set_lna(&mut self, enable: bool) -> Result<(), Nrf24Error<SpiError, OutputPinError>> {
         self.spi_read(1, registers::RF_SETUP)?;
-        let out = self._buf[1] & !1 | enable as u8;
+        let out = self.buf[1] & !1 | enable as u8;
         self.spi_write_byte(registers::RF_SETUP, out)
     }
 }
@@ -313,6 +315,18 @@ mod test {
             (
                 vec![registers::CONFIG | commands::W_REGISTER, 0xCu8],
                 vec![0xEu8, 0u8],
+            ),
+            //set cached TX address
+            (
+                vec![
+                    registers::RX_ADDR_P0 | commands::W_REGISTER,
+                    0xE7,
+                    0xE7,
+                    0xE7,
+                    0xE7,
+                    0xE7
+                ],
+                vec![0xE, 0, 0, 0, 0, 0]
             ),
             // open pipe 0 for TX (regardless of auto-ack)
             (vec![registers::EN_RXADDR, 0u8], vec![0xEu8, 0u8]),
@@ -385,7 +399,7 @@ mod test {
 
         let mocks = mk_radio(&ce_expectations, &spi_expectations);
         let (mut radio, mut spi, mut ce_pin) = (mocks.0, mocks.1, mocks.2);
-        radio._feature = radio._feature.with_is_plus_variant(is_plus_variant);
+        radio.feature = radio.feature.with_is_plus_variant(is_plus_variant);
         radio.start_carrier_wave(crate::PaLevel::Max, 0xFF).unwrap();
         spi.done();
         ce_pin.done();

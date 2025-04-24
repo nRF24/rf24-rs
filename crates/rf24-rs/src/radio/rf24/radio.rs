@@ -16,16 +16,16 @@ where
     DELAY: DelayNs,
 {
     fn as_rx(&mut self) -> Result<(), Self::Error> {
-        self._config_reg = self._config_reg.as_rx();
-        self.spi_write_byte(registers::CONFIG, self._config_reg.into_bits())?;
+        self.config_reg = self.config_reg.as_rx();
+        self.spi_write_byte(registers::CONFIG, self.config_reg.into_bits())?;
         self.clear_status_flags(StatusFlags::new())?;
         self.ce_pin.set_high().map_err(|e| e.kind())?;
 
         // Restore the pipe0 address, if exists
-        if let Some(addr) = self._pipe0_rx_addr {
+        if let Some(addr) = self.pipe0_rx_addr {
             self.spi_write_buf(
                 registers::RX_ADDR_P0,
-                &addr[..self._feature.address_length() as usize],
+                &addr[..self.feature.address_length() as usize],
             )?;
         } else {
             self.close_rx_pipe(0)?;
@@ -36,21 +36,25 @@ where
     fn as_tx(&mut self) -> Result<(), Self::Error> {
         self.ce_pin.set_low().map_err(|e| e.kind())?;
 
-        self._delay_impl.delay_ns(self.tx_delay * 1000);
-        if self._feature.ack_payloads() {
+        self.delay_impl.delay_ns(self.tx_delay * 1000);
+        if self.feature.ack_payloads() {
             self.flush_tx()?;
         }
 
-        self._config_reg = self._config_reg.as_tx();
-        self.spi_write_byte(registers::CONFIG, self._config_reg.into_bits())?;
+        self.config_reg = self.config_reg.as_tx();
+        self.spi_write_byte(registers::CONFIG, self.config_reg.into_bits())?;
+
+        // use `spi_read()` to avoid multiple borrows of self (`spi_write_buf()` and `tx_buf`)
+        self.buf[1..6].copy_from_slice(&self.tx_addr);
+        self.spi_read(5, registers::RX_ADDR_P0 | commands::W_REGISTER)?;
 
         self.spi_read(1, registers::EN_RXADDR)?;
-        let out = self._buf[1] | 1;
+        let out = self.buf[1] | 1;
         self.spi_write_byte(registers::EN_RXADDR, out)
     }
 
     fn is_rx(&self) -> bool {
-        self._config_reg.is_rx()
+        self.config_reg.is_rx()
     }
 
     /// See [`EsbRadio::send()`] for implementation-agnostic detail.
@@ -65,12 +69,12 @@ where
             // write() also clears the status flags and asserts the CE pin
             return Ok(false);
         }
-        self._delay_impl.delay_us(10);
+        self.delay_impl.delay_us(10);
         // now block until we get a tx_ds or tx_df event
-        while self._status.into_bits() & (mnemonics::MASK_MAX_RT | mnemonics::MASK_TX_DS) == 0 {
+        while self.status.into_bits() & (mnemonics::MASK_MAX_RT | mnemonics::MASK_TX_DS) == 0 {
             self.spi_read(0, commands::NOP)?;
         }
-        Ok(self._status.tx_ds())
+        Ok(self.status.tx_ds())
     }
 
     /// See [`EsbRadio::write()`] for implementation-agnostic detail.
@@ -91,25 +95,25 @@ where
         self.clear_status_flags(StatusFlags::from_bits(
             mnemonics::MASK_MAX_RT | mnemonics::MASK_TX_DS,
         ))?;
-        if self._status.tx_full() {
+        if self.status.tx_full() {
             // TX FIFO is full already
             return Ok(false);
         }
         let mut buf_len = buf.len().min(32) as u8;
         // to avoid resizing the given buf, we'll have to use self._buf directly
-        self._buf[0] = if !ask_no_ack {
+        self.buf[0] = if !ask_no_ack {
             commands::W_TX_PAYLOAD
         } else {
             commands::W_TX_PAYLOAD_NO_ACK
         };
-        self._buf[1..(buf_len + 1) as usize].copy_from_slice(&buf[..buf_len as usize]);
+        self.buf[1..(buf_len + 1) as usize].copy_from_slice(&buf[..buf_len as usize]);
         // ensure payload_length setting is respected
-        if !self._feature.dynamic_payloads() && buf_len < self._payload_length {
+        if !self.feature.dynamic_payloads() && buf_len < self.payload_length {
             // pad buf with zeros
-            for i in (buf_len + 1)..(self._payload_length + 1) {
-                self._buf[i as usize] = 0;
+            for i in (buf_len + 1)..(self.payload_length + 1) {
+                self.buf[i as usize] = 0;
             }
-            buf_len = self._payload_length;
+            buf_len = self.payload_length;
         }
         self.spi_transfer(buf_len + 1)?;
         if start_tx {
@@ -138,17 +142,17 @@ where
     ///   payload even when [`RF24::read()`] is called with an empty RX FIFO.
     fn read(&mut self, buf: &mut [u8], len: Option<u8>) -> Result<u8, Self::Error> {
         let buf_len =
-            (buf.len().min(32) as u8).min(len.unwrap_or(if self._feature.dynamic_payloads() {
+            (buf.len().min(32) as u8).min(len.unwrap_or(if self.feature.dynamic_payloads() {
                 self.get_dynamic_payload_length()?
             } else {
-                self._payload_length
+                self.payload_length
             }));
         if buf_len == 0 {
             return Ok(0);
         }
         self.spi_read(buf_len, commands::R_RX_PAYLOAD)?;
         for i in 0..buf_len {
-            buf[i as usize] = self._buf[i as usize + 1];
+            buf[i as usize] = self.buf[i as usize + 1];
         }
         let flags = StatusFlags::from_bits(mnemonics::MASK_RX_DR);
         self.clear_status_flags(flags)?;
@@ -161,12 +165,12 @@ where
             return Ok(false);
         }
         self.rewrite()?;
-        self._delay_impl.delay_us(10);
+        self.delay_impl.delay_us(10);
         // now block until a tx_ds or tx_df event occurs
-        while self._status.into_bits() & 0x30 == 0 {
+        while self.status.into_bits() & 0x30 == 0 {
             self.spi_read(0, commands::NOP)?;
         }
-        Ok(self._status.tx_ds())
+        Ok(self.status.tx_ds())
     }
 
     fn rewrite(&mut self) -> Result<(), Self::Error> {
@@ -180,7 +184,7 @@ where
 
     fn get_last_arc(&mut self) -> Result<u8, Self::Error> {
         self.spi_read(1, registers::OBSERVE_TX)?;
-        Ok(self._buf[1] & 0xF)
+        Ok(self.buf[1] & 0xF)
     }
 }
 
@@ -277,6 +281,18 @@ mod test {
                 vec![registers::CONFIG | commands::W_REGISTER, 0xCu8],
                 vec![0xEu8, 0u8],
             ),
+            // set cached TX address to RX pipe 0
+            (
+                vec![
+                    registers::RX_ADDR_P0 | commands::W_REGISTER,
+                    0xE7,
+                    0xE7,
+                    0xE7,
+                    0xE7,
+                    0xE7
+                ],
+                vec![0xE, 0, 0, 0, 0, 0]
+            ),
             // open pipe 0 for TX (regardless of auto-ack)
             (vec![registers::EN_RXADDR, 0u8], vec![0xEu8, 0u8]),
             (
@@ -286,7 +302,7 @@ mod test {
         ];
         let mocks = mk_radio(&ce_expectations, &spi_expectations);
         let (mut radio, mut spi, mut ce_pin) = (mocks.0, mocks.1, mocks.2);
-        radio._feature = radio._feature.with_ack_payloads(true);
+        radio.feature = radio.feature.with_ack_payloads(true);
         radio.as_tx().unwrap();
         spi.done();
         ce_pin.done();
@@ -341,7 +357,7 @@ mod test {
         assert!(radio.send(&payload, false).unwrap());
         // again using simulated full TX FIFO
         assert!(!radio.send(&payload, false).unwrap());
-        radio._config_reg = radio._config_reg.as_rx(); // simulate RX mode
+        radio.config_reg = radio.config_reg.as_rx(); // simulate RX mode
         assert!(radio.send(&payload, false).is_err());
         spi.done();
         ce_pin.done();
@@ -382,7 +398,7 @@ mod test {
         let (mut radio, mut spi, mut ce_pin) = (mocks.0, mocks.1, mocks.2);
         assert!(radio.write(&payload, true, false).unwrap());
         // upload a dynamically sized payload
-        radio._feature = radio._feature.with_dynamic_payloads(true);
+        radio.feature = radio.feature.with_dynamic_payloads(true);
         assert!(radio.write(&payload, true, false).unwrap());
         spi.done();
         ce_pin.done();
@@ -426,7 +442,7 @@ mod test {
         assert_eq!(32u8, radio.read(&mut payload, None).unwrap());
         assert_eq!(payload, [0x55u8; 32]);
         assert_eq!(0u8, radio.read(&mut payload, Some(0)).unwrap());
-        radio._feature = radio._feature.with_dynamic_payloads(true);
+        radio.feature = radio.feature.with_dynamic_payloads(true);
         assert_eq!(32u8, radio.read(&mut payload, None).unwrap());
         assert_eq!(payload, [0xAA; 32]);
         spi.done();
@@ -456,7 +472,7 @@ mod test {
         let mocks = mk_radio(&ce_expectations, &spi_expectations);
         let (mut radio, mut spi, mut ce_pin) = (mocks.0, mocks.1, mocks.2);
         assert!(radio.resend().unwrap());
-        radio._config_reg = radio._config_reg.as_rx(); // simulate RX mode
+        radio.config_reg = radio.config_reg.as_rx(); // simulate RX mode
         assert!(!radio.resend().unwrap());
         spi.done();
         ce_pin.done();

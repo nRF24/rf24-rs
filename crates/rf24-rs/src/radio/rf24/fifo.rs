@@ -13,7 +13,7 @@ where
 {
     fn available(&mut self) -> Result<bool, Self::Error> {
         self.spi_read(1, registers::FIFO_STATUS)?;
-        Ok(self._buf[1] & 1 == 0)
+        Ok(self.buf[1] & 1 == 0)
     }
 
     fn available_pipe(&mut self, pipe: &mut u8) -> Result<bool, Self::Error> {
@@ -21,7 +21,7 @@ where
             // RX FIFO is not empty
             // get last used pipe
             self.spi_read(0, commands::NOP)?;
-            *pipe = self._status.rx_pipe();
+            *pipe = self.status.rx_pipe();
             return Ok(true);
         }
         Ok(false)
@@ -40,7 +40,7 @@ where
     fn get_fifo_state(&mut self, about_tx: bool) -> Result<FifoState, Self::Error> {
         self.spi_read(1, registers::FIFO_STATUS)?;
         let offset = about_tx as u8 * 4;
-        let status = (self._buf[1] & (3 << offset)) >> offset;
+        let status = (self.buf[1] & (3 << offset)) >> offset;
         match status {
             1 => Ok(FifoState::Empty),
             2 => Ok(FifoState::Full),

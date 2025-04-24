@@ -176,7 +176,7 @@ where
         std::println!("RF Power Amplifier________{}", self.get_pa_level()?);
 
         self.spi_read(1, registers::RF_SETUP)?;
-        let rf_setup = self._buf[1];
+        let rf_setup = self.buf[1];
         std::println!("RF LNA enabled____________{}", rf_setup & 1 > 0);
 
         std::println!("CRC Length________________{}", self.get_crc_length()?);
@@ -192,7 +192,7 @@ where
         );
 
         self.spi_read(1, registers::SETUP_RETR)?;
-        let retry_setup = self._buf[1];
+        let retry_setup = self.buf[1];
         std::println!(
             "Auto retry delay__________{} microseconds",
             (retry_setup >> 4) as u16 * 250 + 250
@@ -200,10 +200,10 @@ where
         std::println!("Auto retry attempts_______{} maximum", retry_setup & 0x0F);
 
         self.spi_read(1, registers::FIFO_STATUS)?;
-        std::println!("Re-use TX FIFO____________{}", (self._buf[1] & 0x80) > 0);
+        std::println!("Re-use TX FIFO____________{}", (self.buf[1] & 0x80) > 0);
 
         self.spi_read(1, registers::OBSERVE_TX)?;
-        let observer = self._buf[1];
+        let observer = self.buf[1];
         std::println!("Packets lost\n    on current channel____{}", observer >> 4);
         std::println!(
             "Retry attempts made\n    for last transmission_{}",
@@ -211,13 +211,13 @@ where
         );
 
         self.spi_read(1, registers::CONFIG)?;
-        self._config_reg = Config::from_bits(self._buf[1]);
-        std::println!("IRQ on Data Ready_________{}", self._config_reg.rx_dr());
-        std::println!("    Data Ready triggered__{}", self._status.rx_dr());
-        std::println!("IRQ on Data Sent__________{}", self._config_reg.tx_ds());
-        std::println!("    Data Sent triggered___{}", self._status.tx_ds());
-        std::println!("IRQ on Data Fail__________{}", self._config_reg.tx_df());
-        std::println!("    Data Fail triggered___{}", self._status.tx_df());
+        self.config_reg = Config::from_bits(self.buf[1]);
+        std::println!("IRQ on Data Ready_________{}", self.config_reg.rx_dr());
+        std::println!("    Data Ready triggered__{}", self.status.rx_dr());
+        std::println!("IRQ on Data Sent__________{}", self.config_reg.tx_ds());
+        std::println!("    Data Sent triggered___{}", self.status.tx_ds());
+        std::println!("IRQ on Data Fail__________{}", self.config_reg.tx_df());
+        std::println!("    Data Fail triggered___{}", self.status.tx_df());
 
         let fifo = self.get_fifo_state(true)?;
         std::println!("TX FIFO___________________{}", fifo);
@@ -225,37 +225,37 @@ where
         std::println!("RX FIFO___________________{}", fifo);
 
         self.spi_read(1, registers::FEATURE)?;
-        let features = self._buf[1];
+        let features = self.buf[1];
         std::println!("Ask no ACK allowed________{}", features & 1 > 0);
         std::println!("ACK Payload enabled_______{}", features & 2 > 0);
 
         self.spi_read(1, registers::DYNPD)?;
-        std::println!("Dynamic Payloads__________{:#010b}", self._buf[1]);
+        std::println!("Dynamic Payloads__________{:#010b}", self.buf[1]);
 
         self.spi_read(1, registers::EN_AA)?;
-        std::println!("Auto Acknowledgment_______{:#010b}", self._buf[1]);
+        std::println!("Auto Acknowledgment_______{:#010b}", self.buf[1]);
 
         std::println!(
             "Primary Mode______________{}X",
-            if self._config_reg.is_rx() { "R" } else { "T" }
+            if self.config_reg.is_rx() { "R" } else { "T" }
         );
         std::println!("Powered Up________________{}", self.is_powered());
 
         // print pipe addresses
         self.spi_read(5, registers::TX_ADDR)?;
         let mut address = [0u8; 4];
-        address.copy_from_slice(&self._buf[2..6]);
+        address.copy_from_slice(&self.buf[2..6]);
         std::println!(
             "TX address_______________{:#08X}{:02X}",
             u32::from_le_bytes(address),
-            self._buf[1]
+            self.buf[1]
         );
         self.spi_read(1, registers::EN_RXADDR)?;
-        let open_pipes = self._buf[1];
+        let open_pipes = self.buf[1];
         for pipe in 0..=5 {
             self.spi_read(if pipe < 2 { 5 } else { 1 }, registers::RX_ADDR_P0 + pipe)?;
             if pipe < 2 {
-                address.copy_from_slice(&self._buf[2..6]);
+                address.copy_from_slice(&self.buf[2..6]);
             }
             std::println!(
                 "Pipe {pipe} ({}) bound to {:#08X}{:02X}",
@@ -266,7 +266,7 @@ where
                 },
                 // reverse the bytes read to represent how memory is stored
                 u32::from_le_bytes(address),
-                self._buf[1],
+                self.buf[1],
             );
         }
         Ok(())
