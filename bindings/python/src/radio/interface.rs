@@ -668,7 +668,7 @@ impl RF24 {
     /// avoid using pipe 0 to receive because of this.
     ///
     /// Parameters:
-    ///     address: The address to receive data from.
+    ///     address: The address to transmit data to.
     pub fn open_tx_pipe(&mut self, address: &[u8]) -> PyResult<()> {
         self.inner
             .open_tx_pipe(address)

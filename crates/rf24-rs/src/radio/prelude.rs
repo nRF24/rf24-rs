@@ -24,7 +24,7 @@ pub trait EsbPipe: RadioErrorType {
     ///
     /// If the specified `pipe` is not in range [0, 5], then this function does nothing.
     ///
-    /// Up to 6 pipes can be open for reading at once.  Open all the required
+    /// Up to 6 pipes can be open for reading at once. Open all the required
     /// reading pipes, and then call [`EsbRadio::as_rx()`].
     ///
     /// ### About pipe addresses
@@ -61,6 +61,8 @@ pub trait EsbPipe: RadioErrorType {
 
     /// Set an address to pipe 0 for transmitting when radio is in TX mode.
     ///
+    /// Only pipe 0 can be used for transmitting. It is highly recommended to
+    /// avoid using pipe 0 to receive because of this.
     fn open_tx_pipe(&mut self, address: &[u8]) -> Result<(), Self::Error>;
 
     /// Close a specified pipe from receiving data when radio is in RX mode.

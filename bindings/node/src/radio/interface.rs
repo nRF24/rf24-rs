@@ -217,12 +217,12 @@ impl RF24 {
     /// > (via {@link RF24.ackPayloads}).
     ///
     /// This must be called at least once before calling
-    /// {@link RF24.send) or {@link RF24.write).
+    /// {@link RF24.send} or {@link RF24.write}.
     /// Conventionally, this should be called before setting the TX address via
-    /// {@link RF24.openTxPipe).
+    /// {@link RF24.openTxPipe}.
     ///
     /// For auto-ack purposes, this function will also restore the cached
-    /// TX address (passed to {@link RF24.openTxPipe))
+    /// TX address (passed to {@link RF24.openTxPipe})
     /// to the RX pipe 0.
     ///
     /// @group Basic
@@ -779,7 +779,7 @@ impl RF24 {
     /// Only pipe 0 can be used for transmitting. It is highly recommended to
     /// avoid using pipe 0 to receive because of this.
     ///
-    /// @param address - The address to receive data from.
+    /// @param address - The address to transmit data to.
     ///
     /// @group Basic
     #[napi]
