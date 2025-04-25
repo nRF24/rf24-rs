@@ -55,8 +55,8 @@ where
 #[cfg(test)]
 mod test {
     extern crate std;
-    use super::{commands, registers, EsbFifo, FifoState};
-    use crate::{radio::Nrf24Error, spi_test_expects, test::mk_radio};
+    use super::{commands, registers, EsbFifo, FifoState, Nrf24Error};
+    use crate::{spi_test_expects, test::mk_radio};
     use embedded_hal_mock::eh1::spi::Transaction as SpiTransaction;
     use std::vec;
 

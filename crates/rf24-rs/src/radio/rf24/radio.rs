@@ -44,9 +44,11 @@ where
         self.config_reg = self.config_reg.as_tx();
         self.spi_write_byte(registers::CONFIG, self.config_reg.into_bits())?;
 
-        // use `spi_read()` to avoid multiple borrows of self (`spi_write_buf()` and `tx_buf`)
-        self.buf[1..6].copy_from_slice(&self.tx_addr);
-        self.spi_read(5, registers::RX_ADDR_P0 | commands::W_REGISTER)?;
+        // use `spi_transfer()` to avoid multiple borrows of self (`spi_write_buf()` and `tx_buf`)
+        let addr_len = self.feature.address_length();
+        self.buf[0] = registers::RX_ADDR_P0 | commands::W_REGISTER;
+        self.buf[1..addr_len as usize + 1].copy_from_slice(&self.tx_addr[0..addr_len as usize]);
+        self.spi_transfer(addr_len + 1)?;
 
         self.spi_read(1, registers::EN_RXADDR)?;
         let out = self.buf[1] | 1;
@@ -99,23 +101,22 @@ where
             // TX FIFO is full already
             return Ok(false);
         }
-        let mut buf_len = buf.len().min(32) as u8;
+        let buf_len = buf.len().min(32);
         // to avoid resizing the given buf, we'll have to use self._buf directly
         self.buf[0] = if !ask_no_ack {
             commands::W_TX_PAYLOAD
         } else {
             commands::W_TX_PAYLOAD_NO_ACK
         };
-        self.buf[1..(buf_len + 1) as usize].copy_from_slice(&buf[..buf_len as usize]);
+        self.buf[1..buf_len + 1].copy_from_slice(&buf[..buf_len]);
         // ensure payload_length setting is respected
-        if !self.feature.dynamic_payloads() && buf_len < self.payload_length {
+        if !self.feature.dynamic_payloads() && (buf_len as u8) < self.payload_length {
             // pad buf with zeros
-            for i in (buf_len + 1)..(self.payload_length + 1) {
-                self.buf[i as usize] = 0;
-            }
-            buf_len = self.payload_length;
+            self.buf[buf_len + 1..self.payload_length as usize + 1].fill(0);
+            self.spi_transfer(self.payload_length + 1)?;
+        } else {
+            self.spi_transfer(buf_len as u8 + 1)?;
         }
-        self.spi_transfer(buf_len + 1)?;
         if start_tx {
             self.ce_pin.set_high().map_err(|e| e.kind())?;
         }
@@ -151,9 +152,7 @@ where
             return Ok(0);
         }
         self.spi_read(buf_len, commands::R_RX_PAYLOAD)?;
-        for i in 0..buf_len {
-            buf[i as usize] = self.buf[i as usize + 1];
-        }
+        buf[0..buf_len as usize].copy_from_slice(&self.buf[1..buf_len as usize + 1]);
         let flags = StatusFlags::from_bits(mnemonics::MASK_RX_DR);
         self.clear_status_flags(flags)?;
         Ok(buf_len)
