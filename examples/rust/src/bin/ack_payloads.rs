@@ -76,11 +76,15 @@ impl App {
         self.radio.set_ack_payloads(true).map_err(debug_err)?;
 
         let address = [b"1Node", b"2Node"];
+
+        // set TX address of RX node (always uses pipe 0)
         self.radio
-            .open_tx_pipe(address[radio_number as usize])
+            .as_tx(Some(address[radio_number as usize])) // enter inactive TX mode
             .map_err(debug_err)?;
+
+        // set RX address of TX node into an RX pipe
         self.radio
-            .open_rx_pipe(1, address[1 - radio_number as usize])
+            .open_rx_pipe(1, address[1 - radio_number as usize]) // using pipe 1
             .map_err(debug_err)?;
         Ok(())
     }
@@ -90,7 +94,7 @@ impl App {
     /// Uses the [`App::radio`] as a transmitter.
     pub fn tx(&mut self, count: u8) -> Result<()> {
         // put radio into TX mode
-        self.radio.as_tx().map_err(debug_err)?;
+        self.radio.as_tx(None).map_err(debug_err)?;
 
         // declare our outgoing payload.
         // `\x00` is null terminator for the string portion.
@@ -134,6 +138,10 @@ impl App {
             remaining -= 1;
             DelayImpl.delay_ms(1000);
         }
+
+        // recommended behavior is to keep in TX mode while idle
+        self.radio.as_tx(None).map_err(debug_err)?; // put the radio into inactive TX mode
+
         Ok(())
     }
 
@@ -185,9 +193,11 @@ impl App {
             }
         }
 
-        // It is highly recommended to keep the radio idling in an inactive TX mode
-        self.radio.as_tx().map_err(debug_err)?;
-        // as_tx() will also flush any remaining ACK payloads from the radio's TX FIFO.
+        // recommended behavior is to keep in TX mode while idle
+        // as_tx() will also flush unused ACK payloads
+        // when ACK payloads are enabled
+        self.radio.as_tx(None).map_err(debug_err)?; // put the radio into inactive TX mode
+
         Ok(())
     }
 

@@ -44,7 +44,8 @@ export class App {
     const address = [Buffer.from("1Node"), Buffer.from("2Node")];
 
     //set TX address of RX node into the TX pipe
-    this.radio.openTxPipe(address[radioNumber]); // always uses pipe 0
+    this.radio.asTx(address[radioNumber]); // always uses pipe 0
+
     // set RX address of TX node into an RX pipe
     this.radio.openRxPipe(1, address[1 - radioNumber]); // using pipe 1
 
@@ -92,6 +93,9 @@ export class App {
       }
       await timer.setTimeout(1000);
     }
+
+    // recommended behavior is to keep in TX mode while idle
+    this.radio.asTx(); // enter inactive TX mode
   }
 
   /**
@@ -121,7 +125,11 @@ export class App {
         timeout = Date.now() + (duration || 6) * 1000;
       }
     }
-    this.radio.asTx(); // flushes TX FIFO when ACK payloads are enabled
+
+    // recommended behavior is to keep in TX mode while idle
+    this.radio.asTx(); // enter inactive TX mode
+    // `asTx()` also flushes any unused ACK payloads in the TX FIFO
+    // when ACK payloads are enabled
   }
 
   /**

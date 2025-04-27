@@ -1,4 +1,4 @@
-use super::{data_rate::set_tx_delay, registers, Feature, Nrf24Error, RF24};
+use super::{commands, data_rate::set_tx_delay, registers, Feature, Nrf24Error, RF24};
 use crate::{
     radio::{
         prelude::{EsbChannel, EsbFifo, EsbInit, EsbPayloadLength, EsbPipe, EsbPower, EsbStatus},
@@ -48,14 +48,23 @@ where
     }
 
     fn with_config(&mut self, config: &RadioConfig) -> Result<(), Self::Error> {
+        // Set CONFIG register:
+        //      Set all IRQ events on IRQ pin
+        //      Set CRC length
+        //      Power up
+        //      Enable PTX
+        // Do not write CE high so radio will remain in standby-I mode.
+        // PTX should use only 22uA of power in standby-I mode.
+        self.config_reg = config.config_reg.with_power(true);
+        self.ce_pin.set_low().map_err(Nrf24Error::Gpo)?; // Guarantee CE is low on powerDown
         self.clear_status_flags(StatusFlags::new())?;
-        self.power_down()?;
 
         // Flush buffers
         self.flush_rx()?;
         self.flush_tx()?;
 
-        self.set_address_length(config.address_length())?;
+        let addr_len = config.address_length();
+        self.set_address_length(addr_len)?;
 
         self.spi_write_byte(registers::SETUP_RETR, config.auto_retries.into_bits())?;
         self.spi_write_byte(registers::EN_AA, config.auto_ack())?;
@@ -83,21 +92,22 @@ where
                 self.close_rx_pipe(pipe)?;
             }
         }
-        config.tx_address(&mut address);
-        self.open_tx_pipe(&address)?;
+        config.tx_address(&mut self.tx_address);
+        // use `spi_transfer()` to avoid multiple borrows of self (`spi_write_buf()` and `tx_address`)
+        for reg in [registers::TX_ADDR, registers::RX_ADDR_P0] {
+            self.buf[0] = reg | commands::W_REGISTER;
+            self.buf[1..addr_len as usize + 1]
+                .copy_from_slice(&self.tx_address[0..addr_len as usize]);
+            self.spi_transfer(addr_len + 1)?;
+        }
+        // enable pipe 0 for TX mode
+        self.spi_read(1, registers::EN_RXADDR)?;
+        self.spi_write_byte(registers::EN_RXADDR, self.buf[1] | 1)?;
 
         self.set_payload_length(config.payload_length())?;
 
         self.set_channel(config.channel())?;
 
-        // Set CONFIG register:
-        //      Set all IRQ events on IRQ pin
-        //      Set CRC length
-        //      Power up
-        //      Enable PTX
-        // Do not write CE high so radio will remain in standby-I mode.
-        // PTX should use only 22uA of power in standby-I mode.
-        self.config_reg = config.config_reg.with_power(true);
         self.spi_write_byte(registers::CONFIG, self.config_reg.into_bits())
     }
 }
@@ -179,11 +189,6 @@ mod test {
                     vec![registers::STATUS | commands::W_REGISTER, 0x70u8],
                     vec![0xEu8, 0u8],
                 ),
-                // power_down()
-                (
-                    vec![registers::CONFIG | commands::W_REGISTER, 0xCu8],
-                    vec![0xEu8, 0u8],
-                ),
                 // flush_rx()
                 (vec![commands::FLUSH_RX], vec![0xEu8]),
                 // flush_tx()
@@ -222,38 +227,38 @@ mod test {
                     vec![0xEu8, 0u8],
                 ),
             ]);
-            for (pipe, addr) in [0xE7, 0xC2].iter().enumerate() {
-                spi_expectations.extend(spi_test_expects![
-                    // set RX address for pipe
-                    (
-                        vec![
-                            (registers::RX_ADDR_P0 + pipe as u8) | commands::W_REGISTER,
-                            *addr,
-                            *addr,
-                            *addr,
-                            *addr,
-                            *addr
-                        ],
-                        vec![0xEu8, 0, 0, 0, 0, 0],
-                    ),
-                    // enable RX pipe
-                    (vec![registers::EN_RXADDR, 0], vec![0xEu8, 0]),
-                    (
-                        vec![registers::EN_RXADDR | commands::W_REGISTER, 1 << pipe],
-                        vec![0xEu8, 0],
-                    ),
-                ]);
-                if pipe == 0 {
-                    // close pipe 0
-                    spi_expectations.extend(spi_test_expects![
-                        (vec![registers::EN_RXADDR, 0], vec![0xEu8, 1]),
-                        (
-                            vec![registers::EN_RXADDR | commands::W_REGISTER, 0],
-                            vec![0xEu8, 0],
-                        ),
-                    ]);
-                }
-            }
+            spi_expectations.extend(spi_test_expects![
+                // enable RX pipe 0
+                (vec![registers::EN_RXADDR, 0], vec![0xEu8, 0]),
+                (
+                    vec![registers::EN_RXADDR | commands::W_REGISTER, 1],
+                    vec![0xEu8, 0],
+                ),
+                // close pipe 0
+                (vec![registers::EN_RXADDR, 0], vec![0xEu8, 1]),
+                (
+                    vec![registers::EN_RXADDR | commands::W_REGISTER, 0],
+                    vec![0xEu8, 0],
+                ),
+                // set RX address for pipe
+                (
+                    vec![
+                        (registers::RX_ADDR_P0 + 1) | commands::W_REGISTER,
+                        0xC2,
+                        0xC2,
+                        0xC2,
+                        0xC2,
+                        0xC2
+                    ],
+                    vec![0xEu8, 0, 0, 0, 0, 0],
+                ),
+                // enable RX pipe 1
+                (vec![registers::EN_RXADDR, 0], vec![0xEu8, 0]),
+                (
+                    vec![registers::EN_RXADDR | commands::W_REGISTER, 2],
+                    vec![0xEu8, 0],
+                ),
+            ]);
             for (pipe, addr) in [0xC3, 0xC4, 0xC5, 0xC6].iter().enumerate() {
                 spi_expectations.extend(spi_test_expects![
                     // set RX address for pipe
@@ -302,6 +307,12 @@ mod test {
                         0xE7
                     ],
                     vec![0xEu8, 0, 0, 0, 0, 0],
+                ),
+                // open pipe 0 for TX (regardless of auto-ack)
+                (vec![registers::EN_RXADDR, 0u8], vec![0xEu8, 0u8]),
+                (
+                    vec![registers::EN_RXADDR | commands::W_REGISTER, 1u8],
+                    vec![0xEu8, 0u8],
                 ),
                 // set payload length to 32 bytes on all pipes
                 (

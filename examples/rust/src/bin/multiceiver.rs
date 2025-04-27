@@ -97,11 +97,10 @@ impl App {
             .map_err(debug_err)?;
 
         // put radio into TX mode
-        self.radio.as_tx().map_err(debug_err)?;
-        // set the TX address to the address of the base station.
         self.radio
-            .open_tx_pipe(&self.addresses[node_number as usize])
+            .as_tx(Some(&self.addresses[node_number as usize]))
             .map_err(debug_err)?;
+
         let mut counter = 0;
         while counter < count {
             counter += 1;
@@ -123,6 +122,10 @@ impl App {
             }
             DelayImpl.delay_ms(1000);
         }
+
+        // recommended behavior is to keep in TX mode while idle
+        self.radio.as_tx(None).map_err(debug_err)?; // put the radio into inactive TX mode
+
         Ok(())
     }
 
@@ -153,8 +156,9 @@ impl App {
             }
         }
 
-        // It is highly recommended to keep the radio idling in an inactive TX mode
-        self.radio.as_tx().map_err(debug_err)?;
+        // recommended behavior is to keep in TX mode while idle
+        self.radio.as_tx(None).map_err(debug_err)?; // put the radio into inactive TX mode
+
         Ok(())
     }
 

@@ -46,7 +46,7 @@ export class App {
     const address = [Buffer.from("1Node"), Buffer.from("2Node")];
 
     //set TX address of RX node into the TX pipe
-    this.radio.openTxPipe(address[radioNumber]); // always uses pipe 0
+    this.radio.asTx(address[radioNumber]); // always uses pipe 0
     // set RX address of TX node into an RX pipe
     this.radio.openRxPipe(1, address[1 - radioNumber]); // using pipe 1
 
@@ -165,6 +165,9 @@ export class App {
     // all 3 ACK payloads received were 4 bytes each, and RX FIFO is full
     // so, fetching 12 bytes from the RX FIFO also flushes RX FIFO
     console.log("\nComplete RX FIFO:", this.radio.read(12).toString("utf-8"));
+
+    // recommended behavior is to keep in TX mode while idle
+    this.radio.asTx(); // enter inactive TX mode
   }
 
   /**
@@ -199,7 +202,10 @@ export class App {
     timer.setTimeout(500); // wait for last ACK payload to transmit
 
     // exit RX mode
-    this.radio.asTx(); // also clears the TX FIFO when ACK payloads are enabled
+    // recommended behavior is to keep in TX mode while idle
+    this.radio.asTx(); // enter inactive TX mode
+    // `asTx()` also flushes any unused ACK payloads in the TX FIFO
+    // when ACK payloads are enabled
 
     if (this.radio.available()) {
       // If RX FIFO is not empty (timeout did not occur).

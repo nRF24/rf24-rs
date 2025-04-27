@@ -70,9 +70,9 @@ class App:
             ((node_number * 3) % 12) + 3, 15
         )  # max value is 15 for both args
 
-        self.radio.as_tx()
-        # set the TX address to the address of the base station.
-        self.radio.open_tx_pipe(self.addresses[node_number])
+        # set the TX address to the address of the base station (always uses pipe 0).
+        self.radio.as_tx(self.addresses[node_number])  # enter inactive TX mode
+
         counter = 0
         # use the node_number to identify where the payload came from
         while counter < count:
@@ -93,6 +93,9 @@ class App:
                 print("Transmission failed or timed out")
             time.sleep(1)  # slow down the test for readability
 
+        # recommended behavior is to keep in TX mode while idle
+        self.radio.as_tx()  # enter inactive TX mode
+
     def rx(self, timeout=10):
         """Use the nRF24L01 as a base station for listening to all nodes"""
         # write the addresses to all pipes.
@@ -112,7 +115,9 @@ class App:
                     f"PayloadID: {payload_id}",
                 )
                 end_time = time.monotonic() + timeout  # reset timer with every payload
-        self.radio.as_tx()
+
+        # recommended behavior is to keep in TX mode while idle
+        self.radio.as_tx()  # enter inactive TX mode
 
     def set_role(self):
         """Set the role using stdin stream. Timeout arg for slave() can be

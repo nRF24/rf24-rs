@@ -44,9 +44,23 @@ where
         self.config_reg = self.config_reg.as_tx();
         self.spi_write_byte(registers::CONFIG, self.config_reg.into_bits())?;
 
+        let addr_len = self.feature.address_length();
+        if let Some(tx_address) = tx_address {
+            let len = tx_address.len().min(addr_len as usize);
+            self.tx_address[0..len].copy_from_slice(&tx_address[0..len]);
+            // use `spi_transfer()` to avoid multiple borrows of self (`spi_write_buf()` and `tx_address`)
+            self.buf[0] = registers::TX_ADDR | commands::W_REGISTER;
+            self.buf[1..addr_len as usize + 1]
+                .copy_from_slice(&self.tx_address[0..addr_len as usize]);
+            self.spi_transfer(addr_len + 1)?;
+        }
+
+        self.buf[0] = registers::RX_ADDR_P0 | commands::W_REGISTER;
+        self.buf[1..addr_len as usize + 1].copy_from_slice(&self.tx_address[0..addr_len as usize]);
+        self.spi_transfer(addr_len + 1)?;
+
         self.spi_read(1, registers::EN_RXADDR)?;
-        let out = self.buf[1] | 1;
-        self.spi_write_byte(registers::EN_RXADDR, out)
+        self.spi_write_byte(registers::EN_RXADDR, self.buf[1] | 1)
     }
 
     fn is_rx(&self) -> bool {
@@ -230,11 +244,8 @@ mod test {
         buf_expected[0] = registers::RX_ADDR_P0 | commands::W_REGISTER;
 
         let spi_expectations = spi_test_expects![
-            // open_rx_pipe(0)
-            (
-                buf_expected.clone().to_vec(),
-                vec![0xEu8, 0u8, 0u8, 0u8, 0u8, 0u8],
-            ),
+            // RX address not immediately written to pipe 0 while in TX mode.
+            // so, the SPI transaction  is skipped.
             // set EN_RXADDR
             (vec![registers::EN_RXADDR, 0u8], vec![0xEu8, 0u8]),
             (
@@ -251,7 +262,7 @@ mod test {
                 vec![registers::STATUS | commands::W_REGISTER, 0x70u8],
                 vec![0xEu8, 0u8],
             ),
-            // write cached _pipe0_rx_addr
+            // write cached pipe0_rx_addr
             (buf_expected.to_vec(), vec![0xEu8, 0u8, 0u8, 0u8, 0u8, 0u8]),
         ];
         let mocks = mk_radio(&ce_expectations, &spi_expectations);
@@ -274,6 +285,29 @@ mod test {
                 vec![registers::CONFIG | commands::W_REGISTER, 0xCu8],
                 vec![0xEu8, 0u8],
             ),
+            // set cached TX address to RX pipe 0
+            (
+                vec![
+                    registers::TX_ADDR | commands::W_REGISTER,
+                    0xE7,
+                    0xE7,
+                    0xE7,
+                    0xE7,
+                    0xE7
+                ],
+                vec![0xE, 0, 0, 0, 0, 0]
+            ),
+            (
+                vec![
+                    registers::RX_ADDR_P0 | commands::W_REGISTER,
+                    0xE7,
+                    0xE7,
+                    0xE7,
+                    0xE7,
+                    0xE7
+                ],
+                vec![0xE, 0, 0, 0, 0, 0]
+            ),
             // open pipe 0 for TX (regardless of auto-ack)
             (vec![registers::EN_RXADDR, 0u8], vec![0xEu8, 0u8]),
             (
@@ -284,7 +318,8 @@ mod test {
         let mocks = mk_radio(&ce_expectations, &spi_expectations);
         let (mut radio, mut spi, mut ce_pin) = (mocks.0, mocks.1, mocks.2);
         radio.feature = radio.feature.with_ack_payloads(true);
-        radio.as_tx().unwrap();
+        let tx_address = [0xE7; 5];
+        radio.as_tx(Some(&tx_address)).unwrap();
         spi.done();
         ce_pin.done();
     }

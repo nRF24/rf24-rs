@@ -68,8 +68,8 @@ class App:
             int(input("Which radio is this? Enter '0' or '1'. Defaults to '0' ") or 0)
         )
 
-        # set TX address of RX node into the TX pipe
-        self.radio.open_tx_pipe(address[radio_number])  # always uses pipe 0
+        # set TX address of RX node (always uses pipe 0)
+        self.radio.as_tx(address[radio_number])  # enter inactive TX mode
 
         # set RX address of TX node into an RX pipe
         self.radio.open_rx_pipe(1, address[not radio_number])  # using pipe 1
@@ -181,6 +181,9 @@ class App:
         # So, fetching 12 bytes from the RX FIFO also flushes RX FIFO.
         print("\nComplete RX FIFO:", self.radio.read(12))
 
+        # recommended behavior is to keep in TX mode while idle
+        self.radio.as_tx()  # enter inactive TX mode
+
     def rx(self, timeout=6):  # will listen for 6 seconds before timing out
         """Only listen for 3 payload from the master node"""
         # the "data ready" event will trigger in RX mode
@@ -203,8 +206,11 @@ class App:
             pass
         time.sleep(0.5)  # wait for last ACK payload to transmit
 
-        #  exit RX mode
-        self.radio.as_tx()  # also clears the TX FIFO when ACK payloads are enabled
+        # exit RX mode
+        # recommended behavior is to keep in TX mode while idle
+        self.radio.as_tx()  # enter inactive TX mode
+        # as_tx() will also flush unused ACK payloads
+        # when ACK payloads are enabled
 
         if self.radio.available():  # if RX FIFO is not empty (timeout did not occur)
             # All 3 payloads received were 5 bytes each, and RX FIFO is full.

@@ -75,11 +75,15 @@ impl App {
             .map_err(debug_err)?;
 
         let address = [b"1Node", b"2Node"];
+
+        // set TX address of RX node (always uses pipe 0)
         self.radio
-            .open_tx_pipe(address[radio_number as usize])
+            .as_tx(Some(address[radio_number as usize])) // enter inactive TX mode
             .map_err(debug_err)?;
+
+        // set RX address of TX node into an RX pipe
         self.radio
-            .open_rx_pipe(1, address[1 - radio_number as usize])
+            .open_rx_pipe(1, address[1 - radio_number as usize]) // using pipe 1
             .map_err(debug_err)?;
         Ok(())
     }
@@ -113,8 +117,10 @@ impl App {
         let stream = Self::make_payloads();
         // declare mutable flags for error checking
         let mut flags = StatusFlags::default();
+
         // put radio into TX mode
-        self.radio.as_tx().map_err(debug_err)?;
+        self.radio.as_tx(None).map_err(debug_err)?;
+
         for _ in 0..count {
             self.radio.flush_tx().map_err(debug_err)?;
             let mut failures = 0u8;
@@ -160,6 +166,10 @@ impl App {
                 failures,
             );
         }
+
+        // recommended behavior is to keep in TX mode while idle
+        self.radio.as_tx(None).map_err(debug_err)?; // put the radio into inactive TX mode
+
         Ok(())
     }
 
@@ -183,8 +193,9 @@ impl App {
             }
         }
 
-        // It is highly recommended to keep the radio idling in an inactive TX mode
-        self.radio.as_tx().map_err(debug_err)?;
+        // recommended behavior is to keep in TX mode while idle
+        self.radio.as_tx(None).map_err(debug_err)?; // put the radio into inactive TX mode
+
         Ok(())
     }
 

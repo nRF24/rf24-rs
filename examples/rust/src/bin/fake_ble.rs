@@ -84,7 +84,7 @@ impl App {
     /// Transmits a battery charge level as a BLE beacon.
     pub fn tx_battery(&mut self, count: u8) -> Result<()> {
         // put radio into TX mode
-        self.radio.as_tx().map_err(debug_err)?;
+        self.radio.as_tx(None).map_err(debug_err)?;
 
         let mut battery_service = BatteryService::new();
         battery_service.set_data(85); // 85 % remaining charge
@@ -114,7 +114,7 @@ impl App {
     /// Transmits a temperature measurement as a BLE beacon.
     pub fn tx_temperature(&mut self, count: u8) -> Result<()> {
         // put radio into TX mode
-        self.radio.as_tx().map_err(debug_err)?;
+        self.radio.as_tx(None).map_err(debug_err)?;
 
         let mut temperature_service = TemperatureService::new();
         temperature_service.set_data(45.0); // 45 C degrees
@@ -142,7 +142,7 @@ impl App {
     /// Transmits a URL as a BLE beacon.
     pub fn tx_url(&mut self, count: u8) -> Result<()> {
         // put radio into TX mode
-        self.radio.as_tx().map_err(debug_err)?;
+        self.radio.as_tx(None).map_err(debug_err)?;
 
         let mut url_service = UrlService::new();
         url_service.set_data("https://www.google.com");
@@ -200,7 +200,7 @@ impl App {
                 }
                 if Instant::now() >= end_time {
                     // It is highly recommended to keep the radio idling in an inactive TX mode
-                    self.radio.as_tx().map_err(debug_err)?;
+                    self.radio.as_tx(None).map_err(debug_err)?;
                     // continue reading payloads from RX FIFO
                 }
             }

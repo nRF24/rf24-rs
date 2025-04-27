@@ -28,7 +28,11 @@ where
                 cached_addr[..width].copy_from_slice(&address[..width]);
                 self.pipe0_rx_addr = Some(cached_addr);
             }
-            self.spi_write_buf(registers::RX_ADDR_P0 + pipe, &address[..width])?;
+            if self.config_reg.is_rx() || pipe != 0 {
+                // skip this if radio is in TX mode and the specified `pipe` is 0
+                // NOTE: as_rx() will restore the cached address for pipe 0 (if any)
+                self.spi_write_buf(registers::RX_ADDR_P0 + pipe, &address[..width])?;
+            }
         }
         // For pipes 2-5, only write the MSB
         else {
@@ -38,11 +42,6 @@ where
         self.spi_read(1, registers::EN_RXADDR)?;
         let out = self.buf[1] | (1 << pipe);
         self.spi_write_byte(registers::EN_RXADDR, out)
-    }
-
-    fn open_tx_pipe(&mut self, address: &[u8]) -> Result<(), Self::Error> {
-        self.spi_write_buf(registers::TX_ADDR, address)?;
-        self.spi_write_buf(registers::RX_ADDR_P0, address)
     }
 
     /// If the given `pipe` number is  not in range [0, 5], then this function does nothing.
@@ -104,28 +103,6 @@ mod test {
         let address = [0x55u8; 5];
         radio.open_rx_pipe(9, &address).unwrap();
         radio.open_rx_pipe(5, &address).unwrap();
-        spi.done();
-        ce_pin.done();
-    }
-
-    #[test]
-    pub fn open_tx_pipe() {
-        let mut expected_buf = [0x55u8; 6];
-        expected_buf[0] = registers::TX_ADDR | commands::W_REGISTER;
-        let mut p0_buf = [0x55u8; 6];
-        p0_buf[0] = registers::RX_ADDR_P0 | commands::W_REGISTER;
-        let mut response = [0u8; 6];
-        response[0] = 0xEu8;
-
-        let spi_expectations = spi_test_expects![
-            // open_rx_pipe(5)
-            (expected_buf.to_vec(), response.clone().to_vec()),
-            (p0_buf.to_vec(), response.to_vec()),
-        ];
-        let mocks = mk_radio(&[], &spi_expectations);
-        let (mut radio, mut spi, mut ce_pin) = (mocks.0, mocks.1, mocks.2);
-        let address = [0x55u8; 5];
-        radio.open_tx_pipe(&address).unwrap();
         radio.close_rx_pipe(9).unwrap();
         spi.done();
         ce_pin.done();

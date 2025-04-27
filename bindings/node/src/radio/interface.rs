@@ -196,6 +196,13 @@ impl RF24 {
 
     /// Put the radio into active RX mode.
     ///
+    /// Conventionally, this should be called after setting the RX addresses via
+    /// {@link RF24.openRxPipe}.
+    ///
+    /// This function will restore the cached RX address set to pipe 0.
+    /// This is done because the {@link RF24.asTx} will appropriate the
+    /// RX address on pipe 0 for auto-ack purposes.
+    ///
     /// @group Basic
     #[napi]
     pub fn as_rx(&mut self) -> Result<()> {
@@ -204,7 +211,13 @@ impl RF24 {
             .map_err(|e| Error::new(Status::GenericFailure, format!("{e:?}")))
     }
 
-    /// Deactivates active RX mode and puts the radio into an inactive TX mode.
+    /// Puts the radio into an inactive TX mode.
+    ///
+    /// This must be called at least once before calling {@link RF24.send} or
+    /// {@link RF24.write}.
+    ///
+    /// For auto-ack purposes, this function will also restore
+    /// the cached `txAddress` to the RX pipe 0.
     ///
     /// The datasheet recommends idling the radio in an inactive TX mode.
     ///
@@ -212,11 +225,14 @@ impl RF24 {
     /// > This function will also flush the TX FIFO when ACK payloads are enabled
     /// > (via {@link RF24.ackPayloads}).
     ///
+    /// @param txAddress - If specified, then this buffer will be
+    /// cached and set as the new TX address.
+    ///
     /// @group Basic
     #[napi]
-    pub fn as_tx(&mut self) -> Result<()> {
+    pub fn as_tx(&mut self, tx_address: Option<Buffer>) -> Result<()> {
         self.inner
-            .as_tx()
+            .as_tx(tx_address.as_deref())
             .map_err(|e| Error::new(Status::GenericFailure, format!("{e:?}")))
     }
 
@@ -758,22 +774,6 @@ impl RF24 {
         let address = address.to_vec();
         self.inner
             .open_rx_pipe(pipe, &address)
-            .map_err(|e| Error::new(Status::GenericFailure, format!("{e:?}")))
-    }
-
-    /// Set the address used for transmitting on pipe 0.
-    ///
-    /// Only pipe 0 can be used for transmitting. It is highly recommended to
-    /// avoid using pipe 0 to receive because of this.
-    ///
-    /// @param address - The address to receive data from.
-    ///
-    /// @group Basic
-    #[napi]
-    pub fn open_tx_pipe(&mut self, address: Buffer) -> Result<()> {
-        let address = address.to_vec();
-        self.inner
-            .open_tx_pipe(&address)
             .map_err(|e| Error::new(Status::GenericFailure, format!("{e:?}")))
     }
 

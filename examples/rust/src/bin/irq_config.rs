@@ -78,11 +78,15 @@ impl App {
         self.radio.set_ack_payloads(true).map_err(debug_err)?;
 
         let address = [b"1Node", b"2Node"];
+
+        // set TX address of RX node (always uses pipe 0)
         self.radio
-            .open_tx_pipe(address[radio_number as usize])
+            .as_tx(Some(address[radio_number as usize])) // enter inactive TX mode
             .map_err(debug_err)?;
+
+        // set RX address of TX node into an RX pipe
         self.radio
-            .open_rx_pipe(1, address[1 - radio_number as usize])
+            .open_rx_pipe(1, address[1 - radio_number as usize]) // using pipe 1
             .map_err(debug_err)?;
         Ok(())
     }
@@ -146,7 +150,7 @@ impl App {
         let tx_payloads = [b"Ping ", b"Pong ", b"Radio", b"FAIL!"];
 
         // put radio into TX mode
-        self.radio.as_tx().map_err(debug_err)?;
+        self.radio.as_tx(None).map_err(debug_err)?;
 
         // on data ready test
         println!("\nConfiguring IRQ pin to only ignore 'on data sent' event");
@@ -222,6 +226,9 @@ impl App {
         self.radio.read(&mut rx_data, Some(12)).map_err(debug_err)?;
         println!("\nComplete RX FIFO: {}", String::from_utf8_lossy(&rx_data));
 
+        // recommended behavior is to keep in TX mode while idle
+        self.radio.as_tx(None).map_err(debug_err)?; // put the radio into inactive TX mode
+
         Ok(())
     }
 
@@ -253,7 +260,10 @@ impl App {
         DelayImpl.delay_ms(500); // wait for last ACK payload to transmit
 
         // exit TX mode
-        self.radio.as_tx().map_err(debug_err)?; // also clears the TX FIFO when ACK payloads are enabled
+        // recommended behavior is to keep in TX mode while idle
+        // as_tx() will also flush unused ACK payloads
+        // when ACK payloads are enabled
+        self.radio.as_tx(None).map_err(debug_err)?; // put the radio into inactive TX mode
 
         // if RX FIFO is not empty (timeout did not occur)
         if self.radio.available().map_err(debug_err)? {

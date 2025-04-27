@@ -173,22 +173,43 @@ impl RF24 {
     }
 
     /// Put the radio into active RX mode.
+    ///
+    /// Conventionally, this should be called after setting the RX addresses via
+    /// [`RF24.open_rx_pipe()`][rf24_py.RF24.open_rx_pipe].
+    ///
+    /// This function will restore the cached RX address set to pipe 0.
+    /// This is done because the [`RF24.as_tx()`][rf24_py.RF24.as_tx] will
+    /// appropriate the RX address on pipe 0 for auto-ack purposes.
     pub fn as_rx(&mut self) -> PyResult<()> {
         self.inner
             .as_rx()
             .map_err(|e| PyRuntimeError::new_err(format!("{e:?}")))
     }
 
-    /// Deactivates active RX mode and puts the radio into an inactive TX mode.
+    /// Puts the radio into an inactive TX mode.
+    ///
+    /// This must be called at least once before calling [`RF24.send()`][rf24_py.RF24.send] or
+    /// [`RF24.write()`][rf24_py.RF24.write].
+    ///
+    /// Parameters:
+    ///     tx_address: If specified, then this buffer will be
+    ///         cached and set as the new TX address.
+    ///
+    /// For auto-ack purposes, this function will also restore
+    /// the cached `tx_address` to the RX pipe 0.
     ///
     /// The datasheet recommends idling the radio in an inactive TX mode.
     ///
     /// Note:
     ///     This function will also flush the TX FIFO when ACK payloads are enabled
     ///     (via [`RF24.ack_payloads`][rf24_py.RF24.ack_payloads]).
-    pub fn as_tx(&mut self) -> PyResult<()> {
+    #[pyo3(
+        signature = (tx_address = None),
+        text_signature = "(tx_address: bytes | bytearray | None = None) -> None",
+    )]
+    pub fn as_tx(&mut self, tx_address: Option<&[u8]>) -> PyResult<()> {
         self.inner
-            .as_tx()
+            .as_tx(tx_address)
             .map_err(|e| PyRuntimeError::new_err(format!("{e:?}")))
     }
 
@@ -645,19 +666,6 @@ impl RF24 {
     pub fn open_rx_pipe(&mut self, pipe: u8, address: &[u8]) -> PyResult<()> {
         self.inner
             .open_rx_pipe(pipe, address)
-            .map_err(|e| PyRuntimeError::new_err(format!("{e:?}")))
-    }
-
-    /// Set the address used for transmitting on pipe 0.
-    ///
-    /// Only pipe 0 can be used for transmitting. It is highly recommended to
-    /// avoid using pipe 0 to receive because of this.
-    ///
-    /// Parameters:
-    ///     address: The address to receive data from.
-    pub fn open_tx_pipe(&mut self, address: &[u8]) -> PyResult<()> {
-        self.inner
-            .open_tx_pipe(address)
             .map_err(|e| PyRuntimeError::new_err(format!("{e:?}")))
     }
 

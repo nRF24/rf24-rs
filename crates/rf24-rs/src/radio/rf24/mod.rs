@@ -105,6 +105,14 @@ pub struct RF24<SPI, DO, DELAY> {
     config_reg: ConfigReg,
     feature: Feature,
     pipe0_rx_addr: Option<[u8; 5]>,
+    /// The TX address used on pipe 0 for outgoing transmissions.
+    ///
+    /// This is set with [`RF24::as_tx()`].
+    ///
+    /// This is cached on the [`RF24`] instance, so [`RF24::as_tx()`] can
+    /// use it to ensure proper auto-ack behavior in TX mode,
+    /// if pipe 0 is also used for RX with a different address.
+    tx_address: [u8; 5],
     payload_length: u8,
 }
 
@@ -129,6 +137,7 @@ where
             status: StatusFlags::from_bits(0),
             buf: [0u8; 33],
             pipe0_rx_addr: None,
+            tx_address: [0xE7; 5],
             feature: Feature::from_bits(0)
                 .with_address_length(5)
                 .with_is_plus_variant(true),
@@ -207,7 +216,7 @@ where
         level: PaLevel,
         channel: u8,
     ) -> Result<(), Nrf24Error<SpiError, OutputPinError>> {
-        self.as_tx()?;
+        self.as_tx(None)?;
         self.spi_read(1, registers::RF_SETUP)?;
         self.spi_write_byte(registers::RF_SETUP, self.buf[1] | 0x90)?;
         if self.feature.is_plus_variant() {
@@ -314,6 +323,18 @@ mod test {
             (
                 vec![registers::CONFIG | commands::W_REGISTER, 0xCu8],
                 vec![0xEu8, 0u8],
+            ),
+            //set cached TX address
+            (
+                vec![
+                    registers::RX_ADDR_P0 | commands::W_REGISTER,
+                    0xE7,
+                    0xE7,
+                    0xE7,
+                    0xE7,
+                    0xE7
+                ],
+                vec![0xE, 0, 0, 0, 0, 0]
             ),
             // open pipe 0 for TX (regardless of auto-ack)
             (vec![registers::EN_RXADDR, 0u8], vec![0xEu8, 0u8]),
