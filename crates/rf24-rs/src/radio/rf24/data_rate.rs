@@ -25,7 +25,7 @@ where
 
     fn get_data_rate(&mut self) -> Result<DataRate, Self::DataRateErrorType> {
         self.spi_read(1, registers::RF_SETUP)?;
-        let da_bin = self._buf[1] & DataRate::MASK;
+        let da_bin = self.buf[1] & DataRate::MASK;
         if da_bin == DataRate::MASK {
             return Err(Nrf24Error::BinaryCorruption);
         }
@@ -36,7 +36,7 @@ where
         self.tx_delay = set_tx_delay(data_rate);
         self.spi_read(1, registers::RF_SETUP)?;
         let da_bin = data_rate.into_bits();
-        let out = self._buf[1] & !DataRate::MASK | da_bin;
+        let out = self.buf[1] & !DataRate::MASK | da_bin;
         self.spi_write_byte(registers::RF_SETUP, out)
     }
 }

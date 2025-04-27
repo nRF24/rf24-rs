@@ -14,12 +14,12 @@ where
 
     fn get_pa_level(&mut self) -> Result<PaLevel, Self::PaLevelErrorType> {
         self.spi_read(1, registers::RF_SETUP)?;
-        Ok(PaLevel::from_bits(self._buf[1] & PaLevel::MASK))
+        Ok(PaLevel::from_bits(self.buf[1] & PaLevel::MASK))
     }
 
     fn set_pa_level(&mut self, pa_level: PaLevel) -> Result<(), Self::PaLevelErrorType> {
         self.spi_read(1, registers::RF_SETUP)?;
-        let out = self._buf[1] & !PaLevel::MASK | pa_level.into_bits();
+        let out = self.buf[1] & !PaLevel::MASK | pa_level.into_bits();
         self.spi_write_byte(registers::RF_SETUP, out)
     }
 }

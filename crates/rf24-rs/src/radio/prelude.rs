@@ -336,7 +336,7 @@ pub trait EsbAutoAck: EsbPayloadLength {
     /// Both parameters are clamped to range [0, 15].
     /// - `delay`: How long to wait between each retry, in multiples of
     ///   250 us (microseconds). The minimum value of 0 means 250 us, and
-    ///   the maximum valueof 15 means 4000 us.
+    ///   the maximum value of 15 means 4000 us.
     ///   The default value of 5 means 1500us (`5 * 250 + 250`).
     /// - `count`: How many retries before giving up. The default/maximum is 15. Use
     ///   0 to disable the auto-retry feature.

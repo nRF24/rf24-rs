@@ -5,7 +5,7 @@ use crate::{CrcLength, DataRate, PaLevel};
 use super::mnemonics;
 
 #[bitfield(u8, order = Msb)]
-pub(crate) struct Config {
+pub(crate) struct ConfigReg {
     #[bits(1)]
     _padding: u8,
 
@@ -29,7 +29,7 @@ pub(crate) struct Config {
     pub is_rx: bool,
 }
 
-impl Config {
+impl ConfigReg {
     pub(crate) const CRC_MASK: u8 = 0b1100;
 
     pub const fn crc_length(&self) -> CrcLength {

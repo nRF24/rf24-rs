@@ -5,7 +5,7 @@ use crate::{
     types::StatusFlags,
 };
 
-use super::{commands, registers, Config};
+use super::{commands, registers, ConfigReg};
 
 impl<SPI, DO, DELAY> EsbStatus for RF24<SPI, DO, DELAY>
 where
@@ -17,10 +17,10 @@ where
 
     fn set_status_flags(&mut self, flags: StatusFlags) -> Result<(), Self::StatusErrorType> {
         self.spi_read(1, registers::CONFIG)?;
-        self._config_reg = Config::from_bits(
-            self._buf[1] & !StatusFlags::IRQ_MASK | (!flags.into_bits() & StatusFlags::IRQ_MASK),
+        self.config_reg = ConfigReg::from_bits(
+            self.buf[1] & !StatusFlags::IRQ_MASK | (!flags.into_bits() & StatusFlags::IRQ_MASK),
         );
-        self.spi_write_byte(registers::CONFIG, self._config_reg.into_bits())
+        self.spi_write_byte(registers::CONFIG, self.config_reg.into_bits())
     }
 
     fn clear_status_flags(&mut self, flags: StatusFlags) -> Result<(), Self::StatusErrorType> {
@@ -32,7 +32,7 @@ where
     }
 
     fn get_status_flags(&self, flags: &mut StatusFlags) {
-        *flags = self._status;
+        *flags = self.status;
     }
 }
 

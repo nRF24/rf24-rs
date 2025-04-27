@@ -19,7 +19,7 @@ where
     /// See also [`RF24::set_channel()`].
     fn get_channel(&mut self) -> Result<u8, Self::ChannelErrorType> {
         self.spi_read(1, registers::RF_CH)?;
-        Ok(self._buf[1])
+        Ok(self.buf[1])
     }
 }
 

@@ -1,4 +1,4 @@
-use crate::radio::rf24::bit_fields::{Config, Feature, SetupRetry, SetupRfAw};
+use crate::radio::rf24::bit_fields::{ConfigReg, Feature, SetupRetry, SetupRfAw};
 use crate::{CrcLength, DataRate, PaLevel};
 
 /// A struct to contain configuration about pipe addresses.
@@ -95,7 +95,7 @@ impl EsbPipeConfig {
 /// ```
 #[derive(Debug, Clone, Copy)]
 pub struct RadioConfig {
-    pub(crate) config_reg: Config,
+    pub(crate) config_reg: ConfigReg,
     pub(crate) auto_retries: SetupRetry,
     pub(crate) setup_rf_aw: SetupRfAw,
     pub(crate) feature: Feature,
@@ -150,7 +150,7 @@ impl Default for RadioConfig {
                - powered down
                - inactive TX (StandBy-I) mode
             */
-            config_reg: Config::default(),
+            config_reg: ConfigReg::default(),
             /*
                - 5 * 250 + 250 = 1500 us delay between attempts
                - 15 max attempts

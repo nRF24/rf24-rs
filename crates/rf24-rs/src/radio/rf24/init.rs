@@ -25,21 +25,21 @@ where
         // Enabling 16b CRC is by far the most obvious case if the wrong timing is used - or skipped.
         // Technically we require 4.5ms + 14us as a worst case. We'll just call it 5ms for good measure.
         // WARNING: Delay is based on P-variant whereby non-P *may* require different timing.
-        self._delay_impl.delay_ns(5000000);
+        self.delay_impl.delay_ns(5000000);
 
         self.power_down()?;
         self.spi_read(1, registers::CONFIG)?;
-        if self._buf[1] != self._config_reg.into_bits() {
+        if self.buf[1] != self.config_reg.into_bits() {
             return Err(Nrf24Error::BinaryCorruption);
         }
 
         // detect if is a plus variant & use old toggle features command accordingly
         self.spi_read(1, registers::FEATURE)?;
-        let before_toggle = self._buf[1];
+        let before_toggle = self.buf[1];
         self.toggle_features()?;
         self.spi_read(1, registers::FEATURE)?;
-        let after_toggle = self._buf[1];
-        self._feature
+        let after_toggle = self.buf[1];
+        self.feature
             .set_is_plus_variant(before_toggle == after_toggle);
         if after_toggle < before_toggle {
             // FEATURE register is disabled on non-plus variants until `toggle_features()` is used.
@@ -61,14 +61,14 @@ where
 
         self.spi_write_byte(registers::SETUP_RETR, config.auto_retries.into_bits())?;
         self.spi_write_byte(registers::EN_AA, config.auto_ack())?;
-        self._feature = Feature::from_bits(
-            self._feature.into_bits() & !Feature::REG_MASK
+        self.feature = Feature::from_bits(
+            self.feature.into_bits() & !Feature::REG_MASK
                 | (config.feature.into_bits() & Feature::REG_MASK),
         );
         self.spi_write_byte(registers::DYNPD, 0x3F * (config.dynamic_payloads() as u8))?;
         self.spi_write_byte(
             registers::FEATURE,
-            self._feature.into_bits() & Feature::REG_MASK,
+            self.feature.into_bits() & Feature::REG_MASK,
         )?;
 
         let setup_rf_reg_val = config.setup_rf_aw.into_bits() & 0x27u8;
@@ -99,8 +99,8 @@ where
         //      Enable PTX
         // Do not write CE high so radio will remain in standby-I mode.
         // PTX should use only 22uA of power in standby-I mode.
-        self._config_reg = config.config_reg.with_power(true);
-        self.spi_write_byte(registers::CONFIG, self._config_reg.into_bits())
+        self.config_reg = config.config_reg.with_power(true);
+        self.spi_write_byte(registers::CONFIG, self.config_reg.into_bits())
     }
 }
 
