@@ -477,7 +477,7 @@ pub trait EsbRadio: RadioErrorType {
     ///
     /// This function will also flush the TX FIFO when ACK payloads are enabled
     /// (via [`EsbAutoAck::set_ack_payloads()`]).
-    fn as_tx(&mut self) -> Result<(), Self::Error>;
+    fn as_tx(&mut self, tx_address: Option<&[u8]>) -> Result<(), Self::Error>;
 
     /// Is the radio in RX mode?
     fn is_rx(&self) -> bool;

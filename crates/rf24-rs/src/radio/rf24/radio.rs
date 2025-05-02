@@ -33,7 +33,7 @@ where
         Ok(())
     }
 
-    fn as_tx(&mut self) -> Result<(), Self::Error> {
+    fn as_tx(&mut self, tx_address: Option<&[u8]>) -> Result<(), Self::Error> {
         self.ce_pin.set_low().map_err(|e| e.kind())?;
 
         self.delay_impl.delay_ns(self.tx_delay * 1000);

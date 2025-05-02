@@ -478,7 +478,7 @@ mod test {
             [SpiTransaction::transaction_start().with_error(SpiError::ChipSelectFault)];
         let mocks = mk_radio(&ce_expectations, &spi_expectations);
         let (mut radio, mut spi, mut ce_pin) = (mocks.0, mocks.1, mocks.2);
-        assert!(radio.as_tx().is_err());
+        assert!(radio.as_tx(None).is_err());
         assert!(radio.spi_transfer(1).is_err());
         spi.done();
         ce_pin.done();

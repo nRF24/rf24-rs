@@ -6,7 +6,11 @@ use crate::{
     },
     StatusFlags,
 };
-use embedded_hal::{delay::DelayNs, digital::OutputPin, spi::SpiDevice};
+use embedded_hal::{
+    delay::DelayNs,
+    digital::{Error, OutputPin},
+    spi::SpiDevice,
+};
 
 impl<SPI, DO, DELAY> EsbInit for RF24<SPI, DO, DELAY>
 where
@@ -56,7 +60,7 @@ where
         // Do not write CE high so radio will remain in standby-I mode.
         // PTX should use only 22uA of power in standby-I mode.
         self.config_reg = config.config_reg.with_power(true);
-        self.ce_pin.set_low().map_err(Nrf24Error::Gpo)?; // Guarantee CE is low on powerDown
+        self.ce_pin.set_low().map_err(|e| e.kind())?; // Guarantee CE is low on powerDown
         self.clear_status_flags(StatusFlags::new())?;
 
         // Flush buffers
