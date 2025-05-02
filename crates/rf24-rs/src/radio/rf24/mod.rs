@@ -224,9 +224,9 @@ where
             self.set_auto_retries(0, 0)?;
             let buf = [0xFF; 32];
 
-            // use spi_write_buf() instead of open_tx_pipe() to bypass
-            // truncation of the address with the current RF24::addr_width value
-            self.spi_write_buf(registers::TX_ADDR, &buf[..5])?;
+            // use spi_write_buf() instead of as_tx() to bypass caching and
+            // truncation of the address with the current address width setting
+            self.spi_write_buf(registers::TX_ADDR, &buf[0..5])?;
             self.flush_tx()?; // so we can write to top level
 
             self.spi_write_buf(commands::W_TX_PAYLOAD, &buf)?;
@@ -290,7 +290,7 @@ mod test {
     pub fn test_rpd() {
         let spi_expectations = spi_test_expects![
             // get the RPD register value
-            (vec![registers::RPD, 0u8], vec![0xEu8, 0xFFu8]),
+            (vec![registers::RPD, 0], vec![0xEu8, 0xFF]),
         ];
         let mocks = mk_radio(&[], &spi_expectations);
         let (mut radio, mut spi, mut ce_pin) = (mocks.0, mocks.1, mocks.2);
@@ -312,55 +312,54 @@ mod test {
             ]);
         }
 
-        let mut buf = [0xFFu8; 33];
+        let mut buf = [0xFF; 33];
         buf[0] = commands::W_TX_PAYLOAD;
-        let mut address = [0xFFu8; 6];
+        let mut address = [0xFF; 6];
         address[0] = registers::TX_ADDR | commands::W_REGISTER;
 
         let mut spi_expectations = spi_test_expects![
             // as_tx()
             // clear PRIM_RX flag
             (
-                vec![registers::CONFIG | commands::W_REGISTER, 0xCu8],
-                vec![0xEu8, 0u8],
-            ),
-            //set cached TX address
-            (
-                vec![
-                    registers::RX_ADDR_P0 | commands::W_REGISTER,
-                    0xE7,
-                    0xE7,
-                    0xE7,
-                    0xE7,
-                    0xE7
-                ],
-                vec![0xE, 0, 0, 0, 0, 0]
-            ),
-            // open pipe 0 for TX (regardless of auto-ack)
-            (vec![registers::EN_RXADDR, 0u8], vec![0xEu8, 0u8]),
-            (
-                vec![registers::EN_RXADDR | commands::W_REGISTER, 1u8],
-                vec![0xEu8, 0u8],
-            ),
-            // set special flags in RF_SETUP register value
-            (vec![registers::RF_SETUP, 0u8], vec![0xEu8, 0u8]),
-            (
-                vec![registers::RF_SETUP | commands::W_REGISTER, 0x90u8],
-                vec![0xEu8, 0u8],
+                vec![registers::CONFIG | commands::W_REGISTER, 0xC],
+                vec![0xEu8, 0],
             ),
         ]
         .to_vec();
+
+        // set cached TX address to RX pipe 0 and prepare pipe 0 for auto-ack with same address
+        for reg in [registers::TX_ADDR, registers::RX_ADDR_P0] {
+            spi_expectations.extend(spi_test_expects![(
+                vec![reg | commands::W_REGISTER, 0xE7, 0xE7, 0xE7, 0xE7, 0xE7],
+                vec![0xEu8, 0, 0, 0, 0, 0]
+            ),]);
+        }
+        spi_expectations.extend(spi_test_expects![
+            // open pipe 0 for TX (regardless of auto-ack)
+            (vec![registers::EN_RXADDR, 0], vec![0xEu8, 0]),
+            (
+                vec![registers::EN_RXADDR | commands::W_REGISTER, 1],
+                vec![0xEu8, 0],
+            ),
+            // set special flags in RF_SETUP register value
+            (vec![registers::RF_SETUP, 0], vec![0xEu8, 0]),
+            (
+                vec![registers::RF_SETUP | commands::W_REGISTER, 0x90],
+                vec![0xEu8, 0],
+            ),
+        ]);
+
         if is_plus_variant {
             spi_expectations.extend(spi_test_expects![
                 // disable auto-ack
                 (
-                    vec![registers::EN_AA | commands::W_REGISTER, 0u8],
-                    vec![0xEu8, 0u8],
+                    vec![registers::EN_AA | commands::W_REGISTER, 0],
+                    vec![0xEu8, 0],
                 ),
                 // disable auto-retries
                 (
-                    vec![registers::SETUP_RETR | commands::W_REGISTER, 0u8],
-                    vec![0xEu8, 0u8],
+                    vec![registers::SETUP_RETR | commands::W_REGISTER, 0],
+                    vec![0xEu8, 0],
                 ),
                 // set TX address
                 (address.to_vec(), vec![0u8; 6]),
@@ -369,25 +368,25 @@ mod test {
                 // set TX payload
                 (buf.to_vec(), vec![0u8; 33]),
                 // set_crc_length(disabled)
-                (vec![registers::CONFIG, 0u8], vec![0xEu8, 0xCu8]),
+                (vec![registers::CONFIG, 0], vec![0xEu8, 0xC]),
                 (
-                    vec![registers::CONFIG | commands::W_REGISTER, 0u8],
-                    vec![0xEu8, 0u8],
+                    vec![registers::CONFIG | commands::W_REGISTER, 0],
+                    vec![0xEu8, 0],
                 ),
             ]);
         }
         spi_expectations.extend(spi_test_expects![
             // set_pa_level()
             // set special flags in RF_SETUP register value
-            (vec![registers::RF_SETUP, 0u8], vec![0xEu8, 0x91u8]),
+            (vec![registers::RF_SETUP, 0], vec![0xEu8, 0x91]),
             (
-                vec![registers::RF_SETUP | commands::W_REGISTER, 0x97u8],
-                vec![0xEu8, 0u8],
+                vec![registers::RF_SETUP | commands::W_REGISTER, 0x97],
+                vec![0xEu8, 0],
             ),
             // set_channel(125)
             (
-                vec![registers::RF_CH | commands::W_REGISTER, 125u8],
-                vec![0xEu8, 0u8],
+                vec![registers::RF_CH | commands::W_REGISTER, 125],
+                vec![0xEu8, 0],
             ),
         ]);
         if is_plus_variant {
@@ -398,7 +397,7 @@ mod test {
                         registers::STATUS | commands::W_REGISTER,
                         mnemonics::MASK_MAX_RT | mnemonics::MASK_TX_DS,
                     ],
-                    vec![0xEu8, 0u8],
+                    vec![0xEu8, 0],
                 ),
                 // assert the REUSE_TX_PL flag
                 (vec![commands::REUSE_TX_PL], vec![0xEu8]),
@@ -435,16 +434,17 @@ mod test {
         let spi_expectations = spi_test_expects![
             // power_down()
             (
-                vec![registers::CONFIG | commands::W_REGISTER, 0xCu8],
-                vec![0xEu8, 0u8],
+                vec![registers::CONFIG | commands::W_REGISTER, 0xC],
+                vec![0xEu8, 0],
             ),
             // clear special flags in RF_SETUP register
-            (vec![registers::RF_SETUP, 0u8], vec![0xEu8, 0x90u8]),
+            (vec![registers::RF_SETUP, 0], vec![0xEu8, 0x90]),
             (
-                vec![registers::RF_SETUP | commands::W_REGISTER, 0u8],
-                vec![0xEu8, 0u8],
+                vec![registers::RF_SETUP | commands::W_REGISTER, 0],
+                vec![0xEu8, 0],
             ),
         ];
+
         let mocks = mk_radio(&ce_expectations, &spi_expectations);
         let (mut radio, mut spi, mut ce_pin) = (mocks.0, mocks.1, mocks.2);
         radio.stop_carrier_wave().unwrap();
@@ -456,12 +456,13 @@ mod test {
     pub fn set_lna() {
         let spi_expectations = spi_test_expects![
             // clear the LNA_CUR flag in RF-SETUP
-            (vec![registers::RF_SETUP, 0u8], vec![0xEu8, 1u8]),
+            (vec![registers::RF_SETUP, 0], vec![0xEu8, 1]),
             (
-                vec![registers::RF_SETUP | commands::W_REGISTER, 0u8],
-                vec![0xEu8, 0u8],
+                vec![registers::RF_SETUP | commands::W_REGISTER, 0],
+                vec![0xEu8, 0],
             ),
         ];
+
         let mocks = mk_radio(&[], &spi_expectations);
         let (mut radio, mut spi, mut ce_pin) = (mocks.0, mocks.1, mocks.2);
         radio.set_lna(false).unwrap();
