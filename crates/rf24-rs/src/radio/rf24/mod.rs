@@ -1,4 +1,8 @@
-use embedded_hal::{delay::DelayNs, digital::OutputPin, spi::SpiDevice};
+use embedded_hal::{
+    delay::DelayNs,
+    digital::{Error as _, ErrorKind as OutputPinError, OutputPin},
+    spi::{Error as _, ErrorKind as SpiError, SpiDevice},
+};
 mod auto_ack;
 pub(crate) mod bit_fields;
 mod channel;
@@ -17,7 +21,7 @@ pub use constants::{commands, mnemonics, registers};
 mod details;
 mod status;
 use super::prelude::{
-    EsbAutoAck, EsbChannel, EsbCrcLength, EsbFifo, EsbPaLevel, EsbPower, EsbRadio,
+    EsbAutoAck, EsbChannel, EsbCrcLength, EsbFifo, EsbPaLevel, EsbPower, EsbRadio, RadioErrorType,
 };
 use crate::{
     types::{CrcLength, PaLevel},
@@ -38,6 +42,27 @@ pub enum Nrf24Error<SPI, DO> {
     /// This only occurs when user code neglected to call [`RF24::as_tx()`] at least once
     /// before calling [`RF24::send()`].
     NotAsTxError,
+}
+
+impl From<SpiError> for Nrf24Error<SpiError, OutputPinError> {
+    fn from(value: SpiError) -> Self {
+        Nrf24Error::Spi(value)
+    }
+}
+
+impl From<OutputPinError> for Nrf24Error<SpiError, OutputPinError> {
+    fn from(value: OutputPinError) -> Self {
+        Nrf24Error::Gpo(value)
+    }
+}
+
+impl<SPI, DO, DELAY> RadioErrorType for RF24<SPI, DO, DELAY>
+where
+    SPI: SpiDevice,
+    DO: OutputPin,
+    DELAY: DelayNs,
+{
+    type Error = Nrf24Error<SpiError, OutputPinError>;
 }
 
 /// This struct implements the [`Esb*` traits](mod@crate::radio::prelude)
@@ -113,10 +138,10 @@ where
         }
     }
 
-    fn spi_transfer(&mut self, len: u8) -> Result<(), Nrf24Error<SPI::Error, DO::Error>> {
+    fn spi_transfer(&mut self, len: u8) -> Result<(), Nrf24Error<SpiError, OutputPinError>> {
         self.spi
             .transfer_in_place(&mut self.buf[..len as usize])
-            .map_err(Nrf24Error::Spi)?;
+            .map_err(|e| e.kind())?;
         self.status = StatusFlags::from_bits(self.buf[0]);
         Ok(())
     }
@@ -126,7 +151,11 @@ where
     /// self.spi_read(0, commands::NOP)?;
     /// // STATUS register is now stored in self._status
     /// ```
-    fn spi_read(&mut self, len: u8, command: u8) -> Result<(), Nrf24Error<SPI::Error, DO::Error>> {
+    fn spi_read(
+        &mut self,
+        len: u8,
+        command: u8,
+    ) -> Result<(), Nrf24Error<SpiError, OutputPinError>> {
         self.buf[0] = command;
         self.spi_transfer(len + 1)
     }
@@ -135,7 +164,7 @@ where
         &mut self,
         command: u8,
         byte: u8,
-    ) -> Result<(), Nrf24Error<SPI::Error, DO::Error>> {
+    ) -> Result<(), Nrf24Error<SpiError, OutputPinError>> {
         self.buf[0] = command | commands::W_REGISTER;
         self.buf[1] = byte;
         self.spi_transfer(2)
@@ -145,7 +174,7 @@ where
         &mut self,
         command: u8,
         buf: &[u8],
-    ) -> Result<(), Nrf24Error<SPI::Error, DO::Error>> {
+    ) -> Result<(), Nrf24Error<SpiError, OutputPinError>> {
         self.buf[0] = command | commands::W_REGISTER;
         let buf_len = buf.len();
         self.buf[1..(buf_len + 1)].copy_from_slice(&buf[..buf_len]);
@@ -154,7 +183,7 @@ where
 
     /// A private function to write a special SPI command specific to older
     /// non-plus variants of the nRF24L01 radio module. It has no effect on plus variants.
-    fn toggle_features(&mut self) -> Result<(), Nrf24Error<SPI::Error, DO::Error>> {
+    fn toggle_features(&mut self) -> Result<(), Nrf24Error<SpiError, OutputPinError>> {
         self.buf[0] = commands::ACTIVATE;
         self.buf[1] = 0x73;
         self.spi_transfer(2)
@@ -168,7 +197,7 @@ where
         self.feature.is_plus_variant()
     }
 
-    pub fn rpd(&mut self) -> Result<bool, Nrf24Error<SPI::Error, DO::Error>> {
+    pub fn rpd(&mut self) -> Result<bool, Nrf24Error<SpiError, OutputPinError>> {
         self.spi_read(1, registers::RPD)?;
         Ok(self.buf[1] & 1 == 1)
     }
@@ -177,7 +206,7 @@ where
         &mut self,
         level: PaLevel,
         channel: u8,
-    ) -> Result<(), Nrf24Error<SPI::Error, DO::Error>> {
+    ) -> Result<(), Nrf24Error<SpiError, OutputPinError>> {
         self.as_tx()?;
         self.spi_read(1, registers::RF_SETUP)?;
         self.spi_write_byte(registers::RF_SETUP, self.buf[1] | 0x90)?;
@@ -197,7 +226,7 @@ where
         }
         self.set_pa_level(level)?;
         self.set_channel(channel)?;
-        self.ce_pin.set_high().map_err(Nrf24Error::Gpo)?;
+        self.ce_pin.set_high().map_err(|e| e.kind())?;
         if self.feature.is_plus_variant() {
             self.delay_impl.delay_ns(1000000); // datasheet says 1 ms is ok in this instance
             self.rewrite()?;
@@ -205,7 +234,7 @@ where
         Ok(())
     }
 
-    pub fn stop_carrier_wave(&mut self) -> Result<(), Nrf24Error<SPI::Error, DO::Error>> {
+    pub fn stop_carrier_wave(&mut self) -> Result<(), Nrf24Error<SpiError, OutputPinError>> {
         /*
          * A note from the datasheet:
          * Do not use REUSE_TX_PL together with CONT_WAVE=1. When both these
@@ -215,7 +244,8 @@ where
         self.power_down()?; // per datasheet recommendation (just to be safe)
         self.spi_read(1, registers::RF_SETUP)?;
         self.spi_write_byte(registers::RF_SETUP, self.buf[1] & !0x90)?;
-        self.ce_pin.set_low().map_err(Nrf24Error::Gpo)
+        self.ce_pin.set_low().map_err(|e| e.kind())?;
+        Ok(())
     }
 
     /// Control the builtin LNA feature on nRF24L01 (older non-plus variants) and Si24R1
@@ -226,7 +256,7 @@ where
     ///
     /// This function has no effect on nRF24L01+ modules and PA/LNA variants because
     /// the LNA feature is always enabled.
-    pub fn set_lna(&mut self, enable: bool) -> Result<(), Nrf24Error<SPI::Error, DO::Error>> {
+    pub fn set_lna(&mut self, enable: bool) -> Result<(), Nrf24Error<SpiError, OutputPinError>> {
         self.spi_read(1, registers::RF_SETUP)?;
         let out = self.buf[1] & !1 | enable as u8;
         self.spi_write_byte(registers::RF_SETUP, out)
@@ -239,7 +269,8 @@ where
 mod test {
     extern crate std;
     use super::{commands, mnemonics, registers};
-    use crate::{spi_test_expects, test::mk_radio};
+    use crate::{radio::prelude::EsbRadio, spi_test_expects, test::mk_radio};
+    use embedded_hal::{digital::ErrorKind as OutputPinError, spi::ErrorKind as SpiError};
     use embedded_hal_mock::eh1::{
         digital::{State as PinState, Transaction as PinTransaction},
         spi::Transaction as SpiTransaction,
@@ -413,6 +444,20 @@ mod test {
         let mocks = mk_radio(&[], &spi_expectations);
         let (mut radio, mut spi, mut ce_pin) = (mocks.0, mocks.1, mocks.2);
         radio.set_lna(false).unwrap();
+        spi.done();
+        ce_pin.done();
+    }
+
+    #[test]
+    fn mock_hw_errors() {
+        let ce_expectations =
+            [PinTransaction::set(PinState::Low).with_error(OutputPinError::Other)];
+        let spi_expectations =
+            [SpiTransaction::transaction_start().with_error(SpiError::ChipSelectFault)];
+        let mocks = mk_radio(&ce_expectations, &spi_expectations);
+        let (mut radio, mut spi, mut ce_pin) = (mocks.0, mocks.1, mocks.2);
+        assert!(radio.as_tx().is_err());
+        assert!(radio.spi_transfer(1).is_err());
         spi.done();
         ce_pin.done();
     }

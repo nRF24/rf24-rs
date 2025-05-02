@@ -12,11 +12,14 @@ use crate::types::{CrcLength, DataRate, FifoState, PaLevel, StatusFlags};
 
 use super::RadioConfig;
 
+/// A trait to alias hardware related errors about the radio.
+pub trait RadioErrorType {
+    type Error;
+}
+
 /// A trait to represent manipulation of data pipes
 /// for an ESB capable transceiver.
-pub trait EsbPipe {
-    type PipeErrorType;
-
+pub trait EsbPipe: RadioErrorType {
     /// Open a specified `pipe` for receiving data when radio is in RX mode.
     ///
     /// If the specified `pipe` is not in range [0, 5], then this function does nothing.
@@ -54,45 +57,41 @@ pub trait EsbPipe {
     ///
     /// Read [maniacBug's blog post](http://maniacalbits.blogspot.com/2013/04/rf24-addressing-nrf24l01-radios-require.html)
     /// to understand how to avoid using malformed addresses.
-    fn open_rx_pipe(&mut self, pipe: u8, address: &[u8]) -> Result<(), Self::PipeErrorType>;
+    fn open_rx_pipe(&mut self, pipe: u8, address: &[u8]) -> Result<(), Self::Error>;
 
     /// Set an address to pipe 0 for transmitting when radio is in TX mode.
     ///
-    fn open_tx_pipe(&mut self, address: &[u8]) -> Result<(), Self::PipeErrorType>;
+    fn open_tx_pipe(&mut self, address: &[u8]) -> Result<(), Self::Error>;
 
     /// Close a specified pipe from receiving data when radio is in RX mode.
-    fn close_rx_pipe(&mut self, pipe: u8) -> Result<(), Self::PipeErrorType>;
+    fn close_rx_pipe(&mut self, pipe: u8) -> Result<(), Self::Error>;
 
     /// Set the address length (applies to all pipes).
     ///
     /// If the specified length is clamped to the range [2, 5].
     /// Any value outside that range defaults to 5.
-    fn set_address_length(&mut self, length: u8) -> Result<(), Self::PipeErrorType>;
+    fn set_address_length(&mut self, length: u8) -> Result<(), Self::Error>;
 
     /// Get the currently configured address length (applied to all pipes).
-    fn get_address_length(&mut self) -> Result<u8, Self::PipeErrorType>;
+    fn get_address_length(&mut self) -> Result<u8, Self::Error>;
 }
 
 /// A trait to represent manipulation of a channel (aka frequency)
 /// for an ESB capable transceiver.
-pub trait EsbChannel {
-    type ChannelErrorType;
-
+pub trait EsbChannel: RadioErrorType {
     /// Set the radio's currently selected channel.
     ///
     /// These channels translate to the RF frequency as an offset of Hz from 2400 MHz.
     /// The default channel is 76 (2400 + 76 = 2.476 GHz).
-    fn set_channel(&mut self, channel: u8) -> Result<(), Self::ChannelErrorType>;
+    fn set_channel(&mut self, channel: u8) -> Result<(), Self::Error>;
 
     /// Get the radio's currently selected channel.
-    fn get_channel(&mut self) -> Result<u8, Self::ChannelErrorType>;
+    fn get_channel(&mut self) -> Result<u8, Self::Error>;
 }
 
 /// A trait to represent manipulation of [`StatusFlags`]
 /// for an ESB capable transceiver.
-pub trait EsbStatus {
-    type StatusErrorType;
-
+pub trait EsbStatus: RadioErrorType {
     /// Get the [`StatusFlags`] state that was cached from the latest SPI transaction.
     fn get_status_flags(&self, flags: &mut StatusFlags);
 
@@ -102,7 +101,7 @@ pub trait EsbStatus {
     /// IRQ pin ignore the corresponding event.
     /// By default, all events are enabled and will trigger the IRQ pin,
     /// a behavior equivalent to `set_status_flags(None)`.
-    fn set_status_flags(&mut self, flags: StatusFlags) -> Result<(), Self::StatusErrorType>;
+    fn set_status_flags(&mut self, flags: StatusFlags) -> Result<(), Self::Error>;
 
     /// Clear the radio's IRQ status flags
     ///
@@ -112,40 +111,38 @@ pub trait EsbStatus {
     /// interrupt event. Setting any member of [`StatusFlags`] to `false` will leave
     /// the corresponding status flag untouched. This means that the IRQ pin can remain
     /// active (LOW) when multiple events occurred but only flag was cleared.
-    fn clear_status_flags(&mut self, flags: StatusFlags) -> Result<(), Self::StatusErrorType>;
+    fn clear_status_flags(&mut self, flags: StatusFlags) -> Result<(), Self::Error>;
 
     /// Refresh the internal cache of status byte
     /// (which is also saved from every SPI transaction).
     ///
     /// Use [`EsbStatus::get_status_flags()`] to get the updated status flags.
-    fn update(&mut self) -> Result<(), Self::StatusErrorType>;
+    fn update(&mut self) -> Result<(), Self::Error>;
 }
 
 /// A trait to represent manipulation of RX and TX FIFOs
 /// for an ESB capable transceiver.
-pub trait EsbFifo {
-    type FifoErrorType;
-
+pub trait EsbFifo: RadioErrorType {
     /// Flush the radio's RX FIFO.
-    fn flush_rx(&mut self) -> Result<(), Self::FifoErrorType>;
+    fn flush_rx(&mut self) -> Result<(), Self::Error>;
 
     /// Flush the radio's TX FIFO.
     ///
     /// This function is automatically called by [`EsbRadio::as_tx()`]
     /// if ACK payloads are enabled.
-    fn flush_tx(&mut self) -> Result<(), Self::FifoErrorType>;
+    fn flush_tx(&mut self) -> Result<(), Self::Error>;
 
     /// Get the state of the specified FIFO.
     ///
     /// - Pass `true` to `about_tx` parameter to get the state of the TX FIFO.
     /// - Pass `false` to `about_tx` parameter to get the state of the RX FIFO.
-    fn get_fifo_state(&mut self, about_tx: bool) -> Result<FifoState, Self::FifoErrorType>;
+    fn get_fifo_state(&mut self, about_tx: bool) -> Result<FifoState, Self::Error>;
 
     /// Is there a payload available in the radio's RX FIFO?
     ///
     /// This function simply returns true if there is data to [`EsbRadio::read()`] from the RX FIFO.
     /// Use [`EsbFifo::available_pipe()`] to get information about the pipe that received the data.
-    fn available(&mut self) -> Result<bool, Self::FifoErrorType>;
+    fn available(&mut self) -> Result<bool, Self::Error>;
 
     /// This is similar to [`EsbFifo::available()`] except the `pipe` parameter is given
     /// a mutable [`u8`] value, and the pipe number that received the data is stored to it.
@@ -171,23 +168,21 @@ pub trait EsbFifo {
     /// before calling this function.
     ///
     /// </div>
-    fn available_pipe(&mut self, pipe: &mut u8) -> Result<bool, Self::FifoErrorType>;
+    fn available_pipe(&mut self, pipe: &mut u8) -> Result<bool, Self::Error>;
 }
 
 /// A trait to represent manipulation of payload lengths (static or dynamic)
 /// for an ESB capable transceiver.
-pub trait EsbPayloadLength {
-    type PayloadLengthErrorType;
-
+pub trait EsbPayloadLength: RadioErrorType {
     /// Set the radio's static payload length.
     ///
     /// Note, this has no effect when dynamic payloads are enabled.
-    fn set_payload_length(&mut self, length: u8) -> Result<(), Self::PayloadLengthErrorType>;
+    fn set_payload_length(&mut self, length: u8) -> Result<(), Self::Error>;
 
     /// Get the currently configured static payload length used on pipe 0
     ///
     /// Use [`EsbPayloadLength::get_dynamic_payload_length()`] instead when dynamic payloads are enabled.
-    fn get_payload_length(&mut self) -> Result<u8, Self::PayloadLengthErrorType>;
+    fn get_payload_length(&mut self) -> Result<u8, Self::Error>;
 
     /// Set the dynamic payloads feature for all pipes.
     ///
@@ -212,7 +207,7 @@ pub trait EsbPayloadLength {
     ///     }
     /// }
     /// ```
-    fn set_dynamic_payloads(&mut self, enable: bool) -> Result<(), Self::PayloadLengthErrorType>;
+    fn set_dynamic_payloads(&mut self, enable: bool) -> Result<(), Self::Error>;
 
     /// Get the current setting of the dynamic payloads feature.
     ///
@@ -224,14 +219,12 @@ pub trait EsbPayloadLength {
     /// When dynamic payloads are disabled (via [`EsbPayloadLength::set_dynamic_payloads()`])
     /// or there is no [`EsbFifo::available()`] payload in the RX FIFO, this function's
     /// returned value shall be considered invalid.
-    fn get_dynamic_payload_length(&mut self) -> Result<u8, Self::PayloadLengthErrorType>;
+    fn get_dynamic_payload_length(&mut self) -> Result<u8, Self::Error>;
 }
 
 /// A trait to represent manipulation of the automatic acknowledgement feature
 /// for an ESB capable transceiver.
-pub trait EsbAutoAck: EsbPayloadLength {
-    type AutoAckErrorType;
-
+pub trait EsbAutoAck: EsbPayloadLength + RadioErrorType {
     /// Enable or disable the custom ACK (acknowledgement) payloads attached to auto-ack packets.
     ///
     /// By default this feature is disabled.
@@ -243,7 +236,7 @@ pub trait EsbAutoAck: EsbPayloadLength {
     /// Use [`EsbRadio::read()`] to fetch the payloads from the RX FIFO.
     ///
     /// To append a payload to an auto ack packet, use [`EsbAutoAck::write_ack_payload()`].
-    fn set_ack_payloads(&mut self, enable: bool) -> Result<(), Self::AutoAckErrorType>;
+    fn set_ack_payloads(&mut self, enable: bool) -> Result<(), Self::Error>;
 
     /// Get the current setting of the ACK payloads feature.
     ///
@@ -282,7 +275,7 @@ pub trait EsbAutoAck: EsbPayloadLength {
     ///
     /// See also [`EsbAutoAck::set_ack_payloads()`],
     /// [`EsbPayloadLength::set_dynamic_payloads`], and [`EsbAutoAck::set_auto_ack()`].
-    fn write_ack_payload(&mut self, pipe: u8, buf: &[u8]) -> Result<bool, Self::AutoAckErrorType>;
+    fn write_ack_payload(&mut self, pipe: u8, buf: &[u8]) -> Result<bool, Self::Error>;
 
     /// Enable or disable the auto-ack (automatic acknowledgement) feature for all
     /// pipes.
@@ -304,7 +297,7 @@ pub trait EsbAutoAck: EsbPayloadLength {
     /// If disabling auto-acknowledgment packets, the ACK payloads
     /// feature is also disabled as this feature is required to send ACK
     /// payloads.
-    fn set_auto_ack(&mut self, enable: bool) -> Result<(), Self::AutoAckErrorType>;
+    fn set_auto_ack(&mut self, enable: bool) -> Result<(), Self::Error>;
 
     /// Set the auto-ack feature for an individual `pipe`.
     ///
@@ -324,7 +317,7 @@ pub trait EsbAutoAck: EsbPayloadLength {
     /// If disabling auto-acknowledgment packets on pipe 0, the ACK
     /// payloads feature is also disabled as this feature is required on pipe 0
     /// to send ACK payloads.
-    fn set_auto_ack_pipe(&mut self, enable: bool, pipe: u8) -> Result<(), Self::AutoAckErrorType>;
+    fn set_auto_ack_pipe(&mut self, enable: bool, pipe: u8) -> Result<(), Self::Error>;
 
     /// Set the number of retry attempts and delay between retry attempts when
     /// transmitting a payload.
@@ -344,7 +337,7 @@ pub trait EsbAutoAck: EsbPayloadLength {
     /// Disabling the auto-retry feature on a transmitter still uses the
     /// auto-ack feature (if enabled), except it will not retry to transmit if
     /// the payload was not acknowledged on the first attempt.
-    fn set_auto_retries(&mut self, delay: u8, count: u8) -> Result<(), Self::AutoAckErrorType>;
+    fn set_auto_retries(&mut self, delay: u8, count: u8) -> Result<(), Self::Error>;
 
     /// Allow the functionality of the `ask_no_ack` parameter in [`EsbRadio::send()`] and
     /// [`EsbRadio::write()`].
@@ -354,26 +347,22 @@ pub trait EsbAutoAck: EsbPayloadLength {
     /// allow disabling the auto-ack feature on a per-payload basis. Such behavior would be
     /// desirable when transmitting to multiple radios that are setup to receive data from the
     /// same address.
-    fn allow_ask_no_ack(&mut self, enable: bool) -> Result<(), Self::AutoAckErrorType>;
+    fn allow_ask_no_ack(&mut self, enable: bool) -> Result<(), Self::Error>;
 }
 
 /// A trait to represent manipulation of the power amplitude level
 /// for an ESB capable transceiver.
-pub trait EsbPaLevel {
-    type PaLevelErrorType;
-
+pub trait EsbPaLevel: RadioErrorType {
     /// Get the currently configured Power Amplitude Level (PA Level)
-    fn get_pa_level(&mut self) -> Result<PaLevel, Self::PaLevelErrorType>;
+    fn get_pa_level(&mut self) -> Result<PaLevel, Self::Error>;
 
     /// Set the radio's Power Amplitude Level (PA Level)
-    fn set_pa_level(&mut self, pa_level: PaLevel) -> Result<(), Self::PaLevelErrorType>;
+    fn set_pa_level(&mut self, pa_level: PaLevel) -> Result<(), Self::Error>;
 }
 
 /// A trait to represent manipulation of the state of power
 /// for an ESB capable transceiver.
-pub trait EsbPower {
-    type PowerErrorType;
-
+pub trait EsbPower: RadioErrorType {
     /// Power down the radio.
     ///
     /// <div class="warning">
@@ -381,7 +370,7 @@ pub trait EsbPower {
     /// The nRF24L01 cannot receive nor transmit data when powered down.
     ///
     /// </div>
-    fn power_down(&mut self) -> Result<(), Self::PowerErrorType>;
+    fn power_down(&mut self) -> Result<(), Self::Error>;
 
     /// Power up the radio.
     ///
@@ -399,7 +388,7 @@ pub trait EsbPower {
     /// // ... do something else for 5 milliseconds
     /// radio.as_rx().unwrap();
     /// ```
-    fn power_up(&mut self, delay: Option<u32>) -> Result<(), Self::PowerErrorType>;
+    fn power_up(&mut self, delay: Option<u32>) -> Result<(), Self::Error>;
 
     /// Get the current (cached) state of the radio's power.
     ///
@@ -409,44 +398,36 @@ pub trait EsbPower {
 
 /// A trait to represent manipulation of Cyclical Redundancy Checksums
 /// for an ESB capable transceiver.
-pub trait EsbCrcLength {
-    type CrcLengthErrorType;
-
+pub trait EsbCrcLength: RadioErrorType {
     /// Get the currently configured CRC (Cyclical Redundancy Checksum) length
-    fn get_crc_length(&mut self) -> Result<CrcLength, Self::CrcLengthErrorType>;
+    fn get_crc_length(&mut self) -> Result<CrcLength, Self::Error>;
 
     /// Set the radio's CRC (Cyclical Redundancy Checksum) length
-    fn set_crc_length(&mut self, crc_length: CrcLength) -> Result<(), Self::CrcLengthErrorType>;
+    fn set_crc_length(&mut self, crc_length: CrcLength) -> Result<(), Self::Error>;
 }
 
 /// A trait to represent manipulation of the Data Rate
 /// for an ESB capable transceiver.
-pub trait EsbDataRate {
-    type DataRateErrorType;
-
+pub trait EsbDataRate: RadioErrorType {
     /// Get the currently configured Data Rate
-    fn get_data_rate(&mut self) -> Result<DataRate, Self::DataRateErrorType>;
+    fn get_data_rate(&mut self) -> Result<DataRate, Self::Error>;
 
     /// Set the radio's Data Rate
-    fn set_data_rate(&mut self, data_rate: DataRate) -> Result<(), Self::DataRateErrorType>;
+    fn set_data_rate(&mut self, data_rate: DataRate) -> Result<(), Self::Error>;
 }
 
 /// A trait to represent debug output
 /// for an ESB capable transceiver.
-pub trait EsbDetails {
-    type DetailsErrorType;
-
+pub trait EsbDetails: RadioErrorType {
     /// Print details about radio's current configuration.
     ///
     /// This should only be used for debugging development.
     /// Using this in production should be limited due to a significant increase in
     /// compile size.
-    fn print_details(&mut self) -> Result<(), Self::DetailsErrorType>;
+    fn print_details(&mut self) -> Result<(), Self::Error>;
 }
 
-pub trait EsbInit {
-    type ConfigErrorType;
-
+pub trait EsbInit: RadioErrorType {
     /// Initialize the radio's hardware.
     ///
     /// This is similar to [`EsbInit::with_config()`] (with [`RadioConfig::default()`]),
@@ -459,28 +440,26 @@ pub trait EsbInit {
     /// This function should only be called once after instantiating the radio object.
     /// Afterward, it is quicker to use [`EsbInit::with_config()`] to reconfigure the
     /// radio for different network requirements.
-    fn init(&mut self) -> Result<(), Self::ConfigErrorType>;
+    fn init(&mut self) -> Result<(), Self::Error>;
 
     /// Reconfigure the radio using the given `config` object.
     ///
     /// See [`RadioConfig`] for more detail.
     /// This function is a convenience where calling multiple configuration functions may
     /// be cumbersome.
-    fn with_config(&mut self, config: &RadioConfig) -> Result<(), Self::ConfigErrorType>;
+    fn with_config(&mut self, config: &RadioConfig) -> Result<(), Self::Error>;
 }
 
 /// A trait to represent manipulation of an ESB capable transceiver.
 ///
 /// Although the name is rather generic, this trait describes the
 /// behavior of a radio's rudimentary modes (RX and TX).
-pub trait EsbRadio {
-    type RadioErrorType;
-
+pub trait EsbRadio: RadioErrorType {
     /// Put the radio into active RX mode.
     ///
     /// Conventionally, this should be called after setting the RX addresses via
     /// [`EsbPipe::open_rx_pipe()`]
-    fn as_rx(&mut self) -> Result<(), Self::RadioErrorType>;
+    fn as_rx(&mut self) -> Result<(), Self::Error>;
 
     /// Put the radio into inactive TX mode.
     ///
@@ -488,7 +467,7 @@ pub trait EsbRadio {
     /// [`EsbRadio::write()`].
     /// Conventionally, this should be called after setting the TX address via
     /// [`EsbPipe::open_tx_pipe()`].
-    fn as_tx(&mut self) -> Result<(), Self::RadioErrorType>;
+    fn as_tx(&mut self) -> Result<(), Self::Error>;
 
     /// Is the radio in RX mode?
     fn is_rx(&self) -> bool;
@@ -500,7 +479,7 @@ pub trait EsbRadio {
     ///
     /// See [`EsbRadio::write()`] for description of `ask_no_ack` parameter and more
     /// detail about how the radio processes data in the TX FIFO.
-    fn send(&mut self, buf: &[u8], ask_no_ack: bool) -> Result<bool, Self::RadioErrorType>;
+    fn send(&mut self, buf: &[u8], ask_no_ack: bool) -> Result<bool, Self::Error>;
 
     /// Non-blocking function to prepare radio for transmitting payload(s).
     ///
@@ -526,12 +505,7 @@ pub trait EsbRadio {
     /// Set the `start_tx` parameter `false` to prevent entering active TX mode. If the radio
     /// is already in active TX mode (because it is processing payloads in the TX FIFO), then
     /// this parameter has no effect.
-    fn write(
-        &mut self,
-        buf: &[u8],
-        ask_no_ack: bool,
-        start_tx: bool,
-    ) -> Result<bool, Self::RadioErrorType>;
+    fn write(&mut self, buf: &[u8], ask_no_ack: bool, start_tx: bool) -> Result<bool, Self::Error>;
 
     /// Similar to [`EsbRadio::send()`] but specifically for failed transmissions.
     ///
@@ -542,7 +516,7 @@ pub trait EsbRadio {
     ///
     /// Unlike [`EsbRadio::rewrite()`], this function will only make one attempt to
     /// resend the failed payload.
-    fn resend(&mut self) -> Result<bool, Self::RadioErrorType>;
+    fn resend(&mut self) -> Result<bool, Self::Error>;
 
     /// Similar to [`EsbRadio::write()`] but specifically for failed transmissions.
     ///
@@ -561,14 +535,14 @@ pub trait EsbRadio {
     /// - The radio's TX FIFO is flushed (via [`EsbFifo::flush_tx()`]).
     /// - The radio's CE pin is set to inactive LOW. This can be done directly on the pin or by calling
     ///   [`EsbRadio::as_tx()`].
-    fn rewrite(&mut self) -> Result<(), Self::RadioErrorType>;
+    fn rewrite(&mut self) -> Result<(), Self::Error>;
 
     /// Get the Auto-Retry Count (ARC) about the previous transmission.
     ///
     /// This data is reset for every payload attempted to transmit.
     /// It cannot exceed 15 per the `count` parameter in [`EsbAutoAck::set_auto_retries()`].
     /// If auto-ack feature is disabled, then this function provides no useful data.
-    fn get_last_arc(&mut self) -> Result<u8, Self::RadioErrorType>;
+    fn get_last_arc(&mut self) -> Result<u8, Self::Error>;
 
     /// Read data from the radio's RX FIFO into the specified `buf`.
     ///
@@ -581,5 +555,5 @@ pub trait EsbRadio {
     /// (set by [`EsbPayloadLength::set_payload_length()`]) or the dynamic payload length
     /// (fetched internally using [`EsbPayloadLength::get_dynamic_payload_length()`]) if
     /// dynamic payload lengths are enable (see [`EsbPayloadLength::set_dynamic_payloads()`]).
-    fn read(&mut self, buf: &mut [u8], len: Option<u8>) -> Result<u8, Self::RadioErrorType>;
+    fn read(&mut self, buf: &mut [u8], len: Option<u8>) -> Result<u8, Self::Error>;
 }
