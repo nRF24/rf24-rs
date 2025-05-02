@@ -269,7 +269,8 @@ where
 mod test {
     extern crate std;
     use super::{commands, mnemonics, registers};
-    use crate::{spi_test_expects, test::mk_radio};
+    use crate::{radio::prelude::EsbRadio, spi_test_expects, test::mk_radio};
+    use embedded_hal::{digital::ErrorKind as OutputPinError, spi::ErrorKind as SpiError};
     use embedded_hal_mock::eh1::{
         digital::{State as PinState, Transaction as PinTransaction},
         spi::Transaction as SpiTransaction,
@@ -443,6 +444,20 @@ mod test {
         let mocks = mk_radio(&[], &spi_expectations);
         let (mut radio, mut spi, mut ce_pin) = (mocks.0, mocks.1, mocks.2);
         radio.set_lna(false).unwrap();
+        spi.done();
+        ce_pin.done();
+    }
+
+    #[test]
+    fn mock_hw_errors() {
+        let ce_expectations =
+            [PinTransaction::set(PinState::Low).with_error(OutputPinError::Other)];
+        let spi_expectations =
+            [SpiTransaction::transaction_start().with_error(SpiError::ChipSelectFault)];
+        let mocks = mk_radio(&ce_expectations, &spi_expectations);
+        let (mut radio, mut spi, mut ce_pin) = (mocks.0, mocks.1, mocks.2);
+        assert!(radio.as_tx().is_err());
+        assert!(radio.spi_transfer(1).is_err());
         spi.done();
         ce_pin.done();
     }
