@@ -84,7 +84,52 @@ mod test {
     use std::vec;
 
     #[test]
-    pub fn open_rx_pipe5() {
+    pub fn open_rx_pipe() {
+        let spi_expectations = spi_test_expects![
+            // open_rx_pipe(5)
+            (
+                vec![(registers::RX_ADDR_P0 + 5) | commands::W_REGISTER, 0x55u8],
+                vec![0xEu8, 0u8],
+            ),
+            // set EN_RXADDR
+            (vec![registers::EN_RXADDR, 0], vec![0xEu8, 1]),
+            (
+                vec![registers::EN_RXADDR | commands::W_REGISTER, 0x21],
+                vec![0xEu8, 0],
+            ),
+            // open_rx_pipe(0)
+            (
+                vec![
+                    registers::RX_ADDR_P0 | commands::W_REGISTER,
+                    0x55,
+                    0x55,
+                    0x55,
+                    0x55,
+                    0x55
+                ],
+                vec![0xEu8, 0, 0, 0, 0, 0],
+            ),
+            // set EN_RXADDR
+            (vec![registers::EN_RXADDR, 0], vec![0xEu8, 2]),
+            (
+                vec![registers::EN_RXADDR | commands::W_REGISTER, 3],
+                vec![0xEu8, 0u8],
+            ),
+        ];
+        let mocks = mk_radio(&[], &spi_expectations);
+        let (mut radio, mut spi, mut ce_pin) = (mocks.0, mocks.1, mocks.2);
+        let address = [0x55u8; 5];
+        radio.open_rx_pipe(9, &address).unwrap();
+        radio.open_rx_pipe(5, &address).unwrap();
+        radio.close_rx_pipe(9).unwrap();
+        radio.config_reg = radio.config_reg.as_rx();
+        radio.open_rx_pipe(0, &address).unwrap();
+        spi.done();
+        ce_pin.done();
+    }
+
+    #[test]
+    fn open_rx_pipe0() {
         let spi_expectations = spi_test_expects![
             // open_rx_pipe(5)
             (

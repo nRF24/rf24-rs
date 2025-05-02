@@ -5,14 +5,9 @@ use crate::{CrcLength, DataRate, PaLevel};
 #[derive(Debug, Clone, Copy)]
 pub struct EsbPipeConfig {
     pub(super) tx_address: [u8; 5],
-    pipe0: [u8; 5],
-    pipe1: [u8; 5],
-    pipe2: u8,
-    pipe3: u8,
-    pipe4: u8,
-    pipe5: u8,
-    pipe6: u8,
-    pipe7: u8,
+    pub(super) pipe0: [u8; 5],
+    pub(super) pipe1: [u8; 5],
+    pub(super) subsequent_pipe_prefixes: [u8; 6],
     pub(super) rx_pipes_enabled: u8,
 }
 
@@ -22,12 +17,7 @@ impl Default for EsbPipeConfig {
             tx_address: [0xE7; 5],
             pipe0: [0xE7; 5],
             pipe1: [0xC2; 5],
-            pipe2: 0xC3,
-            pipe3: 0xC4,
-            pipe4: 0xC5,
-            pipe5: 0xC6,
-            pipe6: 0xC7,
-            pipe7: 0xC8,
+            subsequent_pipe_prefixes: [0xC3, 0xC4, 0xC5, 0xC6, 0xC7, 0xC8],
             rx_pipes_enabled: 2,
         }
     }
@@ -47,16 +37,12 @@ impl EsbPipeConfig {
         if pipe < 8 {
             self.rx_pipes_enabled |= 1 << pipe;
         }
-        match pipe {
-            0 => self.pipe0[..len].copy_from_slice(&address[..len]),
-            1 => self.pipe1[..len].copy_from_slice(&address[..len]),
-            2 => self.pipe2 = address[0],
-            3 => self.pipe3 = address[0],
-            4 => self.pipe4 = address[0],
-            5 => self.pipe5 = address[0],
-            6 => self.pipe6 = address[0],
-            7 => self.pipe7 = address[0],
-            _ => (),
+        if pipe == 0 {
+            self.pipe0[..len].copy_from_slice(&address[..len]);
+        } else if pipe == 1 {
+            self.pipe1[..len].copy_from_slice(&address[..len]);
+        } else if pipe < 8 {
+            self.subsequent_pipe_prefixes[pipe as usize - 2] = address[0];
         }
     }
 
@@ -68,16 +54,12 @@ impl EsbPipeConfig {
 
     pub(super) fn get_rx_address(&self, pipe: u8, address: &mut [u8]) {
         let len = address.len().min(5);
-        match pipe {
-            0 => address[..len].copy_from_slice(&self.pipe0[..len]),
-            1 => address[..len].copy_from_slice(&self.pipe1[..len]),
-            2 => address[0] = self.pipe2,
-            3 => address[0] = self.pipe3,
-            4 => address[0] = self.pipe4,
-            5 => address[0] = self.pipe5,
-            6 => address[0] = self.pipe6,
-            7 => address[0] = self.pipe7,
-            _ => (),
+        if pipe == 0 {
+            address[..len].copy_from_slice(&self.pipe0[..len]);
+        } else if pipe == 1 {
+            address[..len].copy_from_slice(&self.pipe1[..len]);
+        } else if pipe < 8 {
+            address[0] = self.subsequent_pipe_prefixes[pipe as usize - 2];
         }
         if pipe > 1 && len > 1 {
             address[1..(len - 1)].copy_from_slice(&self.pipe1[1..(len - 1)]);
@@ -102,7 +84,7 @@ pub struct RadioConfig {
     channel: u8,
     payload_length: u8,
     auto_ack: u8,
-    pipes: EsbPipeConfig,
+    pub(crate) pipes: EsbPipeConfig,
 }
 
 impl Default for RadioConfig {
@@ -616,7 +598,7 @@ mod test {
         config.tx_address(&mut result);
         assert!(address.starts_with(&result));
         config = config.close_rx_pipe(1).close_rx_pipe(10);
-        // just for coverage, pass a empty byte array as RX address
+        // just for coverage, pass an empty byte array as RX address
         config = config.with_rx_address(0, &[]);
         assert!(!config.is_rx_pipe_enabled(1));
         for pipe in 0..=8 {

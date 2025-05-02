@@ -82,16 +82,19 @@ where
         self.spi_write_byte(registers::RF_SETUP, setup_rf_reg_val)?;
         self.tx_delay = set_tx_delay(config.data_rate());
 
-        let mut address = [0; 5];
-        for pipe in 0..6 {
-            config.rx_address(pipe, &mut address);
-            self.open_rx_pipe(pipe, &address)?;
-            // we need to set the pipe addresses before closing the pipe
-            // because pipe 1 address is reused for pipes 2-5
-            if !config.is_rx_pipe_enabled(pipe) {
-                self.close_rx_pipe(pipe)?;
-            }
+        // setup RX addresses
+        if config.is_rx_pipe_enabled(0) {
+            self.pipe0_rx_addr = Some(config.pipes.pipe0);
         }
+        self.spi_write_buf(registers::RX_ADDR_P0 + 1, &config.pipes.pipe1)?;
+        for pipe in 2..6 {
+            self.spi_write_byte(
+                registers::RX_ADDR_P0 + pipe,
+                config.pipes.subsequent_pipe_prefixes[pipe as usize - 2],
+            )?;
+        }
+
+        // setup TX address
         config.tx_address(&mut self.tx_address);
         // use `spi_transfer()` to avoid multiple borrows of self (`spi_write_buf()` and `tx_address`)
         for reg in [registers::TX_ADDR, registers::RX_ADDR_P0] {
@@ -100,9 +103,9 @@ where
                 .copy_from_slice(&self.tx_address[0..addr_len as usize]);
             self.spi_transfer(addr_len + 1)?;
         }
-        // enable pipe 0 for TX mode
-        self.spi_read(1, registers::EN_RXADDR)?;
-        self.spi_write_byte(registers::EN_RXADDR, self.buf[1] | 1)?;
+
+        // open all RX pipes; enable pipe 0 for TX mode
+        self.spi_write_byte(registers::EN_RXADDR, config.pipes.rx_pipes_enabled | 1)?;
 
         self.set_payload_length(config.payload_length())?;
 
@@ -118,71 +121,84 @@ where
 mod test {
     extern crate std;
     use super::{registers, EsbInit};
-    use crate::{radio::rf24::commands, spi_test_expects, test::mk_radio, DataRate, PaLevel};
+    use crate::{
+        radio::{rf24::commands, RadioConfig},
+        spi_test_expects,
+        test::mk_radio,
+        DataRate, PaLevel,
+    };
     use embedded_hal_mock::eh1::{
         digital::{State as PinState, Transaction as PinTransaction},
         spi::Transaction as SpiTransaction,
     };
     use std::vec;
 
-    pub fn init_parametrized(corrupted_binary: bool, is_plus_variant: bool, no_por: bool) {
+    #[derive(Default)]
+    struct InitParams {
+        corrupted_binary: bool,
+        is_plus_variant: bool,
+        no_por: bool,
+        is_p0_rx: bool,
+    }
+    fn init_parametrized(test_params: InitParams) {
         let mut ce_expectations = [PinTransaction::set(PinState::Low)].to_vec();
-        let mut spi_expectations = spi_test_expects![
+        let mut spi_expectations = vec![];
+        if !test_params.is_p0_rx {
             // power_down()
-            (
+            spi_expectations.extend(spi_test_expects![(
                 vec![registers::CONFIG | commands::W_REGISTER, 0xCu8],
                 vec![0xEu8, 0u8],
-            ),
-        ]
-        .to_vec();
-
-        // read back CONFIG register to verify SPI lines are working
-        if corrupted_binary {
-            spi_expectations.extend(spi_test_expects![(
-                vec![registers::CONFIG, 0u8],
-                vec![0xFF, 0xFF]
             ),]);
-            // !!! expectations stop here if emulating corrupted_binary
-        } else {
-            spi_expectations.extend(spi_test_expects![(
-                vec![registers::CONFIG, 0u8],
-                vec![0xEu8, 0xCu8]
-            ),]);
-            ce_expectations.extend([PinTransaction::set(PinState::Low)]);
-
-            // check for plus_variant
-            spi_expectations.extend(spi_test_expects![
-                // read FEATURE register
-                (
-                    vec![registers::FEATURE, 0xCu8],
-                    vec![0xEu8, if no_por { 5u8 } else { 0u8 }],
-                ),
-                // toggle_features()
-                (vec![commands::ACTIVATE, 0x73u8], vec![0xEu8, 0u8]),
-            ]);
-            if is_plus_variant {
-                // mocking a plus variant
-                spi_expectations.extend(spi_test_expects![
-                    // read FEATURE register
-                    (vec![registers::FEATURE, 0u8], vec![0xEu8, 0u8]),
-                ]);
+            if test_params.corrupted_binary {
+                spi_expectations.extend(spi_test_expects![(
+                    vec![registers::CONFIG, 0u8],
+                    vec![0xFF, 0xFF]
+                ),]);
+                // !!! expectations stop here if emulating corrupted_binary
             } else {
-                // mocking a non-plus variant
+                spi_expectations.extend(spi_test_expects![(
+                    vec![registers::CONFIG, 0u8],
+                    vec![0xEu8, 0xCu8]
+                ),]);
+                ce_expectations.extend([PinTransaction::set(PinState::Low)]);
+
+                // check for plus_variant
                 spi_expectations.extend(spi_test_expects![
                     // read FEATURE register
                     (
-                        vec![registers::FEATURE, 0u8],
-                        vec![0xEu8, if no_por { 0u8 } else { 5u8 }]
+                        vec![registers::FEATURE, 0xCu8],
+                        vec![0xEu8, if test_params.no_por { 5u8 } else { 0u8 }],
                     ),
+                    // toggle_features()
+                    (vec![commands::ACTIVATE, 0x73u8], vec![0xEu8, 0u8]),
                 ]);
-                if no_por {
+                if test_params.is_plus_variant {
+                    // mocking a plus variant
                     spi_expectations.extend(spi_test_expects![
-                        // toggle_features()
-                        (vec![commands::ACTIVATE, 0x73u8], vec![0xEu8, 0u8]),
+                        // read FEATURE register
+                        (vec![registers::FEATURE, 0u8], vec![0xEu8, 0u8]),
                     ]);
+                } else {
+                    // mocking a non-plus variant
+                    spi_expectations.extend(spi_test_expects![
+                        // read FEATURE register
+                        (
+                            vec![registers::FEATURE, 0u8],
+                            vec![0xEu8, if test_params.no_por { 0u8 } else { 5u8 }]
+                        ),
+                    ]);
+                    if test_params.no_por {
+                        spi_expectations.extend(spi_test_expects![
+                            // toggle_features()
+                            (vec![commands::ACTIVATE, 0x73u8], vec![0xEu8, 0u8]),
+                        ]);
+                    }
                 }
             }
+        }
 
+        if !test_params.corrupted_binary {
+            // begin with_config()
             spi_expectations.extend(spi_test_expects![
                 // clear_status_flags()
                 (
@@ -226,21 +242,7 @@ mod test {
                     ],
                     vec![0xEu8, 0u8],
                 ),
-            ]);
-            spi_expectations.extend(spi_test_expects![
-                // enable RX pipe 0
-                (vec![registers::EN_RXADDR, 0], vec![0xEu8, 0]),
-                (
-                    vec![registers::EN_RXADDR | commands::W_REGISTER, 1],
-                    vec![0xEu8, 0],
-                ),
-                // close pipe 0
-                (vec![registers::EN_RXADDR, 0], vec![0xEu8, 1]),
-                (
-                    vec![registers::EN_RXADDR | commands::W_REGISTER, 0],
-                    vec![0xEu8, 0],
-                ),
-                // set RX address for pipe
+                // set RX address for pipe 1
                 (
                     vec![
                         (registers::RX_ADDR_P0 + 1) | commands::W_REGISTER,
@@ -251,12 +253,6 @@ mod test {
                         0xC2
                     ],
                     vec![0xEu8, 0, 0, 0, 0, 0],
-                ),
-                // enable RX pipe 1
-                (vec![registers::EN_RXADDR, 0], vec![0xEu8, 0]),
-                (
-                    vec![registers::EN_RXADDR | commands::W_REGISTER, 2],
-                    vec![0xEu8, 0],
                 ),
             ]);
             for (pipe, addr) in [0xC3, 0xC4, 0xC5, 0xC6].iter().enumerate() {
@@ -269,76 +265,28 @@ mod test {
                         ],
                         vec![0xEu8, 0],
                     ),
-                    // enable RX pipe
-                    (vec![registers::EN_RXADDR, 0], vec![0xEu8, 0]),
-                    (
-                        vec![registers::EN_RXADDR | commands::W_REGISTER, 1 << (pipe + 2)],
-                        vec![0xEu8, 0],
-                    ),
-                    // close RX pipe
-                    (vec![registers::EN_RXADDR, 0], vec![0xEu8, 1 << (pipe + 2)]),
-                    (
-                        vec![registers::EN_RXADDR | commands::W_REGISTER, 0],
-                        vec![0xEu8, 0],
-                    ),
                 ]);
             }
+            // set TX address for pipe 0 and as RX address for pipe 0
+            for reg in [registers::TX_ADDR, registers::RX_ADDR_P0] {
+                spi_expectations.extend(spi_test_expects![(
+                    vec![reg | commands::W_REGISTER, 0xE7, 0xE7, 0xE7, 0xE7, 0xE7],
+                    vec![0xEu8, 0, 0, 0, 0, 0],
+                ),]);
+            }
+            // open RX pipe 1. Also pipe 0 for TX (regardless of auto-ack)
+            spi_expectations.extend(spi_test_expects![(
+                vec![registers::EN_RXADDR | commands::W_REGISTER, 3],
+                vec![0xEu8, 0u8],
+            ),]);
+            // set payload length to 32 bytes on all pipes
+            for pipe in 0..6 {
+                spi_expectations.extend(spi_test_expects![(
+                    vec![(registers::RX_PW_P0 + pipe) | commands::W_REGISTER, 32],
+                    vec![0xEu8, 0],
+                ),]);
+            }
             spi_expectations.extend(spi_test_expects![
-                // set TX address for pipe 0
-                (
-                    vec![
-                        registers::TX_ADDR | commands::W_REGISTER,
-                        0xE7,
-                        0xE7,
-                        0xE7,
-                        0xE7,
-                        0xE7
-                    ],
-                    vec![0xEu8, 0, 0, 0, 0, 0],
-                ),
-                // set RX address for pipe 0
-                (
-                    vec![
-                        registers::RX_ADDR_P0 | commands::W_REGISTER,
-                        0xE7,
-                        0xE7,
-                        0xE7,
-                        0xE7,
-                        0xE7
-                    ],
-                    vec![0xEu8, 0, 0, 0, 0, 0],
-                ),
-                // open pipe 0 for TX (regardless of auto-ack)
-                (vec![registers::EN_RXADDR, 0u8], vec![0xEu8, 0u8]),
-                (
-                    vec![registers::EN_RXADDR | commands::W_REGISTER, 1u8],
-                    vec![0xEu8, 0u8],
-                ),
-                // set payload length to 32 bytes on all pipes
-                (
-                    vec![registers::RX_PW_P0 | commands::W_REGISTER, 32u8],
-                    vec![0xEu8, 0u8],
-                ),
-                (
-                    vec![(registers::RX_PW_P0 + 1) | commands::W_REGISTER, 32u8],
-                    vec![0xEu8, 0u8],
-                ),
-                (
-                    vec![(registers::RX_PW_P0 + 2) | commands::W_REGISTER, 32u8],
-                    vec![0xEu8, 0u8],
-                ),
-                (
-                    vec![(registers::RX_PW_P0 + 3) | commands::W_REGISTER, 32u8],
-                    vec![0xEu8, 0u8],
-                ),
-                (
-                    vec![(registers::RX_PW_P0 + 4) | commands::W_REGISTER, 32u8],
-                    vec![0xEu8, 0u8],
-                ),
-                (
-                    vec![(registers::RX_PW_P0 + 5) | commands::W_REGISTER, 32u8],
-                    vec![0xEu8, 0u8],
-                ),
                 // set_channel()
                 (
                     vec![registers::RF_CH | commands::W_REGISTER, 76u8],
@@ -354,34 +302,58 @@ mod test {
 
         let mocks = mk_radio(&ce_expectations, &spi_expectations);
         let (mut radio, mut spi, mut ce_pin) = (mocks.0, mocks.1, mocks.2);
-        let result = radio.init();
-        if corrupted_binary {
+        let result = if !test_params.is_p0_rx {
+            radio.init()
+        } else {
+            radio.with_config(&RadioConfig::default().with_rx_address(0, &[0xE7; 5]))
+        };
+        if test_params.corrupted_binary {
             assert!(result.is_err());
         } else {
             assert!(result.is_ok());
         }
-        assert_eq!(radio.is_plus_variant(), is_plus_variant);
+        if !test_params.is_p0_rx {
+            assert_eq!(radio.is_plus_variant(), test_params.is_plus_variant);
+        }
         spi.done();
         ce_pin.done();
     }
 
     #[test]
     fn init_bin_corrupt() {
-        init_parametrized(true, true, false);
+        init_parametrized(InitParams {
+            corrupted_binary: true,
+            is_plus_variant: true,
+            ..Default::default()
+        });
     }
 
     #[test]
     fn init_plus_variant() {
-        init_parametrized(false, true, false);
+        init_parametrized(InitParams {
+            is_plus_variant: true,
+            ..Default::default()
+        });
     }
 
     #[test]
     fn init_non_plus_variant() {
-        init_parametrized(false, false, false);
+        init_parametrized(InitParams::default());
     }
 
     #[test]
     fn init_non_plus_variant_no_por() {
-        init_parametrized(false, false, true);
+        init_parametrized(InitParams {
+            no_por: true,
+            ..Default::default()
+        });
+    }
+
+    #[test]
+    fn init_with_pipe0_rx() {
+        init_parametrized(InitParams {
+            is_p0_rx: true,
+            ..Default::default()
+        });
     }
 }
