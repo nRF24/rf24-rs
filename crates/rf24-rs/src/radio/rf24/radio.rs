@@ -389,7 +389,7 @@ mod test {
                     registers::STATUS | commands::W_REGISTER,
                     mnemonics::MASK_MAX_RT | mnemonics::MASK_TX_DS,
                 ],
-                vec![0xFu8, 0u8],
+                vec![0xFu8, 0],
             ),
             // flush_tx()
             (vec![commands::FLUSH_TX], vec![0xEu8]),

@@ -88,8 +88,8 @@ mod test {
         let spi_expectations = spi_test_expects![
             // open_rx_pipe(5)
             (
-                vec![(registers::RX_ADDR_P0 + 5) | commands::W_REGISTER, 0x55u8],
-                vec![0xEu8, 0u8],
+                vec![(registers::RX_ADDR_P0 + 5) | commands::W_REGISTER, 0x55],
+                vec![0xEu8, 0],
             ),
             // set EN_RXADDR
             (vec![registers::EN_RXADDR, 0], vec![0xEu8, 1]),
@@ -113,12 +113,12 @@ mod test {
             (vec![registers::EN_RXADDR, 0], vec![0xEu8, 2]),
             (
                 vec![registers::EN_RXADDR | commands::W_REGISTER, 3],
-                vec![0xEu8, 0u8],
+                vec![0xEu8, 0],
             ),
         ];
         let mocks = mk_radio(&[], &spi_expectations);
         let (mut radio, mut spi, mut ce_pin) = (mocks.0, mocks.1, mocks.2);
-        let address = [0x55u8; 5];
+        let address = [0x55; 5];
         radio.open_rx_pipe(9, &address).unwrap();
         radio.open_rx_pipe(5, &address).unwrap();
         radio.close_rx_pipe(9).unwrap();
@@ -133,14 +133,14 @@ mod test {
         let spi_expectations = spi_test_expects![
             // open_rx_pipe(5)
             (
-                vec![(registers::RX_ADDR_P0 + 5) | commands::W_REGISTER, 0x55u8],
-                vec![0xEu8, 0u8],
+                vec![(registers::RX_ADDR_P0 + 5) | commands::W_REGISTER, 0x55],
+                vec![0xEu8, 0],
             ),
             // set EN_RXADDR
-            (vec![registers::EN_RXADDR, 0u8], vec![0xEu8, 1u8]),
+            (vec![registers::EN_RXADDR, 0], vec![0xEu8, 1]),
             (
-                vec![registers::EN_RXADDR | commands::W_REGISTER, 0x21u8],
-                vec![0xEu8, 0u8],
+                vec![registers::EN_RXADDR | commands::W_REGISTER, 0x21],
+                vec![0xEu8, 0],
             ),
         ];
         let mocks = mk_radio(&[], &spi_expectations);
@@ -159,46 +159,46 @@ mod test {
             // for 2 byte addresses
             // write the SETUP_AW register value
             (
-                vec![registers::SETUP_AW | commands::W_REGISTER, 0u8],
-                vec![0xEu8, 0u8],
+                vec![registers::SETUP_AW | commands::W_REGISTER, 0],
+                vec![0xEu8, 0],
             ),
             // read the SETUP_AW register value
-            (vec![registers::SETUP_AW, 0u8], vec![0xEu8, 0u8]),
+            (vec![registers::SETUP_AW, 0], vec![0xEu8, 0]),
             // for 3 byte addresses
             // write the SETUP_AW register value
             (
-                vec![registers::SETUP_AW | commands::W_REGISTER, 1u8],
-                vec![0xEu8, 0u8],
+                vec![registers::SETUP_AW | commands::W_REGISTER, 1],
+                vec![0xEu8, 0],
             ),
             // read the SETUP_AW register value
-            (vec![registers::SETUP_AW, 0u8], vec![0xEu8, 1u8]),
+            (vec![registers::SETUP_AW, 0], vec![0xEu8, 1]),
             // for 4 byte addresses
             // write the SETUP_AW register value
             (
-                vec![registers::SETUP_AW | commands::W_REGISTER, 2u8],
-                vec![0xEu8, 0u8],
+                vec![registers::SETUP_AW | commands::W_REGISTER, 2],
+                vec![0xEu8, 0],
             ),
             // read the SETUP_AW register value
-            (vec![registers::SETUP_AW, 0u8], vec![0xEu8, 2u8]),
+            (vec![registers::SETUP_AW, 0], vec![0xEu8, 2]),
             // for 5 byte addresses
             // write the SETUP_AW register value
             (
-                vec![registers::SETUP_AW | commands::W_REGISTER, 3u8],
-                vec![0xEu8, 0u8],
+                vec![registers::SETUP_AW | commands::W_REGISTER, 3],
+                vec![0xEu8, 0],
             ),
             // read the SETUP_AW register value
-            (vec![registers::SETUP_AW, 0u8], vec![0xEu8, 3u8]),
+            (vec![registers::SETUP_AW, 0], vec![0xEu8, 3]),
         ];
         let mocks = mk_radio(&[], &spi_expectations);
         let (mut radio, mut spi, mut ce_pin) = (mocks.0, mocks.1, mocks.2);
         radio.set_address_length(2).unwrap();
-        assert_eq!(radio.get_address_length().unwrap(), 2u8);
+        assert_eq!(radio.get_address_length().unwrap(), 2);
         radio.set_address_length(3).unwrap();
-        assert_eq!(radio.get_address_length().unwrap(), 3u8);
+        assert_eq!(radio.get_address_length().unwrap(), 3);
         radio.set_address_length(4).unwrap();
-        assert_eq!(radio.get_address_length().unwrap(), 4u8);
+        assert_eq!(radio.get_address_length().unwrap(), 4);
         radio.set_address_length(5).unwrap();
-        assert_eq!(radio.get_address_length().unwrap(), 5u8);
+        assert_eq!(radio.get_address_length().unwrap(), 5);
         spi.done();
         ce_pin.done();
     }

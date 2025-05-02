@@ -146,19 +146,19 @@ mod test {
         if !test_params.is_p0_rx {
             // power_down()
             spi_expectations.extend(spi_test_expects![(
-                vec![registers::CONFIG | commands::W_REGISTER, 0xCu8],
-                vec![0xEu8, 0u8],
+                vec![registers::CONFIG | commands::W_REGISTER, 0xC],
+                vec![0xEu8, 0],
             ),]);
             if test_params.corrupted_binary {
                 spi_expectations.extend(spi_test_expects![(
-                    vec![registers::CONFIG, 0u8],
+                    vec![registers::CONFIG, 0],
                     vec![0xFF, 0xFF]
                 ),]);
                 // !!! expectations stop here if emulating corrupted_binary
             } else {
                 spi_expectations.extend(spi_test_expects![(
-                    vec![registers::CONFIG, 0u8],
-                    vec![0xEu8, 0xCu8]
+                    vec![registers::CONFIG, 0],
+                    vec![0xEu8, 0xC]
                 ),]);
                 ce_expectations.extend([PinTransaction::set(PinState::Low)]);
 
@@ -166,31 +166,31 @@ mod test {
                 spi_expectations.extend(spi_test_expects![
                     // read FEATURE register
                     (
-                        vec![registers::FEATURE, 0xCu8],
-                        vec![0xEu8, if test_params.no_por { 5u8 } else { 0u8 }],
+                        vec![registers::FEATURE, 0xC],
+                        vec![0xEu8, if test_params.no_por { 5 } else { 0 }],
                     ),
                     // toggle_features()
-                    (vec![commands::ACTIVATE, 0x73u8], vec![0xEu8, 0u8]),
+                    (vec![commands::ACTIVATE, 0x73], vec![0xEu8, 0]),
                 ]);
                 if test_params.is_plus_variant {
                     // mocking a plus variant
                     spi_expectations.extend(spi_test_expects![
                         // read FEATURE register
-                        (vec![registers::FEATURE, 0u8], vec![0xEu8, 0u8]),
+                        (vec![registers::FEATURE, 0], vec![0xEu8, 0]),
                     ]);
                 } else {
                     // mocking a non-plus variant
                     spi_expectations.extend(spi_test_expects![
                         // read FEATURE register
                         (
-                            vec![registers::FEATURE, 0u8],
-                            vec![0xEu8, if test_params.no_por { 0u8 } else { 5u8 }]
+                            vec![registers::FEATURE, 0],
+                            vec![0xEu8, if test_params.no_por { 0 } else { 5 }]
                         ),
                     ]);
                     if test_params.no_por {
                         spi_expectations.extend(spi_test_expects![
                             // toggle_features()
-                            (vec![commands::ACTIVATE, 0x73u8], vec![0xEu8, 0u8]),
+                            (vec![commands::ACTIVATE, 0x73], vec![0xEu8, 0]),
                         ]);
                     }
                 }
@@ -202,8 +202,8 @@ mod test {
             spi_expectations.extend(spi_test_expects![
                 // clear_status_flags()
                 (
-                    vec![registers::STATUS | commands::W_REGISTER, 0x70u8],
-                    vec![0xEu8, 0u8],
+                    vec![registers::STATUS | commands::W_REGISTER, 0x70],
+                    vec![0xEu8, 0],
                 ),
                 // flush_rx()
                 (vec![commands::FLUSH_RX], vec![0xEu8]),
@@ -211,28 +211,28 @@ mod test {
                 (vec![commands::FLUSH_TX], vec![0xEu8]),
                 // set_address_length()
                 (
-                    vec![registers::SETUP_AW | commands::W_REGISTER, 3u8],
-                    vec![0xEu8, 0u8],
+                    vec![registers::SETUP_AW | commands::W_REGISTER, 3],
+                    vec![0xEu8, 0],
                 ),
                 // set_auto_retries()
                 (
-                    vec![registers::SETUP_RETR | commands::W_REGISTER, 0x5fu8],
-                    vec![0xEu8, 0u8],
+                    vec![registers::SETUP_RETR | commands::W_REGISTER, 0x5F],
+                    vec![0xEu8, 0],
                 ),
                 // write auto-ack register
                 (
-                    vec![registers::EN_AA | commands::W_REGISTER, 0x3Fu8],
-                    vec![0xEu8, 0u8],
+                    vec![registers::EN_AA | commands::W_REGISTER, 0x3F],
+                    vec![0xEu8, 0],
                 ),
                 // write dynamic payloads register
                 (
-                    vec![registers::DYNPD | commands::W_REGISTER, 0u8],
-                    vec![0xEu8, 0u8],
+                    vec![registers::DYNPD | commands::W_REGISTER, 0],
+                    vec![0xEu8, 0],
                 ),
                 // write FEATURE register
                 (
-                    vec![registers::FEATURE | commands::W_REGISTER, 0u8],
-                    vec![0xEu8, 0u8],
+                    vec![registers::FEATURE | commands::W_REGISTER, 0],
+                    vec![0xEu8, 0],
                 ),
                 // write data rate && PA level register
                 (
@@ -240,7 +240,7 @@ mod test {
                         registers::RF_SETUP | commands::W_REGISTER,
                         DataRate::Mbps1.into_bits() | PaLevel::Max.into_bits() | 1
                     ],
-                    vec![0xEu8, 0u8],
+                    vec![0xEu8, 0],
                 ),
                 // set RX address for pipe 1
                 (
@@ -277,7 +277,7 @@ mod test {
             // open RX pipe 1. Also pipe 0 for TX (regardless of auto-ack)
             spi_expectations.extend(spi_test_expects![(
                 vec![registers::EN_RXADDR | commands::W_REGISTER, 3],
-                vec![0xEu8, 0u8],
+                vec![0xEu8, 0],
             ),]);
             // set payload length to 32 bytes on all pipes
             for pipe in 0..6 {
@@ -289,13 +289,13 @@ mod test {
             spi_expectations.extend(spi_test_expects![
                 // set_channel()
                 (
-                    vec![registers::RF_CH | commands::W_REGISTER, 76u8],
-                    vec![0xEu8, 0u8],
+                    vec![registers::RF_CH | commands::W_REGISTER, 76],
+                    vec![0xEu8, 0],
                 ),
                 // write CONFIG register (configure CRC, power, and IRQ events)
                 (
-                    vec![registers::CONFIG | commands::W_REGISTER, 0xEu8],
-                    vec![0xEu8, 0u8],
+                    vec![registers::CONFIG | commands::W_REGISTER, 0xE],
+                    vec![0xEu8, 0],
                 ),
             ]);
         }
