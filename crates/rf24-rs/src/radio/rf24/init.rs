@@ -82,14 +82,16 @@ where
             self.feature.into_bits() & Feature::REG_MASK,
         )?;
 
-        let setup_rf_reg_val = config.setup_rf_aw.into_bits() & 0x27u8;
+        let setup_rf_reg_val = config.setup_rf_aw.into_bits() & 0x27;
         self.spi_write_byte(registers::RF_SETUP, setup_rf_reg_val)?;
         self.tx_delay = set_tx_delay(config.data_rate());
 
         // setup RX addresses
-        if config.is_rx_pipe_enabled(0) {
-            self.pipe0_rx_addr = Some(config.pipes.pipe0);
-        }
+        self.pipe0_rx_addr = if config.is_rx_pipe_enabled(0) {
+            Some(config.pipes.pipe0)
+        } else {
+            None
+        };
         self.spi_write_buf(registers::RX_ADDR_P0 + 1, &config.pipes.pipe1)?;
         for pipe in 2..6 {
             self.spi_write_byte(

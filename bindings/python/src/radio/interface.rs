@@ -322,17 +322,29 @@ impl RF24 {
             .map_err(|e| PyRuntimeError::new_err(format!("{e:?}")))
     }
 
-    /// A property that describes if the radio is a nRF24L01+ or not.
+    /// Is this radio a nRF24L01+ variant?
+    ///
+    /// The bool that this property returns is only valid _after_ calling
+    /// [`RF24.begin()`][rf24_py.RF24.begin].
     #[getter]
     pub fn is_plus_variant(&self) -> bool {
         self.inner.is_plus_variant()
     }
 
-    /// A property that describes the radio's Received Power Detection (RPD).
+    /// Was the Received Power Detection (RPD) trigger?
     ///
-    /// This is reset upon entering RX mode and is only set if the radio detects a
-    /// signal if strength -64 dBm or greater (actual threshold may vary depending
-    /// on radio model).
+    /// This flag is asserted during an RX session (after a mandatory 130 microseconds
+    /// duration) if a signal stronger than -64 dBm was detected.
+    ///
+    /// Note that if a payload was placed in RX mode, then that means
+    /// the signal used to transmit that payload was stronger than either
+    ///
+    /// * -82 dBm in 2 Mbps [`DataRate`][rf24_py.DataRate]
+    /// * -85 dBm in 1 Mbps [`DataRate`][rf24_py.DataRate]
+    /// * -94 dBm in 250 Kbps [`DataRate`][rf24_py.DataRate]
+    ///
+    /// Sensitivity may vary based of the radio's model and manufacturer.
+    /// The information above is stated in the nRF24L01+ datasheet.
     #[getter]
     pub fn get_rpd(&mut self) -> PyResult<bool> {
         self.inner
@@ -340,11 +352,10 @@ impl RF24 {
             .map_err(|e| PyRuntimeError::new_err(format!("{e:?}")))
     }
 
-    /// Start a constant carrier wave on the given `channel` using the specified
-    /// power amplitude `level`.
+    /// Start a constant carrier wave
     ///
-    /// This functionality is only useful for testing the radio hardware works as a
-    /// transmitter.
+    /// This functionality is meant for hardware tests (in conjunction with [`RF24::rpd`][rf24_py.RF24.rpd]).
+    /// Typically, this behavior is required by government agencies to enforce regional restrictions.
     ///
     /// Parameters:
     ///     level: The Power Amplitude level to use when transmitting.
@@ -357,10 +368,20 @@ impl RF24 {
             .map_err(|e| PyRuntimeError::new_err(format!("{e:?}")))
     }
 
-    /// Stop transmitting the constant carrier wave.
+    /// Stop the constant carrier wave started via
+    /// [`RF24.start_carrier_wave()`][rf24_py.RF24.start_carrier_wave].
     ///
-    /// [`RF24.start_carrier_wave()`][rf24_py.RF24.start_carrier_wave] should be called
-    /// before this function.
+    /// This function leaves the radio in a configuration that may be undesired or
+    /// unexpected because of the setup involved in
+    /// [`RF24.start_carrier_wave()`][rf24_py.RF24.start_carrier_wave].
+    /// The [`PaLevel`][rf24_py.PaLevel] and `channel` passed to
+    /// [`RF24.start_carrier_wave()`][rf24_py.RF24.start_carrier_wave] are
+    /// still set.
+    /// If [`RF24::is_plus_variant`] returns `true`, the following features are all disabled:
+    ///
+    /// - auto-ack
+    /// - CRC
+    /// - auto-retry
     pub fn stop_carrier_wave(&mut self) -> PyResult<()> {
         self.inner
             .stop_carrier_wave()
@@ -368,6 +389,9 @@ impl RF24 {
     }
 
     /// Enable or disable the LNA feature.
+    ///
+    /// This is enabled by default (regardless of chip variant).
+    /// See [`PaLevel`][rf24_py.PaLevel] for effective behavior.
     ///
     /// On nRF24L01+ modules with a builtin antenna, this feature is always enabled.
     /// For clone's and module's with a separate PA/LNA circuit (external antenna),
