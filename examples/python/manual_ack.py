@@ -49,8 +49,8 @@ class App:
         # usually run with nRF24L01 transceivers in close proximity of each other
         self.radio.pa_level = PaLevel.Low  # PaLevel.Max is default
 
-        # set TX address of RX node into the TX pipe
-        self.radio.open_tx_pipe(address[radio_number])  # always uses pipe 0
+        # set TX address of RX node (always uses pipe 0)
+        self.radio.as_tx(address[radio_number])  # enter inactive TX mode
 
         # set RX address of TX node into an RX pipe
         self.radio.open_rx_pipe(1, address[not radio_number])  # using pipe 1
@@ -113,6 +113,9 @@ class App:
             time.sleep(1)  # make example readable by slowing down transmissions
             count -= 1
 
+        # recommended behavior is to keep in TX mode while idle
+        self.radio.as_tx()  # enter inactive TX mode
+
     def rx(self, timeout: int = 6):
         """Polls the radio and prints the received value. This method expires
         after 6 seconds of no received transmission"""
@@ -161,7 +164,7 @@ class App:
                 end_time = time.monotonic() + timeout  # reset the timeout timer
 
         # recommended behavior is to keep in TX mode while idle
-        self.radio.as_tx()  # put the nRF24L01 into inactive TX mode
+        self.radio.as_tx()  # enter inactive TX mode
 
     def set_role(self):
         """Set the role using stdin stream. Timeout arg for slave() can be

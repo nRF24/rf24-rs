@@ -84,7 +84,7 @@ impl App {
     /// Transmits a battery charge level as a BLE beacon.
     pub fn tx_battery(&mut self, count: u8) -> Result<()> {
         // put radio into TX mode
-        self.radio.as_tx().map_err(debug_err)?;
+        self.radio.as_tx(None).map_err(debug_err)?;
 
         let mut battery_service = BatteryService::new();
         battery_service.set_data(85); // 85 % remaining charge
@@ -108,13 +108,17 @@ impl App {
         // disable these features for example purposes
         self.ble.set_name("");
         self.ble.show_pa_level = false;
+
+        // recommended behavior is to keep in TX mode while idle
+        self.radio.as_tx(None).map_err(debug_err)?; // enter inactive TX mode
+
         Ok(())
     }
 
     /// Transmits a temperature measurement as a BLE beacon.
     pub fn tx_temperature(&mut self, count: u8) -> Result<()> {
         // put radio into TX mode
-        self.radio.as_tx().map_err(debug_err)?;
+        self.radio.as_tx(None).map_err(debug_err)?;
 
         let mut temperature_service = TemperatureService::new();
         temperature_service.set_data(45.0); // 45 C degrees
@@ -136,13 +140,17 @@ impl App {
 
         // disable these features when done (for example purposes)
         self.ble.set_name("");
+
+        // recommended behavior is to keep in TX mode while idle
+        self.radio.as_tx(None).map_err(debug_err)?; // enter inactive TX mode
+
         Ok(())
     }
 
     /// Transmits a URL as a BLE beacon.
     pub fn tx_url(&mut self, count: u8) -> Result<()> {
         // put radio into TX mode
-        self.radio.as_tx().map_err(debug_err)?;
+        self.radio.as_tx(None).map_err(debug_err)?;
 
         let mut url_service = UrlService::new();
         url_service.set_data("https://www.google.com");
@@ -160,6 +168,9 @@ impl App {
             self.ble.hop_channel(&mut self.radio).map_err(debug_err)?;
             DelayImpl.delay_ms(500);
         }
+
+        // recommended behavior is to keep in TX mode while idle
+        self.radio.as_tx(None).map_err(debug_err)?; // enter inactive TX mode
 
         Ok(())
     }
@@ -199,8 +210,9 @@ impl App {
                     }
                 }
                 if Instant::now() >= end_time {
-                    // It is highly recommended to keep the radio idling in an inactive TX mode
-                    self.radio.as_tx().map_err(debug_err)?;
+                    // recommended behavior is to keep in TX mode while idle.
+                    // enter inactive TX mode (exit RX mode)
+                    self.radio.as_tx(None).map_err(debug_err)?;
                     // continue reading payloads from RX FIFO
                 }
             }

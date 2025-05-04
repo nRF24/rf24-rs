@@ -24,7 +24,7 @@ pub trait EsbPipe: RadioErrorType {
     ///
     /// If the specified `pipe` is not in range [0, 5], then this function does nothing.
     ///
-    /// Up to 6 pipes can be open for reading at once.  Open all the required
+    /// Up to 6 pipes can be open for reading at once. Open all the required
     /// reading pipes, and then call [`EsbRadio::as_rx()`].
     ///
     /// ### About pipe addresses
@@ -44,11 +44,14 @@ pub trait EsbPipe: RadioErrorType {
     ///
     /// <div class="warning">
     ///
+    /// Only pipe 0 can be used for transmitting. It is highly recommended to
+    /// avoid using pipe 0 to receive because of this.
+    ///
     /// If the pipe 0 is opened for receiving by this function, the `address`
     /// passed to this function (for pipe 0) will be restored at every call to
     /// [`EsbRadio::as_rx()`].
     /// This address restoration is implemented because of the underlying necessary
-    /// functionality of [`EsbPipe::open_tx_pipe()`].
+    /// functionality of [`EsbRadio::as_tx()`].
     ///
     /// It is important that the `address` length for pipe 0
     /// is equal to the length configured by [`EsbPipe::set_address_length()`].
@@ -58,10 +61,6 @@ pub trait EsbPipe: RadioErrorType {
     /// Read [maniacBug's blog post](http://maniacalbits.blogspot.com/2013/04/rf24-addressing-nrf24l01-radios-require.html)
     /// to understand how to avoid using malformed addresses.
     fn open_rx_pipe(&mut self, pipe: u8, address: &[u8]) -> Result<(), Self::Error>;
-
-    /// Set an address to pipe 0 for transmitting when radio is in TX mode.
-    ///
-    fn open_tx_pipe(&mut self, address: &[u8]) -> Result<(), Self::Error>;
 
     /// Close a specified pipe from receiving data when radio is in RX mode.
     fn close_rx_pipe(&mut self, pipe: u8) -> Result<(), Self::Error>;
@@ -459,15 +458,26 @@ pub trait EsbRadio: RadioErrorType {
     ///
     /// Conventionally, this should be called after setting the RX addresses via
     /// [`EsbPipe::open_rx_pipe()`]
+    ///
+    /// This function will restore the cached RX address set to pipe 0.
+    /// This is done because the [`EsbRadio::as_tx()`] will appropriate the
+    /// RX address on pipe 0 for auto-ack purposes.
     fn as_rx(&mut self) -> Result<(), Self::Error>;
 
     /// Put the radio into inactive TX mode.
     ///
     /// This must be called at least once before calling [`EsbRadio::send()`] or
     /// [`EsbRadio::write()`].
-    /// Conventionally, this should be called after setting the TX address via
-    /// [`EsbPipe::open_tx_pipe()`].
-    fn as_tx(&mut self) -> Result<(), Self::Error>;
+    ///
+    /// If the `tx_address` parameter is given [`Some`] value, then that will be
+    /// cached and set as the new TX address.
+    ///
+    /// For auto-ack purposes, this function will also restore
+    /// the cached `tx_address` to the RX pipe 0.
+    ///
+    /// This function will also flush the TX FIFO when ACK payloads are enabled
+    /// (via [`EsbAutoAck::set_ack_payloads()`]).
+    fn as_tx(&mut self, tx_address: Option<&[u8]>) -> Result<(), Self::Error>;
 
     /// Is the radio in RX mode?
     fn is_rx(&self) -> bool;

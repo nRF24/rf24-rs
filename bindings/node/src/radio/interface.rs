@@ -196,6 +196,13 @@ impl RF24 {
 
     /// Put the radio into active RX mode.
     ///
+    /// Conventionally, this should be called after setting the RX addresses via
+    /// {@link RF24.openRxPipe}.
+    ///
+    /// This function will restore the cached RX address set to pipe 0.
+    /// This is done because the {@link RF24.asTx} will appropriate the
+    /// RX address on pipe 0 for auto-ack purposes.
+    ///
     /// @group Basic
     #[napi]
     pub fn as_rx(&mut self) -> Result<()> {
@@ -204,7 +211,13 @@ impl RF24 {
             .map_err(|e| Error::new(Status::GenericFailure, format!("{e:?}")))
     }
 
-    /// Deactivates active RX mode and puts the radio into an inactive TX mode.
+    /// Puts the radio into an inactive TX mode.
+    ///
+    /// This must be called at least once before calling {@link RF24.send} or
+    /// {@link RF24.write}.
+    ///
+    /// For auto-ack purposes, this function will also restore
+    /// the cached `txAddress` to the RX pipe 0.
     ///
     /// The datasheet recommends idling the radio in an inactive TX mode.
     ///
@@ -212,11 +225,14 @@ impl RF24 {
     /// > This function will also flush the TX FIFO when ACK payloads are enabled
     /// > (via {@link RF24.ackPayloads}).
     ///
+    /// @param txAddress - If specified, then this buffer will be
+    /// cached and set as the new TX address.
+    ///
     /// @group Basic
     #[napi]
-    pub fn as_tx(&mut self) -> Result<()> {
+    pub fn as_tx(&mut self, tx_address: Option<Buffer>) -> Result<()> {
         self.inner
-            .as_tx()
+            .as_tx(tx_address.as_deref())
             .map_err(|e| Error::new(Status::GenericFailure, format!("{e:?}")))
     }
 
@@ -337,7 +353,10 @@ impl RF24 {
             .map_err(|e| Error::new(Status::GenericFailure, format!("{e:?}")))
     }
 
-    /// A property that describes if the radio is a nRF24L01+ or not.
+    /// Is this radio a nRF24L01+ variant?
+    ///
+    /// The bool that this attribute returns is only valid _after_ calling
+    /// {@link RF24.begin}.
     ///
     /// @group Configuration
     #[napi(getter)]
@@ -345,11 +364,20 @@ impl RF24 {
         self.inner.is_plus_variant()
     }
 
-    /// A property that describes the radio's Received Power Detection (RPD).
+    /// Was the Received Power Detection (RPD) trigger?
     ///
-    /// This is reset upon entering RX mode and is only set if the radio detects a
-    /// signal if strength -64 dBm or greater (actual threshold may vary depending
-    /// on radio model).
+    /// This flag is asserted during an RX session (after a mandatory 130 microseconds
+    /// duration) if a signal stronger than -64 dBm was detected.
+    ///
+    /// Note that if a payload was placed in RX mode, then that means
+    /// the signal used to transmit that payload was stronger than either
+    ///
+    /// * -82 dBm in 2 Mbps {@link DataRate}
+    /// * -85 dBm in 1 Mbps {@link DataRate}
+    /// * -94 dBm in 250 Kbps {@link DataRate}
+    ///
+    /// Sensitivity may vary based of the radio's model and manufacturer.
+    /// The information above is stated in the nRF24L01+ datasheet.
     ///
     /// @group Advanced
     #[napi(getter)]
@@ -359,11 +387,10 @@ impl RF24 {
             .map_err(|e| Error::new(Status::GenericFailure, format!("{e:?}")))
     }
 
-    /// Start a constant carrier wave on the given `channel` using the specified
-    /// power amplitude `level`.
+    /// Start a constant carrier wave
     ///
-    /// This functionality is only useful for testing the radio hardware works as a
-    /// transmitter.
+    /// This functionality is meant for hardware tests (in conjunction with {@link RF24.rpd}).
+    /// Typically, this behavior is required by government agencies to enforce regional restrictions.
     ///
     /// @param level - The Power Amplitude level to use when transmitting.
     /// @param channel - The channel (radio's frequency) used to transmit.
@@ -378,10 +405,17 @@ impl RF24 {
             .map_err(|e| Error::new(Status::GenericFailure, format!("{e:?}")))
     }
 
-    /// Stop transmitting the constant carrier wave.
+    /// Stop the constant carrier wave started via {@link RF24.startCarrierWave}.
     ///
-    /// {@link RF24.startCarrierWave} should be called before
-    /// this function.
+    /// This function leaves the radio in a configuration that may be undesired or
+    /// unexpected because of the setup involved in {@link RF24.startCarrierWave}.
+    /// The {@link PaLevel} and `channel` passed to {@link RF24.startCarrierWave} are
+    /// still set.
+    /// If {@link RF24.isPlusVariant} returns `true`, the following features are all disabled:
+    ///
+    /// - auto-ack
+    /// - CRC
+    /// - auto-retry
     ///
     /// @group Advanced
     #[napi]
@@ -392,6 +426,9 @@ impl RF24 {
     }
 
     /// Enable or disable the LNA feature.
+    ///
+    /// This is enabled by default (regardless of chip variant).
+    /// See {@link PaLevel} for effective behavior.
     ///
     /// On nRF24L01+ modules with a builtin antenna, this feature is always enabled.
     /// For clone's and module's with a separate PA/LNA circuit (external antenna),
@@ -758,22 +795,6 @@ impl RF24 {
         let address = address.to_vec();
         self.inner
             .open_rx_pipe(pipe, &address)
-            .map_err(|e| Error::new(Status::GenericFailure, format!("{e:?}")))
-    }
-
-    /// Set the address used for transmitting on pipe 0.
-    ///
-    /// Only pipe 0 can be used for transmitting. It is highly recommended to
-    /// avoid using pipe 0 to receive because of this.
-    ///
-    /// @param address - The address to receive data from.
-    ///
-    /// @group Basic
-    #[napi]
-    pub fn open_tx_pipe(&mut self, address: Buffer) -> Result<()> {
-        let address = address.to_vec();
-        self.inner
-            .open_tx_pipe(&address)
             .map_err(|e| Error::new(Status::GenericFailure, format!("{e:?}")))
     }
 

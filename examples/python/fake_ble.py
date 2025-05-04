@@ -75,6 +75,9 @@ class App:
         self.ble.name = None
         self.ble.show_pa_level = False
 
+        # recommended behavior is to keep in TX mode while idle
+        self.radio.as_tx()  # enter inactive TX mode
+
     def tx_temperature(self, count: int = 50):
         """Transmits a temperature measurement as a BLE beacon"""
         self.radio.as_tx()  # ensures the nRF24L01 is in TX mode
@@ -99,6 +102,9 @@ class App:
         # disable these features when done (for example purposes)
         self.ble.name = None
 
+        # recommended behavior is to keep in TX mode while idle
+        self.radio.as_tx()  # enter inactive TX mode
+
     def tx_url(self, count: int = 50):
         """Transmits a URL as a BLE beacon"""
         self.radio.as_tx()  # ensures the nRF24L01 is in TX mode
@@ -118,6 +124,9 @@ class App:
             self.ble.send(buffer)
             self.ble.hop_channel()
             time.sleep(0.5)
+
+        # recommended behavior is to keep in TX mode while idle
+        self.radio.as_tx()  # enter inactive TX mode
 
     def rx(self, timeout: int = 6):
         """Polls the radio and prints the received value. This method expires
@@ -151,7 +160,7 @@ class App:
                         print("\tURL:", received.url.data)
             if time.monotonic() >= end_time:
                 # recommended behavior is to keep in TX mode while idle
-                self.radio.as_tx()  # exit RX mode
+                self.radio.as_tx()  # enter inactive TX mode (exit RX mode)
                 # continue to read remaining payloads from RX FIFO
 
     def set_role(self):

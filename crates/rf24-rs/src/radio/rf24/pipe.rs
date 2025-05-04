@@ -28,7 +28,11 @@ where
                 cached_addr[..width].copy_from_slice(&address[..width]);
                 self.pipe0_rx_addr = Some(cached_addr);
             }
-            self.spi_write_buf(registers::RX_ADDR_P0 + pipe, &address[..width])?;
+            if self.config_reg.is_rx() || pipe != 0 {
+                // skip this if radio is in TX mode and the specified `pipe` is 0
+                // NOTE: as_rx() will restore the cached address for pipe 0 (if any)
+                self.spi_write_buf(registers::RX_ADDR_P0 + pipe, &address[..width])?;
+            }
         }
         // For pipes 2-5, only write the MSB
         else {
@@ -38,11 +42,6 @@ where
         self.spi_read(1, registers::EN_RXADDR)?;
         let out = self.buf[1] | (1 << pipe);
         self.spi_write_byte(registers::EN_RXADDR, out)
-    }
-
-    fn open_tx_pipe(&mut self, address: &[u8]) -> Result<(), Self::Error> {
-        self.spi_write_buf(registers::TX_ADDR, address)?;
-        self.spi_write_buf(registers::RX_ADDR_P0, address)
     }
 
     /// If the given `pipe` number is  not in range [0, 5], then this function does nothing.
@@ -85,18 +84,63 @@ mod test {
     use std::vec;
 
     #[test]
-    pub fn open_rx_pipe5() {
+    pub fn open_rx_pipe() {
         let spi_expectations = spi_test_expects![
             // open_rx_pipe(5)
             (
-                vec![(registers::RX_ADDR_P0 + 5) | commands::W_REGISTER, 0x55u8],
-                vec![0xEu8, 0u8],
+                vec![(registers::RX_ADDR_P0 + 5) | commands::W_REGISTER, 0x55],
+                vec![0xEu8, 0],
             ),
             // set EN_RXADDR
-            (vec![registers::EN_RXADDR, 0u8], vec![0xEu8, 1u8]),
+            (vec![registers::EN_RXADDR, 0], vec![0xEu8, 1]),
             (
-                vec![registers::EN_RXADDR | commands::W_REGISTER, 0x21u8],
-                vec![0xEu8, 0u8],
+                vec![registers::EN_RXADDR | commands::W_REGISTER, 0x21],
+                vec![0xEu8, 0],
+            ),
+            // open_rx_pipe(0)
+            (
+                vec![
+                    registers::RX_ADDR_P0 | commands::W_REGISTER,
+                    0x55,
+                    0x55,
+                    0x55,
+                    0x55,
+                    0x55
+                ],
+                vec![0xEu8, 0, 0, 0, 0, 0],
+            ),
+            // set EN_RXADDR
+            (vec![registers::EN_RXADDR, 0], vec![0xEu8, 2]),
+            (
+                vec![registers::EN_RXADDR | commands::W_REGISTER, 3],
+                vec![0xEu8, 0],
+            ),
+        ];
+        let mocks = mk_radio(&[], &spi_expectations);
+        let (mut radio, mut spi, mut ce_pin) = (mocks.0, mocks.1, mocks.2);
+        let address = [0x55; 5];
+        radio.open_rx_pipe(9, &address).unwrap();
+        radio.open_rx_pipe(5, &address).unwrap();
+        radio.close_rx_pipe(9).unwrap();
+        radio.config_reg = radio.config_reg.as_rx();
+        radio.open_rx_pipe(0, &address).unwrap();
+        spi.done();
+        ce_pin.done();
+    }
+
+    #[test]
+    fn open_rx_pipe0() {
+        let spi_expectations = spi_test_expects![
+            // open_rx_pipe(5)
+            (
+                vec![(registers::RX_ADDR_P0 + 5) | commands::W_REGISTER, 0x55],
+                vec![0xEu8, 0],
+            ),
+            // set EN_RXADDR
+            (vec![registers::EN_RXADDR, 0], vec![0xEu8, 1]),
+            (
+                vec![registers::EN_RXADDR | commands::W_REGISTER, 0x21],
+                vec![0xEu8, 0],
             ),
         ];
         let mocks = mk_radio(&[], &spi_expectations);
@@ -104,28 +148,6 @@ mod test {
         let address = [0x55u8; 5];
         radio.open_rx_pipe(9, &address).unwrap();
         radio.open_rx_pipe(5, &address).unwrap();
-        spi.done();
-        ce_pin.done();
-    }
-
-    #[test]
-    pub fn open_tx_pipe() {
-        let mut expected_buf = [0x55u8; 6];
-        expected_buf[0] = registers::TX_ADDR | commands::W_REGISTER;
-        let mut p0_buf = [0x55u8; 6];
-        p0_buf[0] = registers::RX_ADDR_P0 | commands::W_REGISTER;
-        let mut response = [0u8; 6];
-        response[0] = 0xEu8;
-
-        let spi_expectations = spi_test_expects![
-            // open_rx_pipe(5)
-            (expected_buf.to_vec(), response.clone().to_vec()),
-            (p0_buf.to_vec(), response.to_vec()),
-        ];
-        let mocks = mk_radio(&[], &spi_expectations);
-        let (mut radio, mut spi, mut ce_pin) = (mocks.0, mocks.1, mocks.2);
-        let address = [0x55u8; 5];
-        radio.open_tx_pipe(&address).unwrap();
         radio.close_rx_pipe(9).unwrap();
         spi.done();
         ce_pin.done();
@@ -137,46 +159,46 @@ mod test {
             // for 2 byte addresses
             // write the SETUP_AW register value
             (
-                vec![registers::SETUP_AW | commands::W_REGISTER, 0u8],
-                vec![0xEu8, 0u8],
+                vec![registers::SETUP_AW | commands::W_REGISTER, 0],
+                vec![0xEu8, 0],
             ),
             // read the SETUP_AW register value
-            (vec![registers::SETUP_AW, 0u8], vec![0xEu8, 0u8]),
+            (vec![registers::SETUP_AW, 0], vec![0xEu8, 0]),
             // for 3 byte addresses
             // write the SETUP_AW register value
             (
-                vec![registers::SETUP_AW | commands::W_REGISTER, 1u8],
-                vec![0xEu8, 0u8],
+                vec![registers::SETUP_AW | commands::W_REGISTER, 1],
+                vec![0xEu8, 0],
             ),
             // read the SETUP_AW register value
-            (vec![registers::SETUP_AW, 0u8], vec![0xEu8, 1u8]),
+            (vec![registers::SETUP_AW, 0], vec![0xEu8, 1]),
             // for 4 byte addresses
             // write the SETUP_AW register value
             (
-                vec![registers::SETUP_AW | commands::W_REGISTER, 2u8],
-                vec![0xEu8, 0u8],
+                vec![registers::SETUP_AW | commands::W_REGISTER, 2],
+                vec![0xEu8, 0],
             ),
             // read the SETUP_AW register value
-            (vec![registers::SETUP_AW, 0u8], vec![0xEu8, 2u8]),
+            (vec![registers::SETUP_AW, 0], vec![0xEu8, 2]),
             // for 5 byte addresses
             // write the SETUP_AW register value
             (
-                vec![registers::SETUP_AW | commands::W_REGISTER, 3u8],
-                vec![0xEu8, 0u8],
+                vec![registers::SETUP_AW | commands::W_REGISTER, 3],
+                vec![0xEu8, 0],
             ),
             // read the SETUP_AW register value
-            (vec![registers::SETUP_AW, 0u8], vec![0xEu8, 3u8]),
+            (vec![registers::SETUP_AW, 0], vec![0xEu8, 3]),
         ];
         let mocks = mk_radio(&[], &spi_expectations);
         let (mut radio, mut spi, mut ce_pin) = (mocks.0, mocks.1, mocks.2);
         radio.set_address_length(2).unwrap();
-        assert_eq!(radio.get_address_length().unwrap(), 2u8);
+        assert_eq!(radio.get_address_length().unwrap(), 2);
         radio.set_address_length(3).unwrap();
-        assert_eq!(radio.get_address_length().unwrap(), 3u8);
+        assert_eq!(radio.get_address_length().unwrap(), 3);
         radio.set_address_length(4).unwrap();
-        assert_eq!(radio.get_address_length().unwrap(), 4u8);
+        assert_eq!(radio.get_address_length().unwrap(), 4);
         radio.set_address_length(5).unwrap();
-        assert_eq!(radio.get_address_length().unwrap(), 5u8);
+        assert_eq!(radio.get_address_length().unwrap(), 5);
         spi.done();
         ce_pin.done();
     }

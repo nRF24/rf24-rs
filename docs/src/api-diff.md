@@ -31,17 +31,18 @@ Understanding the meaning of the status byte is publicly exposed via
 
 - `update()`: used to get an update about the status flags from the radio.
 - `clear_status_flags()`: used to specify which flag(s) should be cleared.
-- `get_status_flags()`: similar to C++ `whatHappened()` but does not update nor clear the flags.
-- `set_status_flags()`: similar to C++ `maskIRQ()` except the boolean parameters' meaning is not reversed.
+- `get_status_flags()`: similar to `update()` but without any SPI transaction.
+   This only returns the internally cached STATUS byte received from the latest SPI transaction.
+- `set_status_flags()`: used to configure the radio's CE pin.
 
     | lang | only trigger IRQ pin on RX_DR (received data ready) events |
     |:----:|:-----------------------------------------------------------|
-    | C++  | `radio.maskIRQ(/*tx_ds*/ true, /*tx_df*/ true, /*rx_dr*/ false)` |
+    | C++  | `radio.setStatusFlags(RF24_RX_DR)` |
     | Rust | `radio.set_status_flags(StatusFlags::default().with_rx_dr(true))` |
     | Python | `radio.set_status_flags(StatusFlags(rx_dr=True))` |
     | Node.js | `radio.setStatusFlags({ rxDr: true })` |
 
-In this library, setting and getting the status flags is done with a `StatusFlags` object.
+In this library, setting, getting, and clearing the status flags is done with a `StatusFlags` object.
 
 ## No babysitting
 

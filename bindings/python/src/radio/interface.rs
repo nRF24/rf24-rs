@@ -173,22 +173,43 @@ impl RF24 {
     }
 
     /// Put the radio into active RX mode.
+    ///
+    /// Conventionally, this should be called after setting the RX addresses via
+    /// [`RF24.open_rx_pipe()`][rf24_py.RF24.open_rx_pipe].
+    ///
+    /// This function will restore the cached RX address set to pipe 0.
+    /// This is done because the [`RF24.as_tx()`][rf24_py.RF24.as_tx] will
+    /// appropriate the RX address on pipe 0 for auto-ack purposes.
     pub fn as_rx(&mut self) -> PyResult<()> {
         self.inner
             .as_rx()
             .map_err(|e| PyRuntimeError::new_err(format!("{e:?}")))
     }
 
-    /// Deactivates active RX mode and puts the radio into an inactive TX mode.
+    /// Puts the radio into an inactive TX mode.
+    ///
+    /// This must be called at least once before calling [`RF24.send()`][rf24_py.RF24.send] or
+    /// [`RF24.write()`][rf24_py.RF24.write].
+    ///
+    /// Parameters:
+    ///     tx_address: If specified, then this buffer will be
+    ///         cached and set as the new TX address.
+    ///
+    /// For auto-ack purposes, this function will also restore
+    /// the cached `tx_address` to the RX pipe 0.
     ///
     /// The datasheet recommends idling the radio in an inactive TX mode.
     ///
     /// Note:
     ///     This function will also flush the TX FIFO when ACK payloads are enabled
     ///     (via [`RF24.ack_payloads`][rf24_py.RF24.ack_payloads]).
-    pub fn as_tx(&mut self) -> PyResult<()> {
+    #[pyo3(
+        signature = (tx_address = None),
+        text_signature = "(tx_address: bytes | bytearray | None = None) -> None",
+    )]
+    pub fn as_tx(&mut self, tx_address: Option<&[u8]>) -> PyResult<()> {
         self.inner
-            .as_tx()
+            .as_tx(tx_address)
             .map_err(|e| PyRuntimeError::new_err(format!("{e:?}")))
     }
 
@@ -301,17 +322,29 @@ impl RF24 {
             .map_err(|e| PyRuntimeError::new_err(format!("{e:?}")))
     }
 
-    /// A property that describes if the radio is a nRF24L01+ or not.
+    /// Is this radio a nRF24L01+ variant?
+    ///
+    /// The bool that this property returns is only valid _after_ calling
+    /// [`RF24.begin()`][rf24_py.RF24.begin].
     #[getter]
     pub fn is_plus_variant(&self) -> bool {
         self.inner.is_plus_variant()
     }
 
-    /// A property that describes the radio's Received Power Detection (RPD).
+    /// Was the Received Power Detection (RPD) trigger?
     ///
-    /// This is reset upon entering RX mode and is only set if the radio detects a
-    /// signal if strength -64 dBm or greater (actual threshold may vary depending
-    /// on radio model).
+    /// This flag is asserted during an RX session (after a mandatory 130 microseconds
+    /// duration) if a signal stronger than -64 dBm was detected.
+    ///
+    /// Note that if a payload was placed in RX mode, then that means
+    /// the signal used to transmit that payload was stronger than either
+    ///
+    /// * -82 dBm in 2 Mbps [`DataRate`][rf24_py.DataRate]
+    /// * -85 dBm in 1 Mbps [`DataRate`][rf24_py.DataRate]
+    /// * -94 dBm in 250 Kbps [`DataRate`][rf24_py.DataRate]
+    ///
+    /// Sensitivity may vary based of the radio's model and manufacturer.
+    /// The information above is stated in the nRF24L01+ datasheet.
     #[getter]
     pub fn get_rpd(&mut self) -> PyResult<bool> {
         self.inner
@@ -319,11 +352,10 @@ impl RF24 {
             .map_err(|e| PyRuntimeError::new_err(format!("{e:?}")))
     }
 
-    /// Start a constant carrier wave on the given `channel` using the specified
-    /// power amplitude `level`.
+    /// Start a constant carrier wave
     ///
-    /// This functionality is only useful for testing the radio hardware works as a
-    /// transmitter.
+    /// This functionality is meant for hardware tests (in conjunction with [`RF24.rpd`][rf24_py.RF24.rpd]).
+    /// Typically, this behavior is required by government agencies to enforce regional restrictions.
     ///
     /// Parameters:
     ///     level: The Power Amplitude level to use when transmitting.
@@ -336,10 +368,21 @@ impl RF24 {
             .map_err(|e| PyRuntimeError::new_err(format!("{e:?}")))
     }
 
-    /// Stop transmitting the constant carrier wave.
+    /// Stop the constant carrier wave started via
+    /// [`RF24.start_carrier_wave()`][rf24_py.RF24.start_carrier_wave].
     ///
-    /// [`RF24.start_carrier_wave()`][rf24_py.RF24.start_carrier_wave] should be called
-    /// before this function.
+    /// This function leaves the radio in a configuration that may be undesired or
+    /// unexpected because of the setup involved in
+    /// [`RF24.start_carrier_wave()`][rf24_py.RF24.start_carrier_wave].
+    /// The [`PaLevel`][rf24_py.PaLevel] and `channel` passed to
+    /// [`RF24.start_carrier_wave()`][rf24_py.RF24.start_carrier_wave] are
+    /// still set.
+    /// If [`RF24.is_plus_variant`][rf24_py.RF24.is_plus_variant] returns `true`,
+    /// the following features are all disabled:
+    ///
+    /// - auto-ack
+    /// - CRC
+    /// - auto-retry
     pub fn stop_carrier_wave(&mut self) -> PyResult<()> {
         self.inner
             .stop_carrier_wave()
@@ -347,6 +390,9 @@ impl RF24 {
     }
 
     /// Enable or disable the LNA feature.
+    ///
+    /// This is enabled by default (regardless of chip variant).
+    /// See [`PaLevel`][rf24_py.PaLevel] for effective behavior.
     ///
     /// On nRF24L01+ modules with a builtin antenna, this feature is always enabled.
     /// For clone's and module's with a separate PA/LNA circuit (external antenna),
@@ -645,19 +691,6 @@ impl RF24 {
     pub fn open_rx_pipe(&mut self, pipe: u8, address: &[u8]) -> PyResult<()> {
         self.inner
             .open_rx_pipe(pipe, address)
-            .map_err(|e| PyRuntimeError::new_err(format!("{e:?}")))
-    }
-
-    /// Set the address used for transmitting on pipe 0.
-    ///
-    /// Only pipe 0 can be used for transmitting. It is highly recommended to
-    /// avoid using pipe 0 to receive because of this.
-    ///
-    /// Parameters:
-    ///     address: The address to receive data from.
-    pub fn open_tx_pipe(&mut self, address: &[u8]) -> PyResult<()> {
-        self.inner
-            .open_tx_pipe(address)
             .map_err(|e| PyRuntimeError::new_err(format!("{e:?}")))
     }
 

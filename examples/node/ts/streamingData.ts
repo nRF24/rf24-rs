@@ -42,7 +42,7 @@ export class App {
     const address = [Buffer.from("1Node"), Buffer.from("2Node")];
 
     //set TX address of RX node into the TX pipe
-    this.radio.openTxPipe(address[radioNumber]); // always uses pipe 0
+    this.radio.asTx(address[radioNumber]); // always uses pipe 0
     // set RX address of TX node into an RX pipe
     this.radio.openRxPipe(1, address[1 - radioNumber]); // using pipe 1
 
@@ -129,7 +129,9 @@ export class App {
         `Transmission took ${end - start} ms with ${failures} failures detected`,
       );
     }
-    this.radio.asTx(); // ensure radio exits active TX mode
+
+    // recommended behavior is to keep in TX mode while idle
+    this.radio.asTx(); // enter inactive TX mode
   }
 
   /**
@@ -150,7 +152,9 @@ export class App {
         timeout = Date.now() + (duration || 6) * 1000;
       }
     }
-    this.radio.asTx();
+
+    // recommended behavior is to keep in TX mode while idle
+    this.radio.asTx(); // enter inactive TX mode
   }
 
   /**

@@ -77,7 +77,7 @@ export class App {
     this.radio.setAutoRetries(delay, retryCount); // max value is 15 for both args
 
     // set the TX address to the address of the base station.
-    this.radio.openTxPipe(this.addresses[id]);
+    this.radio.asTx(this.addresses[id]);
 
     if (this.payload.readInt32LE(0) != id) {
       // if node ID has changed since last call to master() (or setup())
@@ -100,6 +100,9 @@ export class App {
       }
       await timer.setTimeout(1000);
     }
+
+    // recommended behavior is to keep in TX mode while idle
+    this.radio.asTx(); // enter inactive TX mode
   }
 
   /**
@@ -122,13 +125,15 @@ export class App {
         const nodeId = incoming.readInt32LE(0);
         const payloadId = incoming.readInt32LE(4);
         console.log(
-          `Received ${incoming.length} bytes on pipe ${hasRx.pipe} from node `,
+          `Received ${incoming.length} bytes on pipe ${hasRx.pipe} from node`,
           `${nodeId}: payload ${payloadId}`,
         );
         timeout = Date.now() + (duration || 6) * 1000;
       }
     }
-    this.radio.asTx();
+
+    // recommended behavior is to keep in TX mode while idle
+    this.radio.asTx(); // enter inactive TX mode
   }
 
   /**

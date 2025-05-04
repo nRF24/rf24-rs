@@ -51,8 +51,8 @@ class App:
         # to enable the custom ACK payload feature
         self.radio.ack_payloads = True
 
-        # set TX address of RX node into the TX pipe
-        self.radio.open_tx_pipe(address[radio_number])  # always uses pipe 0
+        # set TX address of RX node (always uses pipe 0)
+        self.radio.as_tx(address[radio_number])  # enter inactive TX mode
 
         # set RX address of TX node into an RX pipe
         self.radio.open_rx_pipe(1, address[not radio_number])  # using pipe 1
@@ -96,6 +96,9 @@ class App:
             time.sleep(1)  # let the RX node prepare a new ACK payload
             count -= 1
 
+        # recommended behavior is to keep in TX mode while idle
+        self.radio.as_tx()  # enter inactive TX mode
+
     def rx(self, timeout: int = 6):
         """Prints the received value and sends an ACK payload"""
         self.radio.as_rx()  # put radio into RX mode, power it up
@@ -125,7 +128,9 @@ class App:
                 self.radio.write_ack_payload(1, buffer)  # load ACK for next response
 
         # recommended behavior is to keep in TX mode while idle
-        self.radio.as_tx()  # put radio in TX mode & flush unused ACK payloads
+        self.radio.as_tx()  # enter inactive TX mode
+        # as_tx() will also flush unused ACK payloads
+        # when ACK payloads are enabled
 
     def set_role(self):
         """Set the role using stdin stream. Timeout arg for slave() can be

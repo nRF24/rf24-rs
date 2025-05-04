@@ -44,7 +44,7 @@ where
 #[cfg(test)]
 mod test {
     extern crate std;
-    use super::{registers, DataRate, EsbDataRate};
+    use super::{registers, DataRate, EsbDataRate, Nrf24Error};
     use crate::{radio::rf24::commands, spi_test_expects, test::mk_radio};
     use embedded_hal_mock::eh1::spi::Transaction as SpiTransaction;
     use std::vec;
@@ -53,23 +53,17 @@ mod test {
     pub fn get_data_rate() {
         let spi_expectations = spi_test_expects![
             // get the RF_SETUP register value for each possible result
-            (vec![registers::RF_SETUP, 0u8], vec![0xEu8, 0u8]),
-            (vec![registers::RF_SETUP, 0u8], vec![0xEu8, 8u8]),
-            (vec![registers::RF_SETUP, 8u8], vec![0xEu8, 0x20u8]),
-            (
-                vec![registers::RF_SETUP, 0x20u8],
-                vec![0xEu8, DataRate::MASK]
-            ),
+            (vec![registers::RF_SETUP, 0], vec![0xEu8, 0]),
+            (vec![registers::RF_SETUP, 0], vec![0xEu8, 8]),
+            (vec![registers::RF_SETUP, 8], vec![0xEu8, 0x20]),
+            (vec![registers::RF_SETUP, 0x20], vec![0xEu8, DataRate::MASK]),
         ];
         let mocks = mk_radio(&[], &spi_expectations);
         let (mut radio, mut spi, mut ce_pin) = (mocks.0, mocks.1, mocks.2);
         assert_eq!(radio.get_data_rate(), Ok(DataRate::Mbps1));
         assert_eq!(radio.get_data_rate(), Ok(DataRate::Mbps2));
         assert_eq!(radio.get_data_rate(), Ok(DataRate::Kbps250));
-        assert_eq!(
-            radio.get_data_rate(),
-            Err(crate::radio::Nrf24Error::BinaryCorruption)
-        );
+        assert_eq!(radio.get_data_rate(), Err(Nrf24Error::BinaryCorruption));
         spi.done();
         ce_pin.done();
     }
@@ -78,20 +72,20 @@ mod test {
     pub fn set_data_rate() {
         let spi_expectations = spi_test_expects![
             // set the RF_SETUP register value for each possible enumeration of CrcLength
-            (vec![registers::RF_SETUP, 0u8], vec![0xEu8, DataRate::MASK]),
+            (vec![registers::RF_SETUP, 0], vec![0xEu8, DataRate::MASK]),
             (
-                vec![registers::RF_SETUP | commands::W_REGISTER, 0u8],
-                vec![0xEu8, 0u8],
+                vec![registers::RF_SETUP | commands::W_REGISTER, 0],
+                vec![0xEu8, 0],
             ),
-            (vec![registers::RF_SETUP, 0u8], vec![0xEu8, DataRate::MASK]),
+            (vec![registers::RF_SETUP, 0], vec![0xEu8, DataRate::MASK]),
             (
-                vec![registers::RF_SETUP | commands::W_REGISTER, 0x8u8],
-                vec![0xEu8, 0u8],
+                vec![registers::RF_SETUP | commands::W_REGISTER, 0x8],
+                vec![0xEu8, 0],
             ),
-            (vec![registers::RF_SETUP, 0u8], vec![0xEu8, DataRate::MASK]),
+            (vec![registers::RF_SETUP, 0], vec![0xEu8, DataRate::MASK]),
             (
-                vec![registers::RF_SETUP | commands::W_REGISTER, 0x20u8],
-                vec![0xEu8, 0u8],
+                vec![registers::RF_SETUP | commands::W_REGISTER, 0x20],
+                vec![0xEu8, 0],
             ),
         ];
         let mocks = mk_radio(&[], &spi_expectations);

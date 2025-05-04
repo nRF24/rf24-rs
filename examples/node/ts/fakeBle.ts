@@ -87,6 +87,9 @@ export class App {
     // disable these features when done (for example purposes)
     this.ble.name = "";
     this.ble.showPaLevel = false;
+
+    // recommended behavior is to keep in TX mode while idle
+    this.radio.asTx(); // enter inactive TX mode
   }
 
   /**
@@ -116,6 +119,9 @@ export class App {
 
     // disable these features when done (for example purposes)
     this.ble.name = "";
+
+    // recommended behavior is to keep in TX mode while idle
+    this.radio.asTx(); // enter inactive TX mode
   }
 
   /**
@@ -141,6 +147,9 @@ export class App {
       this.ble.hopChannel();
       await timer.setTimeout(500);
     }
+
+    // recommended behavior is to keep in TX mode while idle
+    this.radio.asTx(); // enter inactive TX mode
   }
 
   /**
@@ -187,7 +196,7 @@ export class App {
       }
       if (Date.now() >= timeout) {
         // recommended behavior is to keep in TX mode while idle
-        this.radio.asTx(); // exit RX mode
+        this.radio.asTx(); // enter inactive TX mode (exit RX mode)
         // continue to read remaining payloads from RX FIFO
       }
     }

@@ -69,8 +69,8 @@ class App:
         # usually run with nRF24L01 transceivers in close proximity of each other
         self.radio.pa_level = PaLevel.Low  # PaLevel.Max is default
 
-        # set TX address of RX node into the TX pipe
-        self.radio.open_tx_pipe(address[radio_number])  # always uses pipe 0
+        # set TX address of RX node (always uses pipe 0)
+        self.radio.as_tx(address[radio_number])  # enter inactive TX mode
 
         # set RX address of TX node into an RX pipe
         self.radio.open_rx_pipe(1, address[not radio_number])  # using pipe 1
@@ -123,7 +123,9 @@ class App:
                 f"Transmission took {end_timer - start_timer} ms with",
                 f"{failures} failures detected.",
             )
-        self.radio.as_tx()  # ensure radio exits active TX mode
+
+        # recommended behavior is to keep in TX mode while idle
+        self.radio.as_tx()  # enter inactive TX mode
 
     def rx(self, timeout: int = 5, size: int = 32):
         """Stops listening after a `timeout` with no response"""
@@ -132,7 +134,7 @@ class App:
         #  number of bytes we need to transmit
         self.radio.payload_length = size  # the default is the maximum 32 bytes
 
-        self.radio.as_rx()  # put radio into RX mode and power up
+        self.radio.as_rx()  # put radio into active RX mode
         count = 0  # keep track of the number of received payloads
         end_time = time.monotonic() + timeout  # start timer
         while time.monotonic() < end_time:
@@ -144,7 +146,7 @@ class App:
                 end_time = time.monotonic() + timeout  # reset timer on every RX payload
 
         # recommended behavior is to keep in TX mode while idle
-        self.radio.as_tx()  # put the nRF24L01 is in TX mode
+        self.radio.as_tx()  # enter inactive TX mode
 
     def set_role(self):
         """Set the role using stdin stream. Timeout arg for slave() can be

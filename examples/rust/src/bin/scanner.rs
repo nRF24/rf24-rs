@@ -148,7 +148,7 @@ impl App {
             self.radio.as_rx().map_err(debug_err)?;
             DelayImpl.delay_us(130);
             let found_signal = self.radio.rpd().map_err(debug_err)?;
-            self.radio.as_tx().map_err(debug_err)?;
+            self.radio.as_tx(None).map_err(debug_err)?;
             let found_signal = if self.radio.available().map_err(debug_err)? {
                 // discard any packets (noise) saved in RX FIFO
                 self.radio.flush_rx().map_err(debug_err)?;
@@ -215,7 +215,7 @@ impl App {
             || self.radio.get_fifo_state(false).map_err(debug_err)? != FifoState::Empty
         {
             if Instant::now() > end_time && self.radio.is_rx() {
-                self.radio.as_tx().map_err(debug_err)?;
+                self.radio.as_tx(None).map_err(debug_err)?;
             }
             self.radio
                 .read(&mut noise_payload, Some(32))
