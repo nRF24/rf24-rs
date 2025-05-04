@@ -20,7 +20,6 @@ mod radio;
 pub use constants::{commands, mnemonics, registers};
 mod details;
 mod status;
-
 use super::prelude::{
     EsbAutoAck, EsbChannel, EsbCrcLength, EsbFifo, EsbPaLevel, EsbPower, EsbRadio, RadioErrorType,
 };

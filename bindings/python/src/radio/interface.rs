@@ -354,7 +354,7 @@ impl RF24 {
 
     /// Start a constant carrier wave
     ///
-    /// This functionality is meant for hardware tests (in conjunction with [`RF24::rpd`][rf24_py.RF24.rpd]).
+    /// This functionality is meant for hardware tests (in conjunction with [`RF24.rpd`][rf24_py.RF24.rpd]).
     /// Typically, this behavior is required by government agencies to enforce regional restrictions.
     ///
     /// Parameters:
@@ -377,7 +377,8 @@ impl RF24 {
     /// The [`PaLevel`][rf24_py.PaLevel] and `channel` passed to
     /// [`RF24.start_carrier_wave()`][rf24_py.RF24.start_carrier_wave] are
     /// still set.
-    /// If [`RF24::is_plus_variant`] returns `true`, the following features are all disabled:
+    /// If [`RF24.is_plus_variant`][rf24_py.RF24.is_plus_variant] returns `true`,
+    /// the following features are all disabled:
     ///
     /// - auto-ack
     /// - CRC
