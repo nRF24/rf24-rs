@@ -108,6 +108,10 @@ impl App {
         // disable these features for example purposes
         self.ble.set_name("");
         self.ble.show_pa_level = false;
+
+        // recommended behavior is to keep in TX mode while idle
+        self.radio.as_tx(None).map_err(debug_err)?; // enter inactive TX mode
+
         Ok(())
     }
 
@@ -136,6 +140,10 @@ impl App {
 
         // disable these features when done (for example purposes)
         self.ble.set_name("");
+
+        // recommended behavior is to keep in TX mode while idle
+        self.radio.as_tx(None).map_err(debug_err)?; // enter inactive TX mode
+
         Ok(())
     }
 
@@ -160,6 +168,9 @@ impl App {
             self.ble.hop_channel(&mut self.radio).map_err(debug_err)?;
             DelayImpl.delay_ms(500);
         }
+
+        // recommended behavior is to keep in TX mode while idle
+        self.radio.as_tx(None).map_err(debug_err)?; // enter inactive TX mode
 
         Ok(())
     }
@@ -199,7 +210,8 @@ impl App {
                     }
                 }
                 if Instant::now() >= end_time {
-                    // It is highly recommended to keep the radio idling in an inactive TX mode
+                    // recommended behavior is to keep in TX mode while idle.
+                    // enter inactive TX mode (exit RX mode)
                     self.radio.as_tx(None).map_err(debug_err)?;
                     // continue reading payloads from RX FIFO
                 }

@@ -125,7 +125,7 @@ export class App {
         const nodeId = incoming.readInt32LE(0);
         const payloadId = incoming.readInt32LE(4);
         console.log(
-          `Received ${incoming.length} bytes on pipe ${hasRx.pipe} from node `,
+          `Received ${incoming.length} bytes on pipe ${hasRx.pipe} from node`,
           `${nodeId}: payload ${payloadId}`,
         );
         timeout = Date.now() + (duration || 6) * 1000;

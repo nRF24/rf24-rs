@@ -168,7 +168,7 @@ impl App {
         }
 
         // recommended behavior is to keep in TX mode while idle
-        self.radio.as_tx(None).map_err(debug_err)?; // put the radio into inactive TX mode
+        self.radio.as_tx(None).map_err(debug_err)?; // enter inactive TX mode
 
         Ok(())
     }
@@ -194,7 +194,7 @@ impl App {
         }
 
         // recommended behavior is to keep in TX mode while idle
-        self.radio.as_tx(None).map_err(debug_err)?; // put the radio into inactive TX mode
+        self.radio.as_tx(None).map_err(debug_err)?; // enter inactive TX mode
 
         Ok(())
     }
