@@ -1,6 +1,6 @@
 {
   "name": "@rf24/rf24",
-  "version": "0.2.2",
+  "version": "0.3.0",
   "main": "index.js",
   "types": "index.d.ts",
   "description": "A npm package binding the nRF24/rf24-rs rust project.",

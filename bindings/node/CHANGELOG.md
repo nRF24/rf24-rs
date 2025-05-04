@@ -6,6 +6,27 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 <!-- markdownlint-disable MD024 -->
 
+## [rf24-node/0.3.0] - 2025-05-04
+
+### <!-- 6 --> 📦 Dependency updates
+
+- Bump the npm group with 2 updates by @dependabot[bot] in [#35](https://github.com/nRF24/rf24-rs/pull/35)
+- Bump the npm group across 1 directory with 6 updates by @dependabot[bot] in [#39](https://github.com/nRF24/rf24-rs/pull/39)
+- Bump `rf24-rs` to v0.3.0 by @2bndy5 in [`abb8fda`](https://github.com/nRF24/rf24-rs/commit/abb8fdab9575ef30fa3445067aca11f21f07dfbb)
+
+### <!-- 7 -->🚦 Tests
+
+- Use concrete error type by @2bndy5 in [#42](https://github.com/nRF24/rf24-rs/pull/42)
+- Replace `open_tx_pipe()` with `as_tx(Option<address>)` by @2bndy5 in [#41](https://github.com/nRF24/rf24-rs/pull/41)
+
+### <!-- 9 --> 🗨️ Changed
+
+- Remove `_` prefix from private members by @2bndy5 in [`39d8287`](https://github.com/nRF24/rf24-rs/commit/39d8287461777bbf9d8a1c1a92636b46b29669d0)
+
+[rf24-node/0.3.0]: https://github.com/nRF24/rf24-rs/compare/rf24-node/0.2.2...rf24-node/0.3.0
+
+Full commit diff: [`rf24-node/0.2.2...rf24-node/0.3.0`][rf24-node/0.3.0]
+
 ## [rf24-node/0.2.2] - 2025-04-08
 
 ### <!-- 6 --> 📦 Dependency updates
@@ -14,6 +35,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Bump the npm group across 1 directory with 2 updates by @dependabot[bot] in [#34](https://github.com/nRF24/rf24-rs/pull/34)
 - Update defmt requirement from 0.3.10 to 1.0.1 in the cargo group by @dependabot[bot] in [#31](https://github.com/nRF24/rf24-rs/pull/31)
 - Bump `rf24ble-rs` to v0.1.2 by @2bndy5 in [`33fe013`](https://github.com/nRF24/rf24-rs/commit/33fe0130101feb42aaa49aa5b88ac928034ec261)
+- Bump `rf24-node` to v0.2.2 by @2bndy5 in [`9673628`](https://github.com/nRF24/rf24-rs/commit/96736283d11aced8c58cb1e871c71829d57a50bf)
 
 ### <!-- 8 --> 📝 Documentation
 
