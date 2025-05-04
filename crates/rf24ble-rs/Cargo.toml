@@ -15,7 +15,7 @@ rust-version = "1.65"
 name = "rf24ble"
 
 [dependencies]
-rf24-rs = { path = "../rf24-rs", version = "0.2.1" }
+rf24-rs = { path = "../rf24-rs", version = "0.3.0" }
 bitfield-struct = "0.9.3"
 embedded-hal = "1.0.0"
 

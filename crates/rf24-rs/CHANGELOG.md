@@ -6,6 +6,26 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 <!-- markdownlint-disable MD024 -->
 
+## [rf24-rs/0.3.0] - 2025-05-04
+
+### <!-- 6 --> 📦 Dependency updates
+
+- Update defmt requirement from 0.3.10 to 1.0.1 in the cargo group by @dependabot[bot] in [#31](https://github.com/nRF24/rf24-rs/pull/31)
+
+### <!-- 7 -->🚦 Tests
+
+- Use concrete error type by @2bndy5 in [#42](https://github.com/nRF24/rf24-rs/pull/42)
+- Replace `open_tx_pipe()` with `as_tx(Option<address>)` by @2bndy5 in [#41](https://github.com/nRF24/rf24-rs/pull/41)
+
+### <!-- 9 --> 🗨️ Changed
+
+- Regenerate change logs by @2bndy5 in [`581751a`](https://github.com/nRF24/rf24-rs/commit/581751af27d074797b4749572f05e9f8b3548e21)
+- Remove `_` prefix from private members by @2bndy5 in [`39d8287`](https://github.com/nRF24/rf24-rs/commit/39d8287461777bbf9d8a1c1a92636b46b29669d0)
+
+[rf24-rs/0.3.0]: https://github.com/nRF24/rf24-rs/compare/rf24-rs/0.2.1...rf24-rs/0.3.0
+
+Full commit diff: [`rf24-rs/0.2.1...rf24-rs/0.3.0`][rf24-rs/0.3.0]
+
 ## [rf24-rs/0.2.1] - 2025-04-06
 
 ### <!-- 6 --> 📦 Dependency updates
