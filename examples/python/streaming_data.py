@@ -93,23 +93,19 @@ class App:
             failures = 0  # keep track of manual retries
             start_timer = time.monotonic() * 1000  # start timer
             for buf in stream:  # cycle through all payloads in stream
-                while not self.radio.write(buf):
+                while not self.radio.write(buf) and failures <= 99:
                     # upload to TX FIFO failed because TX FIFO is full.
                     # check for transmission errors
                     flags: StatusFlags = self.radio.get_status_flags()
                     if flags.tx_df:  # a transmission failed
                         failures += 1  # increment manual retry count
-                        if failures > 99:
-                            # too many failures detected
-                            # we need to prevent an infinite loop
-                            print("Make sure other node is listening. Aborting stream")
-                            break  # receiver radio seems unresponsive
-
-                        # rewrite() resets the tx_df flag and reuses top level of TX FIFO
-                        self.radio.rewrite()
-                    if failures > 99:
-                        break
+                        self.radio.ce_pin(False)  # exit active TX mode
+                        # NOTE next call to radio.write() will
+                        # radio.clear_status_flags()  # reset the tx_df flag
+                        # radio.ce_pin(True)  # restart transmissions
                 if failures > 99:
+                    # too many failures detected
+                    print("Make sure other node is listening. Aborting stream")
                     break
             # wait for radio to finish transmitting everything in the TX FIFO
             while failures < 99 and self.radio.get_fifo_state(True) != FifoState.Empty:
@@ -117,7 +113,10 @@ class App:
                 flags = self.radio.get_status_flags()
                 if flags.tx_df:
                     failures += 1
-                    self.radio.rewrite()
+                    # manually restart transmissions because where done adding to TX FIFO
+                    self.radio.ce_pin(False)
+                    self.radio.clear_status_flags()
+                    self.radio.ce_pin(True)
             end_timer = time.monotonic() * 1000  # end timer
             print(
                 f"Transmission took {end_timer - start_timer} ms with",

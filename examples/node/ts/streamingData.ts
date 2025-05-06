@@ -90,25 +90,24 @@ export class App {
       const start = Date.now();
       for (const buf of payloads) {
         // for each payload in stream
-        while (!this.radio.write(buf)) {
+        while (!this.radio.write(buf) && failures <= 99) {
           // upload to TX FIFO failed because TX FIFO is full.
           // check status flags
           const flags = this.radio.getStatusFlags();
           if (flags.txDf) {
             // a transmission failed
             failures += 1; // increment manual retry count
-            if (failures > 99) {
-              // too many failures detected
-              // we need to prevent an infinite loop
-              console.log("Make sure other node is listening. Aborting stream");
-              break; // receiver radio seems unresponsive
-            }
 
-            // rewrite() resets the txDf flag and reuses top level of TX FIFO
-            this.radio.rewrite();
+            // we need to reset the txDf flag and the radio's CE pin
+            this.radio.cePin(false);
+            // NOTE the next call to `write()` will
+            // this.radio.clearStatusFlags(); // reset the txDf flag
+            // this.radio.cePin(true); // restart transmissions
           }
         }
         if (failures > 99) {
+          // too many failures detected
+          console.log("Make sure other node is listening. Aborting stream");
           break; // receiver radio seems unresponsive
         }
       }
@@ -121,7 +120,11 @@ export class App {
         const flags = this.radio.getStatusFlags();
         if (flags.txDf) {
           failures += 1;
-          this.radio.rewrite();
+          // we need to reset the txDf flag and the radio's CE pin
+          this.radio.cePin(false);
+          // do this manually because we're done calling `write()`
+          this.radio.clearStatusFlags(); // reset the txDf flag
+          this.radio.cePin(true); // restart transmissions
         }
       }
       const end = Date.now();

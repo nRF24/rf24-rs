@@ -12,6 +12,7 @@
 
 use anyhow::Result;
 use core::time::Duration;
+use embedded_hal::digital::OutputPin;
 
 use rf24::{
     radio::{prelude::*, RF24},
@@ -127,25 +128,25 @@ impl App {
             // start a timer
             let start = Instant::now();
             for buf in &stream {
-                while !self.radio.write(buf, false, true).map_err(debug_err)? {
+                while !self.radio.write(buf, false, true).map_err(debug_err)? && failures <= 99 {
                     // upload to TX FIFO failed because TX FIFO is full.
                     // check for transmission errors
                     self.radio.get_status_flags(&mut flags);
                     if flags.tx_df() {
                         // a transmission failed
                         failures += 1; // increment manual retry count
-                        if failures > 99 {
-                            // too many failures detected
-                            // we need to prevent an infinite loop
-                            println!("Make sure other node is listening. Aborting stream");
-                            break; // receiver radio seems unresponsive
-                        }
 
-                        // rewrite() resets the tx_df flag and reuses top level of TX FIFO
-                        self.radio.rewrite().map_err(debug_err)?;
+                        // we need to reset the txDf flag and the radio's CE pin
+                        self.radio.ce_pin.set_low().map_err(debug_err)?;
+                        // NOTE the next call to `write()` will
+                        // self.radio.clear_status_flags(flags).map_err(debug_err)?; // reset the tx_df flag
+                        // self.radio.ce_pin.set_high().map_err(debug_err)?; // restart transmissions
                     }
                 }
                 if failures > 99 {
+                    // too many failures detected
+                    // we need to prevent an infinite loop
+                    println!("Make sure other node is listening. Aborting stream");
                     break; // receiver radio seems unresponsive
                 }
             }
@@ -156,7 +157,12 @@ impl App {
                 self.radio.get_status_flags(&mut flags);
                 if flags.tx_df() {
                     failures += 1;
-                    self.radio.rewrite().map_err(debug_err)?;
+
+                    // we need to reset the txDf flag and the radio's CE pin
+                    self.radio.ce_pin.set_low().map_err(debug_err)?;
+                    // do this manually because we're done calling `write()`
+                    self.radio.clear_status_flags(flags).map_err(debug_err)?; // reset the tx_df flag
+                    self.radio.ce_pin.set_high().map_err(debug_err)?; // restart transmissions
                 }
             }
             let end = Instant::now(); // end timer
