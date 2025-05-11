@@ -107,10 +107,6 @@ where
         self.clear_status_flags(StatusFlags::from_bits(
             mnemonics::MASK_MAX_RT | mnemonics::MASK_TX_DS,
         ))?;
-        if self.status.tx_full() {
-            // TX FIFO is full already
-            return Ok(false);
-        }
         let buf_len = buf.len().min(32);
         // to avoid resizing the given buf, we'll have to use self._buf directly
         self.buf[0] = if !ask_no_ack {
@@ -130,7 +126,7 @@ where
         if start_tx {
             self.ce_pin.set_high().map_err(|e| e.kind())?;
         }
-        Ok(true)
+        Ok(!self.status.tx_full())
     }
 
     /// See [`EsbRadio::read()`] for implementation-agnostic detail.
@@ -371,6 +367,7 @@ mod test {
             PinTransaction::set(PinState::Low),
             PinTransaction::set(PinState::High),
             PinTransaction::set(PinState::Low),
+            PinTransaction::set(PinState::High),
             PinTransaction::set(PinState::Low),
         ];
 
@@ -403,6 +400,9 @@ mod test {
                 ],
                 vec![0xFu8, 0],
             ),
+            // spoof full TX FIFO
+            // write payload
+            (buf.to_vec(), vec![0xFu8; 33]),
             // flush_tx()
             (vec![commands::FLUSH_TX], vec![0xEu8]),
         ];
