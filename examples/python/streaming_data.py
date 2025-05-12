@@ -93,7 +93,7 @@ class App:
             failures = 0  # keep track of manual retries
             start_timer = time.monotonic() * 1000  # start timer
             for buf in stream:  # cycle through all payloads in stream
-                while not self.radio.write(buf) and failures <= 99:
+                while not self.radio.write(buf):
                     # upload to TX FIFO failed because TX FIFO is full.
                     # check for transmission errors
                     flags: StatusFlags = self.radio.get_status_flags()
@@ -103,12 +103,14 @@ class App:
                         # NOTE next call to radio.write() will
                         # radio.clear_status_flags()  # reset the tx_df flag
                         # radio.ce_pin(True)  # restart transmissions
-                if failures > 99:
+                    if failures > 49:
+                        break  # prevent infinite loop
+                if failures > 49:
                     # too many failures detected
                     print("Make sure other node is listening. Aborting stream")
                     break
             # wait for radio to finish transmitting everything in the TX FIFO
-            while failures < 99 and self.radio.get_fifo_state(True) != FifoState.Empty:
+            while failures <= 49 and self.radio.get_fifo_state(True) != FifoState.Empty:
                 # get_fifo_state() also update()s the StatusFlags
                 flags = self.radio.get_status_flags()
                 if flags.tx_df:

@@ -90,7 +90,7 @@ export class App {
       const start = Date.now();
       for (const buf of payloads) {
         // for each payload in stream
-        while (!this.radio.write(buf) && failures <= 99) {
+        while (!this.radio.write(buf)) {
           // upload to TX FIFO failed because TX FIFO is full.
           // check status flags
           const flags = this.radio.getStatusFlags();
@@ -104,8 +104,11 @@ export class App {
             // this.radio.clearStatusFlags(); // reset the txDf flag
             // this.radio.cePin(true); // restart transmissions
           }
+          if (failures > 49) {
+            break; // prevent an infinite loop
+          }
         }
-        if (failures > 99) {
+        if (failures > 49) {
           // too many failures detected
           console.log("Make sure other node is listening. Aborting stream");
           break; // receiver radio seems unresponsive
@@ -113,7 +116,7 @@ export class App {
       }
       // wait for radio to finish transmitting everything in the TX FIFO
       while (
-        failures < 99 &&
+        failures < 49 &&
         this.radio.getFifoState(true) != FifoState.Empty
       ) {
         // getFifoState() also update()s the StatusFlags

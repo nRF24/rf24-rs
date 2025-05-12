@@ -128,7 +128,7 @@ impl App {
             // start a timer
             let start = Instant::now();
             for buf in &stream {
-                while !self.radio.write(buf, false, true).map_err(debug_err)? && failures <= 99 {
+                while !self.radio.write(buf, false, true).map_err(debug_err)? {
                     // upload to TX FIFO failed because TX FIFO is full.
                     // check for transmission errors
                     self.radio.get_status_flags(&mut flags);
@@ -142,8 +142,11 @@ impl App {
                         // self.radio.clear_status_flags(flags).map_err(debug_err)?; // reset the tx_df flag
                         // self.radio.ce_pin.set_high().map_err(debug_err)?; // restart transmissions
                     }
+                    if failures > 49 {
+                        break; // prevent an infinite loop
+                    }
                 }
-                if failures > 99 {
+                if failures > 49 {
                     // too many failures detected
                     // we need to prevent an infinite loop
                     println!("Make sure other node is listening. Aborting stream");
@@ -151,7 +154,7 @@ impl App {
                 }
             }
             // wait for radio to finish transmitting everything in the TX FIFO
-            while failures < 99
+            while failures < 49
                 && self.radio.get_fifo_state(true).map_err(debug_err)? != FifoState::Empty
             {
                 self.radio.get_status_flags(&mut flags);
