@@ -90,32 +90,29 @@ impl App {
     }
 
     /// return a list of payloads
-    fn make_payloads() -> [[u8; SIZE]; SIZE] {
+    fn make_payload(buf: &mut [u8; SIZE], count: u8) {
         // we'll use `size` for the number of payloads in the list and the
         // payloads' length
-        let mut stream = [[0u8; SIZE]; SIZE];
         static MAX_LEN: i8 = SIZE as i8 - 1;
         static HALF_LEN: i8 = MAX_LEN / 2;
-        for i in 0..SIZE as i8 {
-            // prefix payload with a sequential letter to indicate which
-            // payloads were lost (if any)
-            let buff = &mut stream[i as usize];
-            buff[0] = (i as u8) + if i < 26 { 65 } else { 71 };
-            let abs_diff = (HALF_LEN - i).abs_diff(0) as i8;
-            for j in 0..MAX_LEN {
-                let c = j >= (HALF_LEN + abs_diff) || j < (HALF_LEN - abs_diff);
-                buff[j as usize + 1] = c as u8 + 48;
-            }
+
+        // prefix payload with a sequential letter to indicate which
+        // payloads were lost (if any)
+        buf[0] = count + if count < 26 { 65 } else { 71 };
+        let abs_diff = (HALF_LEN - count as i8).abs_diff(0) as i8;
+        for j in 0..MAX_LEN {
+            let c = j >= (HALF_LEN + abs_diff) || j < (HALF_LEN - abs_diff);
+            buf[j as usize + 1] = c as u8 + 48;
         }
-        stream
     }
 
     /// The TX role.
     ///
     /// Uses the [`App::radio`] as a transmitter.
     pub fn tx(&mut self, count: u8) -> Result<()> {
-        // create a stream of data
-        let stream = Self::make_payloads();
+        // allocate memory for our payloads
+        let mut buf = [0u8; SIZE];
+
         // declare mutable flags for error checking
         let mut flags = StatusFlags::default();
 
@@ -127,8 +124,10 @@ impl App {
             let mut failures = 0u8;
             // start a timer
             let start = Instant::now();
-            for buf in &stream {
-                while !self.radio.write(buf, false, true).map_err(debug_err)? {
+            for i in 0..SIZE {
+                // create a buffer of data to send
+                Self::make_payload(&mut buf, i as u8);
+                while !self.radio.write(&buf, false, true).map_err(debug_err)? {
                     // upload to TX FIFO failed because TX FIFO is full.
                     // check for transmission errors
                     self.radio.get_status_flags(&mut flags);

@@ -15,24 +15,22 @@ import time
 from rf24_py import RF24, PaLevel, StatusFlags, FifoState
 
 
-def make_payloads(size: int = 32) -> list[bytes]:
-    """return a list of payloads"""
+def make_payload(size: int, count: int) -> bytes:
+    """return a payload"""
     # we'll use `size` for the number of payloads in the list and the
     # payloads' length
-    stream = []
-    for i in range(size):
-        # prefix payload with a sequential letter to indicate which
-        # payloads were lost (if any)
-        buff = bytes([i + (65 if 0 <= i < 26 else 71)])
-        max_len = size - 1
-        half_size = int(max_len / 2)
-        abs_diff = abs(half_size - i)
-        for j in range(max_len):
-            char = bool(j >= half_size + abs_diff)
-            char |= bool(j < half_size - abs_diff)
-            buff += bytes([char + 48])
-        stream.append(buff)
-    return stream
+
+    # prefix payload with a sequential letter to indicate which
+    # payloads were lost (if any)
+    buff = bytes([count + (65 if 0 <= count < 26 else 71)])
+    max_len = size - 1
+    half_size = int(max_len / 2)
+    abs_diff = abs(half_size - count)
+    for j in range(max_len):
+        char = bool(j >= half_size + abs_diff)
+        char |= bool(j < half_size - abs_diff)
+        buff += bytes([char + 48])
+    return buff
 
 
 class App:
@@ -84,15 +82,13 @@ class App:
         # number of bytes we need to transmit
         self.radio.payload_length = size  # the default is the maximum 32 bytes
 
-        # create a stream
-        stream = make_payloads(size)
-
         self.radio.as_tx()  # ensures the nRF24L01 is in TX mode
         for _ in range(count):  # transmit the same payloads this many times
             self.radio.flush_tx()  # clear the TX FIFO so we can use all 3 levels
             failures = 0  # keep track of manual retries
             start_timer = time.monotonic() * 1000  # start timer
-            for buf in stream:  # cycle through all payloads in stream
+            for i in range(size):  # cycle through all payloads in stream
+                buf = make_payload(size, i)
                 while not self.radio.write(buf):
                     # upload to TX FIFO failed because TX FIFO is full.
                     # check for transmission errors

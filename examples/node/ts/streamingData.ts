@@ -51,22 +51,18 @@ export class App {
     this.radio.paLevel = PaLevel.Low; // PaLevel.Max is default
   }
 
-  makePayloads(size: number) {
-    const arr = Array<Buffer>();
-    for (let i = 0; i < size; i++) {
-      // prefix each payload with a letter to indicate which payloads were lost (if any)
-      const prefix = i + (i < 26 ? 65 : 71);
-      let payload = String.fromCharCode(prefix);
-      const middleByte = Math.abs((size - 1) / 2 - i);
-      for (let j = 0; j < size - 1; j++) {
-        const byte =
-          Boolean(j >= (size - 1) / 2 + middleByte) ||
-          Boolean(j < (size - 1) / 2 - middleByte);
-        payload += String.fromCharCode(Number(byte) + 48);
-      }
-      arr.push(Buffer.from(payload));
+  makePayload(size: number, count: number): Buffer {
+    // prefix each payload with a letter to indicate which payloads were lost (if any)
+    const prefix = count + (count < 26 ? 65 : 71);
+    let payload = String.fromCharCode(prefix);
+    const middleByte = Math.abs((size - 1) / 2 - count);
+    for (let j = 0; j < size - 1; j++) {
+      const byte =
+        Boolean(j >= (size - 1) / 2 + middleByte) ||
+        Boolean(j < (size - 1) / 2 - middleByte);
+      payload += String.fromCharCode(Number(byte) + 48);
     }
-    return arr;
+    return Buffer.from(payload);
   }
 
   /**
@@ -77,7 +73,7 @@ export class App {
   async tx(count?: number, size?: number) {
     // minimum stream size should be at least 6 payloads for this example.
     const payloadSize = Math.max(Math.min(size || 32, 32), 6);
-    const payloads = this.makePayloads(payloadSize);
+
     // save on transmission time by setting the radio to only transmit the
     // number of bytes we need to transmit
     this.radio.payloadLength = payloadSize; // default is the maximum 32 bytes
@@ -88,7 +84,8 @@ export class App {
 
       let failures = 0;
       const start = Date.now();
-      for (const buf of payloads) {
+      for (let i = 0; i < payloadSize; i++) {
+        const buf = this.makePayload(payloadSize, i);
         // for each payload in stream
         while (!this.radio.write(buf)) {
           // upload to TX FIFO failed because TX FIFO is full.
