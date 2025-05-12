@@ -827,13 +827,15 @@ impl RF24 {
             .map_err(|e| PyRuntimeError::new_err(format!("{e:?}")))
     }
 
-    /// Update the cached value of Status flags.
+    /// Fetch the [`StatusFlags`][rf24_py.StatusFlags] directly from the radio.
     ///
-    /// Use [`RF24.get_status_flags()`][rf24_py.RF24.get_status_flags] to get the updated values.
-    pub fn update(&mut self) -> PyResult<()> {
-        self.inner
-            .update()
-            .map_err(|e| PyRuntimeError::new_err(format!("{e:?}")))
+    /// This function also caches the returned [`StatusFlags`][rf24_py.StatusFlags] which can be
+    /// fetched with [`RF24.get_status_flags()`][rf24_py.RF24.get_status_flags].
+    pub fn update(&mut self) -> PyResult<StatusFlags> {
+        match self.inner.update() {
+            Err(e) => Err(PyRuntimeError::new_err(format!("{e:?}"))),
+            Ok(flags) => Ok(StatusFlags::from_inner(flags)),
+        }
     }
 
     /// Get the current state of the [`StatusFlags`][rf24_py.StatusFlags].
@@ -843,7 +845,8 @@ impl RF24 {
     ///     from the last SPI transaction. It does not actually update the values
     ///     (from the radio) before returning them.
     ///
-    ///     Use [`RF24.update()`][rf24_py.RF24.update] to update them first.
+    ///     Use [`RF24.update()`][rf24_py.RF24.update] to get fresh data directly from the radio
+    ///     at the slight cost of performance.
     pub fn get_status_flags(&mut self) -> StatusFlags {
         let mut flags = rf24::StatusFlags::default();
         self.inner.get_status_flags(&mut flags);

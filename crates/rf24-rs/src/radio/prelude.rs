@@ -92,6 +92,13 @@ pub trait EsbChannel: RadioErrorType {
 /// for an ESB capable transceiver.
 pub trait EsbStatus: RadioErrorType {
     /// Get the [`StatusFlags`] state that was cached from the latest SPI transaction.
+    ///
+    /// This function simply returns the value of the flags that was cached
+    /// from the last SPI transaction. It does not actually update the values
+    /// (from the radio) before returning them.
+    ///
+    /// Use [`EsbStatus::update()`] to get fresh data directly from the radio
+    /// at the slight cost of performance.
     fn get_status_flags(&self, flags: &mut StatusFlags);
 
     /// Configure which status flags trigger the radio's IRQ pin.
@@ -112,11 +119,11 @@ pub trait EsbStatus: RadioErrorType {
     /// active (LOW) when multiple events occurred but only flag was cleared.
     fn clear_status_flags(&mut self, flags: StatusFlags) -> Result<(), Self::Error>;
 
-    /// Refresh the internal cache of status byte
-    /// (which is also saved from every SPI transaction).
+    /// Fetch the [`StatusFlags`] directly from the radio.
     ///
-    /// Use [`EsbStatus::get_status_flags()`] to get the updated status flags.
-    fn update(&mut self) -> Result<(), Self::Error>;
+    /// This function also caches the returned [`StatusFlags`] which can be fetched with
+    /// [`EsbStatus::get_status_flags()`].
+    fn update(&mut self) -> Result<StatusFlags, Self::Error>;
 }
 
 /// A trait to represent manipulation of RX and TX FIFOs

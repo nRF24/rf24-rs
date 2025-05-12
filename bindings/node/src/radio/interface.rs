@@ -947,26 +947,29 @@ impl RF24 {
             .map_err(|e| Error::new(Status::GenericFailure, format!("{e:?}")))
     }
 
-    /// Update the cached value of Status flags.
+    /// Fetch the {@link StatusFlags} directly from the radio.
     ///
-    /// Use {@link RF24.getStatusFlags} to get the updated values.
+    /// This function also caches the returned {@link StatusFlags} which can be fetched with
+    /// {@link RF24.getStatusFlags}.
     ///
     /// @group Advanced
     #[napi]
-    pub fn update(&mut self) -> Result<()> {
-        self.inner
-            .update()
-            .map_err(|e| Error::new(Status::GenericFailure, format!("{e:?}")))
+    pub fn update(&mut self) -> Result<StatusFlags> {
+        match self.inner.update() {
+            Ok(flags) => Ok(StatusFlags::from_inner(flags)),
+            Err(e) => Err(Error::new(Status::GenericFailure, format!("{e:?}"))),
+        }
     }
 
-    /// Get the current state of the {@link StatusFlags}.
+    /// Get the current (cached) state of the {@link StatusFlags}.
     ///
     /// > [!NOTE]
     /// > This function simply returns the value of the flags that was cached
     /// > from the last SPI transaction. It does not actually update the values
     /// > (from the radio) before returning them.
     /// >
-    /// > Use {@link RF24.update} to update them first.
+    /// > Use {@link RF24.update} to get fresh data directly from the radio
+    /// > at the slight cost of performance.
     ///
     /// @group Advanced
     #[napi]

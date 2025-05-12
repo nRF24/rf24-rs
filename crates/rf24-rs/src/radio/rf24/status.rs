@@ -25,8 +25,9 @@ where
         self.spi_write_byte(registers::STATUS, flags.into_bits() & StatusFlags::IRQ_MASK)
     }
 
-    fn update(&mut self) -> Result<(), Self::Error> {
-        self.spi_read(0, commands::NOP)
+    fn update(&mut self) -> Result<StatusFlags, Self::Error> {
+        self.spi_read(0, commands::NOP)?;
+        Ok(self.status)
     }
 
     fn get_status_flags(&self, flags: &mut StatusFlags) {
@@ -48,16 +49,16 @@ mod test {
     pub fn what_happened() {
         let spi_expectations = spi_test_expects![
             // get the RF_SETUP register value for each possible result
-            (vec![commands::NOP], vec![0x70u8]),
+            (vec![commands::NOP], vec![StatusFlags::IRQ_MASK]),
         ];
         let mocks = mk_radio(&[], &spi_expectations);
         let (mut radio, mut spi, mut ce_pin) = (mocks.0, mocks.1, mocks.2);
-        radio.update().unwrap();
-        let mut flags = StatusFlags::default();
-        radio.get_status_flags(&mut flags);
+        let mut flags = radio.update().unwrap();
         assert!(flags.rx_dr());
         assert!(flags.tx_ds());
         assert!(flags.tx_df());
+        radio.get_status_flags(&mut flags);
+        assert_eq!(flags.into_bits(), StatusFlags::IRQ_MASK);
         spi.done();
         ce_pin.done();
     }
