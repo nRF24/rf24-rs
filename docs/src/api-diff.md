@@ -7,6 +7,45 @@ There are some important design decisions here.
 [traits]: https://doc.rust-lang.org/book/ch10-02-traits.html
 [result]: https://doc.rust-lang.org/book/ch02-00-guessing-game-tutorial.html#handling-potential-failure-with-result
 
+## `st*Listening()` methods renamed
+
+The C++ library's `startListening()` and `stopListening()` have been renamed to clarify their intended behavior.
+
+### `as_rx()`
+
+`startListening()` from the C++ library is named `as_rx()` in the rf24-rs crate.
+This should clearly imply that the function adequately prepares the radio for RX operation.
+
+The `open_rx_pipe()` method (equivalent to the C++ library's `openReadingPipe()`) can be safely used in
+either RX or TX mode.
+
+### `as_tx()`
+
+`stopListening()` from the C++ library is named `as_tx()` in the rf24-rs crate.
+This should clearly imply that the function adequately prepares the radio for TX operation.
+
+The C++ `openWritingPipe(tx_address)` method has been deprecated in favor of `startListening(tx_address)`.
+In the rf24-rs crate, there is no `open_tx_pipe()` method.
+Instead, the rf24-rs crate's `as_tx(Option<&[u8]>)` method takes an optional TX address to reflect
+the recommended C++ method.
+
+| Language | Set the TX address  | Reuse previous TX address |
+|:--------:|:--------------------|:--------------------------|
+| C++      | `radio.stopListening(tx_address)` | `radio.stopListening()` |
+| Rust     | `radio.as_tx(Some(&tx_address))`  | `radio.as_tx(None)` |
+| Python   | `radio.as_tx(tx_address)`         | `radio.as_tx()` |
+| Node.js  | `radio.asTx(txAddress)`           | `radio.asTx()` |
+
+### `is_rx()`
+
+The rf24-rs crate offers an `is_rx()` method to programmatically identify when the radio is in RX mode.
+There is no equivalent method in the C++ library.
+
+If this method returns `false`, then the radio is in TX mode.
+Active TX operations can be determined by the radio's CE pin's state (and the [STATUS byte](#status-byte-exposed));
+HIGH for actively transmitting (if TX FIFO is occupied and no transmissions failed),
+LOW for TX standby mode (also referred to in the API documentation as "inactive TX mode").
+
 ## `read()` length is optional
 
 Since the length of the buffer passed to `RF24::read()` can be determined programmatically,
@@ -35,8 +74,8 @@ Understanding the meaning of the status byte is publicly exposed via
    This only returns the internally cached STATUS byte received from the latest SPI transaction.
 - `set_status_flags()`: used to configure the radio's CE pin.
 
-    | lang | only trigger IRQ pin on RX_DR (received data ready) events |
-    |:----:|:-----------------------------------------------------------|
+    | Language | only trigger IRQ pin on RX_DR (received data ready) events |
+    |:--------:|:-----------------------------------------------------------|
     | C++  | `radio.setStatusFlags(RF24_RX_DR)` |
     | Rust | `radio.set_status_flags(StatusFlags::default().with_rx_dr(true))` |
     | Python | `radio.set_status_flags(StatusFlags(rx_dr=True))` |
