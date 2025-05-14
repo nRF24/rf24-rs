@@ -898,14 +898,13 @@ impl RF24 {
     /// This value cannot be negative.
     ///
     /// Since this value can be optimized per the radio's data rate, this value is
-    /// automatically adjusted when changing
-    /// {@link RF24.dataRate}.
+    /// automatically adjusted when changing {@link RF24.dataRate}.
     /// If setting this to a custom value be sure, to set it *after*
     /// changing the radio's data rate.
     ///
     /// > [!WARNING]
-    /// > If set to 0, ensure 130 microsecond delay
-    /// > after calling {@link RF24.asTx} and before transmitting.
+    /// > If set to 0, then the concurrent outgoing ACK packet (when auto-ack is enabled)
+    /// > may fail to transmit when exiting RX mode with {@link RF24.asTx}.
     ///
     /// @group Configuration
     #[napi(setter, js_name = "txDelay")]

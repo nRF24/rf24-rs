@@ -70,7 +70,7 @@ where
 ///
 /// Additionally, there are some functions implemented that are specific to the nRF24L01.
 pub struct RF24<SPI, DO, DELAY> {
-    /// The delay (in microseconds) in which [`RF24::as_rx()`] will wait for
+    /// The delay (in microseconds) in which [`RF24::as_tx()`] will wait for
     /// ACK packets to complete.
     ///
     /// If the auto-ack feature is disabled, then this can be set as low as 0.
@@ -85,9 +85,8 @@ pub struct RF24<SPI, DO, DELAY> {
     ///
     /// <div class="warning">
     ///
-    /// If set to 0, ensure 130 microsecond delay
-    /// after calling [`RF24::as_rx()`]
-    /// and before transmitting.
+    /// If set to 0, then the concurrent outgoing ACK packet (when auto-ack is enabled)
+    /// may fail to transmit when exiting RX mode with [`RF24::as_tx()`].
     ///
     /// </div>
     ///

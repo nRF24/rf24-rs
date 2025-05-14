@@ -781,15 +781,13 @@ impl RF24 {
     /// This value cannot be negative.
     ///
     /// Since this value can be optimized per the radio's data rate, this value is
-    /// automatically adjusted when changing
-    /// [`data_rate`][rf24_py.RF24.data_rate].
+    /// automatically adjusted when changing [`data_rate`][rf24_py.RF24.data_rate].
     /// If setting this to a custom value be sure, to set it *after*
     /// changing the radio's data rate.
     ///
     /// Warning:
-    ///     If set to 0, ensure 130 microsecond delay
-    ///     after calling [`as_tx()`][rf24_py.RF24.as_tx]
-    ///     and before transmitting.
+    ///     If set to 0, then the concurrent outgoing ACK packet (when auto-ack is enabled)
+    ///     may fail to transmit when exiting RX mode with [`as_tx()`][rf24_py.RF24.as_tx].
     #[setter]
     pub fn set_tx_delay(&mut self, value: u32) {
         self.inner.tx_delay = value;
