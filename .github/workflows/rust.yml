@@ -40,7 +40,7 @@ jobs:
       - name: Install cargo-binstall
         uses: cargo-bins/cargo-binstall@main
       - name: Install Just
-        run: cargo binstall -y just cargo-nextest cargo-llvm-cov
+        run: cargo binstall -y cargo-nextest cargo-llvm-cov
       - name: Cache deps
         uses: actions/cache@v4
         with:
@@ -48,8 +48,17 @@ jobs:
           key: cargo-lib-${{ hashFiles('crates/*/src/**', 'crates/**/Cargo.toml') }}
       - run: rustup component add llvm-tools-preview
         # this enables a tool (for default toolchain) needed to measure code coverage.
-      - name: Run tests and generate reports
-        run: just test ci lcov
+      - name: Run tests
+        run: >-
+          cargo llvm-cov --no-report nextest
+          -p rf24-rs
+          -p rf24ble-rs
+          --lib
+          --tests
+          --color always
+          --profile ci lcov
+      - name: Generate coverage reports
+        run: cargo llvm-cov report --lcov --output-path lcov.info
       - uses: codecov/codecov-action@v5
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
