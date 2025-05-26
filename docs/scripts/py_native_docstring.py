@@ -13,6 +13,7 @@ which requires a Linux to compile.
 """
 
 import ast
+import platform
 from typing import cast
 import griffe
 import importlib
@@ -92,11 +93,19 @@ class NativeDocstring(griffe.Extension):
             isinstance(func_parent, ast.ClassDef) or isinstance(func_parent, ast.Module)
         ):
             return  # we're only concerned with class methods or module-scoped functions
+        native_obj = None
         if isinstance(func_parent, ast.ClassDef):
-            native_cls = getattr(self.native, func_parent.name)
-            native_obj = getattr(native_cls, node.name)
+            native_cls = getattr(self.native, func_parent.name, None)
+            if native_cls is not None:
+                native_obj = getattr(native_cls, node.name, None)
         elif isinstance(func_parent, ast.Module):
-            native_obj = getattr(self.native, node.name)
+            native_obj = getattr(self.native, node.name, None)
+        if native_obj is None:
+            if platform.system() == "Linux":
+                raise AttributeError(
+                    f"'{self.native}' has no attribute '{node.parent}'"
+                )
+            return
         native_doc: str = native_obj.__doc__ or ""
         if node.decorator_list:
             for dec in node.decorator_list:
