@@ -56,7 +56,7 @@ jobs:
           --lib
           --tests
           --color always
-          --profile ci lcov
+          --profile ci
       - name: Generate coverage reports
         run: cargo llvm-cov report --lcov --output-path lcov.info
       - uses: codecov/codecov-action@v5
