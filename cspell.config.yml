@@ -96,5 +96,6 @@ words:
   - struct
   - superfences
   - tasklist
+  - timeit
   - twemoji
   - yarnrc

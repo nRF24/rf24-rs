@@ -1,0 +1,115 @@
+
+
+def --wrapped run-cmd [...cmd: string] {
+    let app = if ($cmd | first) == "cargo" {
+        ($cmd | first 2) | str join ' '
+    } else {
+        ($cmd | first)
+    }
+    print $"(ansi blue)\nRunning(ansi reset) ($cmd | str join ' ')"
+    let elapsed = timeit {|| ^($cmd | first) ...($cmd | skip 1)}
+    print $"(ansi magenta)($app) took ($elapsed)(ansi reset)"
+}
+
+
+# Run the test suite
+def "nur test" [profile: string = 'default'] {
+    let cmd = [
+        cargo llvm-cov --no-report nextest
+        -p rf24-rs
+        -p rf24ble-rs
+        --lib
+        --tests
+        --color always
+        --profile $profile
+    ]
+    run-cmd ...$cmd
+}
+
+
+# Clear previous test build artifacts
+def "nur test clean" [] {
+    run-cmd cargo llvm-cov clean
+}
+
+
+# Generate pretty coverage report
+#
+# Pass "--open" to load the built report in your browser
+def --wrapped "nur test pretty-cov" [...args: string] {
+    run-cmd cargo llvm-cov report --json --output-path coverage.json
+    run-cmd llvm-cov-pretty coverage.json ...$args
+}
+
+
+# Generate detailed coverage report
+#
+# Pass "--open" to load the built report in your browser
+def --wrapped "nur test llvm-cov" [...args: string] {
+    run-cmd cargo llvm-cov report --html ...$args
+}
+
+
+# Generate lcov.info
+#
+# Useful for codecov uploads or VSCode extensions like "Coverage Gutters".
+def "nur test lcov" [] {
+    run-cmd cargo llvm-cov report --lcov --output-path lcov.info
+}
+
+
+# Serve mkdocs
+def "nur docs" [
+    --open (-o) # open the built docs in your browser
+] {
+    let cmd = [
+        mkdocs serve --config-file docs/mkdocs.yml
+    ]
+    if $open {
+        run-cmd ...($cmd | append '--open')
+    } else {
+        run-cmd  ...$cmd
+    }
+}
+
+# Build mkdocs
+def "nur docs build" [] {
+    run-cmd mkdocs build --config-file docs/mkdocs.yml
+}
+
+
+# Rust API docs
+def "nur docs rs" [
+    --open (-o) # open the built docs in your browser
+] {
+    let cmd = [
+        cargo doc --no-deps --lib -p rf24-rs -p rf24ble-rs
+    ]
+    if $open {
+        run-cmd ...($cmd | append '--open')
+    } else {
+        run-cmd ...$cmd
+    }
+}
+
+
+# Run clippy and rustfmt (on packages only)
+def "nur lint" [] {
+    let common_args = [
+        -p rf24-rs
+        -p rf24ble-rs
+        -p rf24-node
+        -p rf24-py
+    ]
+    run-cmd ...[
+        cargo clippy --fix --allow-dirty --allow-staged ...$common_args
+    ]
+    run-cmd ...[cargo fmt ...$common_args]
+}
+
+
+# Run clippy and rustfmt (on examples only)
+def "nur lint examples" [] {
+    run-cmd cargo clippy -p rf24-rs-examples --fix --allow-dirty --allow-staged
+    run-cmd cargo fmt -p rf24-rs-examples
+}
