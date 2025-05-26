@@ -45,7 +45,6 @@ words:
   - HLINE
   - inlinehilite
   - istr
-  - justfile
   - Kbps
   - libgpiod
   - linenums
@@ -69,6 +68,7 @@ words:
   - nocbreak
   - noecho
   - npmjs
+  - nurfile
   - opengpio
   - pkgid
   - pyclass

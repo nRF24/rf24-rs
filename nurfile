@@ -13,30 +13,28 @@ def --wrapped run-cmd [...cmd: string] {
 
 
 # Run the test suite
-def "nur test" [profile: string = 'default'] {
-    let cmd = [
-        cargo llvm-cov --no-report nextest
-        -p rf24-rs
-        -p rf24ble-rs
-        --lib
-        --tests
-        --color always
-        --profile $profile
-    ]
+def "nur test" [
+    --clean (-c) # Purge previous test artifacts. Use to refresh coverage data.
+    --profile (-p): string = 'default' # The profile defined in .config/nextest.toml
+] {
+    if $clean {
+        run-cmd cargo llvm-cov clean
+    }
+    let cmd = (
+        [cargo llvm-cov --no-report nextest]
+        | append [-p rf24-rs -p rf24ble-rs]
+        | append [--lib --tests --color always --profile $profile]
+    )
     run-cmd ...$cmd
-}
-
-
-# Clear previous test build artifacts
-def "nur test clean" [] {
-    run-cmd cargo llvm-cov clean
 }
 
 
 # Generate pretty coverage report
 #
 # Pass "--open" to load the built report in your browser
-def --wrapped "nur test pretty-cov" [...args: string] {
+def --wrapped "nur test pretty-cov" [
+    ...args: string # Additional arguments for llvm-pretty-cov.
+] {
     run-cmd cargo llvm-cov report --json --output-path coverage.json
     run-cmd llvm-cov-pretty coverage.json ...$args
 }
@@ -45,7 +43,9 @@ def --wrapped "nur test pretty-cov" [...args: string] {
 # Generate detailed coverage report
 #
 # Pass "--open" to load the built report in your browser
-def --wrapped "nur test llvm-cov" [...args: string] {
+def --wrapped "nur test llvm-cov" [
+    ...args: string # Additional arguments for `llvm-cov report --html`.
+] {
     run-cmd cargo llvm-cov report --html ...$args
 }
 
@@ -62,14 +62,13 @@ def "nur test lcov" [] {
 def "nur docs" [
     --open (-o) # open the built docs in your browser
 ] {
-    let cmd = [
+    mut cmd = [
         mkdocs serve --config-file docs/mkdocs.yml
     ]
     if $open {
-        run-cmd ...($cmd | append '--open')
-    } else {
-        run-cmd  ...$cmd
+        $cmd = $cmd | append '--open'
     }
+    run-cmd  ...$cmd
 }
 
 # Build mkdocs
@@ -82,28 +81,23 @@ def "nur docs build" [] {
 def "nur docs rs" [
     --open (-o) # open the built docs in your browser
 ] {
-    let cmd = [
-        cargo doc --no-deps --lib -p rf24-rs -p rf24ble-rs
-    ]
+    mut cmd = [cargo doc --no-deps --lib -p rf24-rs -p rf24ble-rs]
     if $open {
-        run-cmd ...($cmd | append '--open')
-    } else {
-        run-cmd ...$cmd
+        $cmd = $cmd | append '--open'
     }
+    run-cmd ...$cmd
 }
 
 
 # Run clippy and rustfmt (on packages only)
 def "nur lint" [] {
-    let common_args = [
-        -p rf24-rs
-        -p rf24ble-rs
-        -p rf24-node
-        -p rf24-py
-    ]
-    run-cmd ...[
-        cargo clippy --fix --allow-dirty --allow-staged ...$common_args
-    ]
+    let common_args = (
+        [-p rf24-rs -p rf24ble-rs -p rf24-node -p rf24-py]
+    )
+    run-cmd ...(
+        [cargo clippy --fix --allow-dirty --allow-staged]
+        | append [...$common_args]
+    )
     run-cmd ...[cargo fmt ...$common_args]
 }
 
