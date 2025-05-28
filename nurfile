@@ -13,6 +13,10 @@ def --wrapped run-cmd [...cmd: string] {
 
 
 # Run the test suite
+#
+# Requires the following installed:
+# - cargo-llvm-cov
+# - cargo-nextest
 def "nur test" [
     --clean (-c) # Purge previous test artifacts. Use to refresh coverage data.
     --profile (-p): string = 'default' # The profile defined in .config/nextest.toml
@@ -32,6 +36,9 @@ def "nur test" [
 # Generate pretty coverage report
 #
 # Pass "--open" to load the built report in your browser
+# Requires the following installed:
+# - cargo-llvm-cov
+# - llvm-pretty-cov
 def --wrapped "nur test pretty-cov" [
     ...args: string # Additional arguments for llvm-pretty-cov.
 ] {
@@ -43,6 +50,7 @@ def --wrapped "nur test pretty-cov" [
 # Generate detailed coverage report
 #
 # Pass "--open" to load the built report in your browser
+# Requires cargo-llvm-cov installed.
 def --wrapped "nur test llvm-cov" [
     ...args: string # Additional arguments for `llvm-cov report --html`.
 ] {
@@ -58,10 +66,41 @@ def "nur test lcov" [] {
 }
 
 
+def build-bindings [dirty: bool, --docs] {
+    let is_node_binding_built = "bindings/node/index.d.ts" | path exists
+    if (not $dirty) or (not $is_node_binding_built) {
+        run-cmd yarn build:debug
+    }
+    if $docs and ((not $dirty) or (not $is_node_binding_built)) {
+        run-cmd yarn docs
+    }
+    let is_py_binding_installed = pip show rf24-py | complete | ($in.exit_code == 0)
+    if (not $dirty) or (not $is_py_binding_installed) {
+        run-cmd maturin dev
+    }
+}
+
+# Install bindings for Node.js and Python.
+#
+# Requires beforehand setup:
+# 1. A python virtual environment activated and `maturin` package installed.
+# 2. All node.js dependencies installed via `yarn install`.
+def "nur install" [] {
+    build-bindings false
+}
+
+alias "nur i" = nur install
+
 # Serve mkdocs
+#
+# Obviously this requires mkdocs installed.
+# It is strongly encouraged to use a python virtual environment with
+# additional dependencies installed (listed in docs/requirements.txt).
 def "nur docs" [
-    --open (-o) # open the built docs in your browser
+    --dirty (-d) # Skip re-building bindings and use the previously built version.
+    --open (-o) # Open the built docs in your browser.
 ] {
+    build-bindings $dirty --docs
     mut cmd = [
         mkdocs serve --config-file docs/mkdocs.yml
     ]
@@ -72,14 +111,21 @@ def "nur docs" [
 }
 
 # Build mkdocs
-def "nur docs build" [] {
+#
+# Obviously this requires mkdocs installed.
+# It is strongly encouraged to use a python virtual environment with
+# additional dependencies installed (listed in docs/requirements.txt).
+def "nur docs build" [
+    --dirty (-d) # Skip re-building bindings and use the previously built version.
+] {
+    build-bindings $dirty --docs
     run-cmd mkdocs build --config-file docs/mkdocs.yml
 }
 
 
 # Rust API docs
 def "nur docs rs" [
-    --open (-o) # open the built docs in your browser
+    --open (-o) # Open the built docs in your browser
 ] {
     mut cmd = [cargo doc --no-deps --lib -p rf24-rs -p rf24ble-rs]
     if $open {
