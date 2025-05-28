@@ -34,7 +34,7 @@ jobs:
         run: yarn docs
       - run: pip install -r docs/requirements.txt
       - run: pip install .
-      - run: mkdocs build --config-file docs/mkdocs.yml
+      - run: mkdocs build --config-file docs/mkdocs.yml --strict
       - name: Save docs build as artifact
         uses: actions/upload-artifact@v4
         with:
