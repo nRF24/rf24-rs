@@ -21,10 +21,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Install cargo-binstall
-        uses: cargo-bins/cargo-binstall@main
-      - name: Install Just
-        run: cargo binstall -y just
       - uses: actions/setup-python@v5
         with:
           python-version: 3.x
@@ -38,7 +34,7 @@ jobs:
         run: yarn docs
       - run: pip install -r docs/requirements.txt
       - run: pip install .
-      - run: just docs-build
+      - run: mkdocs build --config-file docs/mkdocs.yml --strict
       - name: Save docs build as artifact
         uses: actions/upload-artifact@v4
         with:
@@ -51,11 +47,7 @@ jobs:
       - uses: actions/checkout@v4
       - name: Setup Rust
         run: rustup update --no-self-update
-      - name: Install cargo-binstall
-        uses: cargo-bins/cargo-binstall@main
-      - name: Install Just
-        run: cargo binstall -y just
-      - run: just docs-rs
+      - run: cargo doc --no-deps --lib -p rf24-rs -p rf24ble-rs
       - name: save docs as artifact
         uses: actions/upload-artifact@v4
         with:

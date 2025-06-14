@@ -22,5 +22,5 @@
 .gitignore text eol=lf
 .gitattributes text eol=lf
 *.txt text eol=lf
-justfile text eol=lf
+nurfile text eol=lf
 LICENSE text eol=lf

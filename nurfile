@@ -1,0 +1,155 @@
+
+
+def --wrapped run-cmd [...cmd: string] {
+    let app = if ($cmd | first) == "cargo" {
+        ($cmd | first 2) | str join ' '
+    } else {
+        ($cmd | first)
+    }
+    print $"(ansi blue)\nRunning(ansi reset) ($cmd | str join ' ')"
+    let elapsed = timeit {|| ^($cmd | first) ...($cmd | skip 1)}
+    print $"(ansi magenta)($app) took ($elapsed)(ansi reset)"
+}
+
+
+# Run the test suite
+#
+# Requires the following installed:
+# - cargo-llvm-cov
+# - cargo-nextest
+def "nur test" [
+    --clean (-c) # Purge previous test artifacts. Use to refresh coverage data.
+    --profile (-p): string = 'default' # The profile defined in .config/nextest.toml
+] {
+    if $clean {
+        run-cmd cargo llvm-cov clean
+    }
+    let cmd = (
+        [cargo llvm-cov --no-report nextest]
+        | append [-p rf24-rs -p rf24ble-rs]
+        | append [--lib --tests --color always --profile $profile]
+    )
+    run-cmd ...$cmd
+}
+
+
+# Generate pretty coverage report
+#
+# Pass "--open" to load the built report in your browser
+# Requires the following installed:
+# - cargo-llvm-cov
+# - llvm-pretty-cov
+def --wrapped "nur test pretty-cov" [
+    ...args: string # Additional arguments for llvm-pretty-cov.
+] {
+    run-cmd cargo llvm-cov report --json --output-path coverage.json
+    run-cmd llvm-cov-pretty coverage.json ...$args
+}
+
+
+# Generate detailed coverage report
+#
+# Pass "--open" to load the built report in your browser
+# Requires cargo-llvm-cov installed.
+def --wrapped "nur test llvm-cov" [
+    ...args: string # Additional arguments for `llvm-cov report --html`.
+] {
+    run-cmd cargo llvm-cov report --html ...$args
+}
+
+
+# Generate lcov.info
+#
+# Useful for codecov uploads or VSCode extensions like "Coverage Gutters".
+def "nur test lcov" [] {
+    run-cmd cargo llvm-cov report --lcov --output-path lcov.info
+}
+
+
+def build-bindings [dirty: bool, --docs] {
+    let is_node_binding_built = "bindings/node/index.d.ts" | path exists
+    if (not $dirty) or (not $is_node_binding_built) {
+        run-cmd yarn build:debug
+    }
+    if $docs and ((not $dirty) or (not $is_node_binding_built)) {
+        run-cmd yarn docs
+    }
+    let is_py_binding_installed = pip show rf24-py | complete | ($in.exit_code == 0)
+    if (not $dirty) or (not $is_py_binding_installed) {
+        run-cmd maturin dev
+    }
+}
+
+# Install bindings for Node.js and Python.
+#
+# Requires beforehand setup:
+# 1. A python virtual environment activated and `maturin` package installed.
+# 2. All node.js dependencies installed via `yarn install`.
+def "nur install" [] {
+    build-bindings false
+}
+
+alias "nur i" = nur install
+
+# Serve mkdocs
+#
+# Obviously this requires mkdocs installed.
+# It is strongly encouraged to use a python virtual environment with
+# additional dependencies installed (listed in docs/requirements.txt).
+def "nur docs" [
+    --dirty (-d) # Skip re-building bindings and use the previously built version.
+    --open (-o) # Open the built docs in your browser.
+] {
+    build-bindings $dirty --docs
+    mut cmd = [
+        mkdocs serve --config-file docs/mkdocs.yml
+    ]
+    if $open {
+        $cmd = $cmd | append '--open'
+    }
+    run-cmd  ...$cmd
+}
+
+# Build mkdocs
+#
+# Obviously this requires mkdocs installed.
+# It is strongly encouraged to use a python virtual environment with
+# additional dependencies installed (listed in docs/requirements.txt).
+def "nur docs build" [
+    --dirty (-d) # Skip re-building bindings and use the previously built version.
+] {
+    build-bindings $dirty --docs
+    run-cmd mkdocs build --config-file docs/mkdocs.yml
+}
+
+
+# Rust API docs
+def "nur docs rs" [
+    --open (-o) # Open the built docs in your browser
+] {
+    mut cmd = [cargo doc --no-deps --lib -p rf24-rs -p rf24ble-rs]
+    if $open {
+        $cmd = $cmd | append '--open'
+    }
+    run-cmd ...$cmd
+}
+
+
+# Run clippy and rustfmt (on packages only)
+def "nur lint" [] {
+    let common_args = (
+        [-p rf24-rs -p rf24ble-rs -p rf24-node -p rf24-py]
+    )
+    run-cmd ...(
+        [cargo clippy --fix --allow-dirty --allow-staged]
+        | append [...$common_args]
+    )
+    run-cmd ...[cargo fmt ...$common_args]
+}
+
+
+# Run clippy and rustfmt (on examples only)
+def "nur lint examples" [] {
+    run-cmd cargo clippy -p rf24-rs-examples --fix --allow-dirty --allow-staged
+    run-cmd cargo fmt -p rf24-rs-examples
+}

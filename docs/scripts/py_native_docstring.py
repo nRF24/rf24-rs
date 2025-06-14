@@ -15,6 +15,7 @@ which requires a Linux to compile.
 import ast
 import platform
 from typing import cast
+from types import ModuleType
 import griffe
 import importlib
 import logging
@@ -58,7 +59,27 @@ def inject_docstring(node: ast.FunctionDef | ast.ClassDef, native_doc: str):
 
 class NativeDocstring(griffe.Extension):
     def __init__(self):
-        self.native = importlib.import_module("rf24_py")
+        self.mod = "rf24_py"
+        self.native = importlib.import_module(self.mod)
+
+    def try_get_attr(
+        self,
+        parent: ModuleType | ast.ClassDef | ast.Module,
+        member: str,
+        child_member: str | None = None,
+    ):
+        try:
+            return getattr(parent, member)
+        except AttributeError as exc:
+            if platform.system() == "Linux":
+                raise exc
+            domain = self.mod if isinstance(parent, ModuleType) else parent.name
+            sibling = member
+            if child_member:
+                domain = member
+                sibling += "." + child_member
+            log.warning("%s has no member %s", domain, sibling)
+            return None
 
     def on_class_node(  # type: ignore[override]
         self,
@@ -68,13 +89,10 @@ class NativeDocstring(griffe.Extension):
         """Prepend a docstring from the native module"""
         if isinstance(node, griffe.ObjectNode):
             return  # any docstring fetched from pure python should be adequate
-        try:
-            native_doc: str | None = getattr(self.native, node.name).__doc__
-        except AttributeError:
-            print(
-                "The", node.name, "class was not found! Are you running this in Linux?"
-            )
+        native = self.try_get_attr(self.native, node.name)
+        if native is None:
             return
+        native_doc = native.__doc__
         if not native_doc:
             return
         # print(f"Amending docstring for rf24_py.{node.name}")
@@ -95,16 +113,12 @@ class NativeDocstring(griffe.Extension):
             return  # we're only concerned with class methods or module-scoped functions
         native_obj = None
         if isinstance(func_parent, ast.ClassDef):
-            native_cls = getattr(self.native, func_parent.name, None)
+            native_cls = self.try_get_attr(self.native, func_parent.name, node.name)
             if native_cls is not None:
-                native_obj = getattr(native_cls, node.name, None)
+                native_obj = self.try_get_attr(native_cls, node.name)
         elif isinstance(func_parent, ast.Module):
-            native_obj = getattr(self.native, node.name, None)
+            native_obj = self.try_get_attr(self.native, node.name)
         if native_obj is None:
-            if platform.system() == "Linux":
-                raise AttributeError(
-                    f"'{self.native}' has no attribute '{node.parent}'"
-                )
             return
         native_doc: str = native_obj.__doc__ or ""
         if node.decorator_list:
