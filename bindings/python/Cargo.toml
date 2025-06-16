@@ -14,10 +14,10 @@ crate-type = ["cdylib"]
 
 [dependencies]
 embedded-hal = "1.0.0"
-pyo3 = {version = "0.24.0", features = ["extension-module"]}
+pyo3 = {version = "0.25.1", features = ["extension-module"]}
 rf24-rs = { path = "../../crates/rf24-rs", features = ["std"]}
 rf24ble-rs = { path = "../../crates/rf24ble-rs", features = ["std"] }
 
 [target.'cfg(target_os = "linux")'.dependencies]
 linux-embedded-hal = {version = "0.4.0", default-features = false, features = ["gpio_cdev", "spi"]}
-nix = { version = "0.29.0", features = ["time"]}
+nix = { version = "0.30.1", features = ["time"]}
