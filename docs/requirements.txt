@@ -1,6 +1,6 @@
 markdown-gfm-admonition==0.1.1
 mkdocs==1.6.1
-mkdocs-include-markdown-plugin==7.1.5
+mkdocs-include-markdown-plugin==7.1.6
 mkdocs-material==9.6.14
-mkdocstrings-python==1.16.11
-pymdown-extensions==10.15
+mkdocstrings-python==1.16.12
+pymdown-extensions==10.16
