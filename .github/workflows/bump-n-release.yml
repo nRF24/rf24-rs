@@ -4,6 +4,10 @@ on:
   workflow_dispatch:
     inputs:
       package:
+        description: >-
+          The package to deploy.
+          Binding packages are named `rf24-<lang>` for simplicity,
+          even if the actual deployed package name is different.
         type: choice
         required: true
         options:
@@ -14,6 +18,7 @@ on:
           # - 'rf24network-rs'
           # - 'rf24mesh-rs'
       bump-component:
+        description: The semantic version component to increase by 1.
         type: choice
         default: 'patch'
         required: true
