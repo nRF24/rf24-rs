@@ -15,7 +15,7 @@ slow-timeout = "10s"
 # This is all tests in tests/ folder + unit test for --extra-args.
 default-filter = "all()"
 
-# show wich tests were skipped
+# show which tests were skipped
 status-level = "skip"
 
 # show log output from each test
