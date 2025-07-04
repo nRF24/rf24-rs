@@ -1,10 +1,10 @@
 {
-    "plugin": ["typedoc-plugin-markdown"],
-    "mergeReadme": true,
-    "useCodeBlocks": true,
-    "hidePageHeader": true,
-    "hideBreadcrumbs": true,
-    "hidePageTitle": true,
-    "expandParameters": true,
-    "parametersFormat": "table",
+    "favicon": "src/images/favicon.ico",
+    "customCss": "src/stylesheets/typedoc.css",
+    // "sidebarLinks": {
+    //     "Changelog": "../rf24-node-changelog",
+    //     "rf24-rs Project": "../",
+    // },
+    "hostedBaseUrl": "https://https://rf24-rs.readthedocs.io/en/latest/node-api",
+    "includeHierarchySummary": false,
 }

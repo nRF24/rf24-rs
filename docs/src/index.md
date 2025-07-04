@@ -5,5 +5,5 @@
     end="<!--absolute-links-->"
 %}
 
-[node-api]: node-api/README.md
+[node-api]: ./node-api/index.html
 [python-api]: python-api/README.md

@@ -249,7 +249,6 @@ __metadata:
   resolution: "@rf24/docs@workspace:docs"
   dependencies:
     typedoc: "npm:^0.28.3"
-    typedoc-plugin-markdown: "npm:^4.6.3"
     typescript: "npm:^5.8.3"
   languageName: unknown
   linkType: soft
@@ -2069,15 +2068,6 @@ __metadata:
   dependencies:
     prelude-ls: "npm:^1.2.1"
   checksum: 10c0/7b3fd0ed43891e2080bf0c5c504b418fbb3e5c7b9708d3d015037ba2e6323a28152ec163bcb65212741fa5d2022e3075ac3c76440dbd344c9035f818e8ecee58
-  languageName: node
-  linkType: hard
-
-"typedoc-plugin-markdown@npm:^4.6.3":
-  version: 4.6.3
-  resolution: "typedoc-plugin-markdown@npm:4.6.3"
-  peerDependencies:
-    typedoc: 0.28.x
-  checksum: 10c0/5242ef2869bfb6dfbe6b3dbe655be8cb1147ed5f17fa3639ed7643ce889534ef27dfb91170f34fd52a83bf89bdb568a5a7a7ad148bbf0b5785cabc7c81dbcb2d
   languageName: node
   linkType: hard
 

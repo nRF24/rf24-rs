@@ -220,9 +220,9 @@ where
         std::println!("    Data Fail triggered___{}", self.status.tx_df());
 
         let fifo = self.get_fifo_state(true)?;
-        std::println!("TX FIFO___________________{}", fifo);
+        std::println!("TX FIFO___________________{fifo}");
         let fifo = self.get_fifo_state(false)?;
-        std::println!("RX FIFO___________________{}", fifo);
+        std::println!("RX FIFO___________________{fifo}");
 
         self.spi_read(1, registers::FEATURE)?;
         let features = self.buf[1];
