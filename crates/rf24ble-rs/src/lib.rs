@@ -21,7 +21,7 @@
 //!
 //!    - 2.402 GHz
 //!    - 2.426 GHz
-//!    - 2.480 GHz.
+//!    - 2.480 GHz
 //!
 //!    For convenience, use [`FakeBle::hop_channel()`](fn@crate::radio::FakeBle::hop_channel())
 //!    (when radio is in TX mode only) to switch between these frequencies.
@@ -33,9 +33,9 @@
 //!    when transmitting to BLE devices, thus the automatic re-transmit and custom ACK payloads
 //!    features are useless because they both depend on the automatic acknowledgments feature.
 //! 6. Dynamic payloads feature of the nRF24L01 isn't compatible with BLE specifications.
-//! 7. BLE specifications only allow using 1 Mbps RF data rate, so that too has been hard coded.
+//! 7. BLE specifications only allow using 1 Mbps RF data rate.
 //! 8. Only the "on data sent" (`tx_ds`) & "on data ready" (`rx_dr`) events will have
-//!    an effect on the interrupt (IRQ) pin. The "on data fail" is never
+//!    an effect on the interrupt (IRQ) pin. The "on data fail" (`tx_df`) event is never
 //!    triggered when the auto-ack feature is disabled.
 
 mod radio;

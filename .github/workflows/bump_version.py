@@ -28,7 +28,6 @@ COMMON_EXCLUDES = [
     "README.md",
     ".gitattributes",
     ".gitignore",
-    "justfile",
     ".pre-commit-config.yaml",
     "crates/README.md",
     "package.json",

@@ -47,7 +47,7 @@ impl RadioConfig {
     /// |    4[^2]    | closed | `0xC5`      |
     /// |    5[^2]    | closed | `0xC6`      |
     ///
-    /// [^1]: The RX address default value is the same as pipe 0 default RX address.
+    /// [^1]: The RX address default value is the same as pipe 0 default TX address.
     /// [^2]: Remember, pipes 2 - 5 share the same 4 LSBytes as the address on pipe 1.
     #[napi(constructor)]
     pub fn new() -> Self {

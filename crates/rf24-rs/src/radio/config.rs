@@ -72,7 +72,9 @@ impl EsbPipeConfig {
 /// This struct follows a builder pattern. Since all fields are private, users should
 /// start with the [`RadioConfig::default`] constructor, then mutate the object accordingly.
 /// ```
-/// let mut config = Config::default();
+/// use rf24::radio::RadioConfig;
+///
+/// let mut config = RadioConfig::default();
 /// config = config.with_channel(42);
 /// ```
 #[derive(Debug, Clone, Copy)]
@@ -123,7 +125,7 @@ impl Default for RadioConfig {
     /// |      5[^1]  | closed | `0xC6`      |
     ///
     /// [^1]: Remember, pipes 2 - 5 share the same 4 LSBytes as the address on pipe 1.
-    /// [^2]: The RX address default value is the same as pipe 0 default RX address.
+    /// [^2]: The RX address default value is the same as pipe 0 default TX address.
     fn default() -> Self {
         Self {
             /*
@@ -382,6 +384,8 @@ impl RadioConfig {
     ///
     /// To enable the feature for pipes 0, 1 and 4:
     /// ```
+    /// use rf24::radio::RadioConfig;
+    ///
     /// let config = RadioConfig::default().with_auto_ack(0b010011);
     /// ```
     /// If enabling the feature for any pipe other than 0, then the pipe 0 should also have the

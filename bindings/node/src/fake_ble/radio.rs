@@ -11,23 +11,23 @@ use super::services::BlePayload;
 
 /// A class to use the nRF24L01 as a Fake BLE beacon.
 ///
-/// !!! note "See also"
-///     This implementation is subject to
-///     [Limitations](https://docs.rs/rf24ble-rs/latest/rf24ble/index.html#limitations).
+/// > [!NOTE]
+/// > This implementation is subject to
+/// > [Limitations](https://docs.rs/rf24ble-rs/latest/rf24ble/index.html#limitations).
 ///
-///     Use {@link bleConfig} to properly configure the radio for
-///     BLE compatibility.
+/// Use {@link bleConfig} to properly configure the radio for
+/// BLE compatibility.
 ///
-///     ```ts
-///     import { bleConfig, FakeBle, RF24 } from "@rf24/rf24";
+/// ```ts
+/// import { bleConfig, FakeBle, RF24 } from "@rf24/rf24";
 ///
-///     const radio = new RF24(22, 0);
-///     radio.begin();
-///     radio.withConfig(bleConfig());
-///     const ble = new FakeBle(radio);
+/// const radio = new RF24(22, 0);
+/// radio.begin();
+/// radio.withConfig(bleConfig());
+/// const ble = new FakeBle(radio);
 ///
-///     radio.printDetails();
-///     ```
+/// radio.printDetails();
+/// ```
 #[napi]
 pub struct FakeBle {
     radio: Reference<RF24>,
@@ -184,7 +184,7 @@ impl FakeBle {
     /// Use {@link RF24.available} to check if there is data in the radio's RX FIFO.
     ///
     /// If the payload was somehow malformed or incomplete,
-    /// then this function returns an undefined value.
+    /// then this function returns an `undefined` value.
     #[napi]
     pub fn read(&mut self) -> Result<Option<BlePayload>> {
         let mut buf = self.radio.read(Some(32))?;
