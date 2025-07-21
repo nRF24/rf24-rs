@@ -41,8 +41,8 @@
   },
   "license": "MIT",
   "devDependencies": {
-    "@napi-rs/cli": "^2.18.4",
-    "@types/node": "^24.0.10",
+    "@napi-rs/cli": "^3.0.1",
+    "@types/node": "^24.0.15",
     "prettier": "3.6.2"
   },
   "engines": {
