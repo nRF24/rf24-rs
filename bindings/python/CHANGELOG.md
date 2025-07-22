@@ -6,6 +6,24 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 <!-- markdownlint-disable MD024 -->
 
+## [rf24-py/0.3.1] - 2025-07-22
+
+### <!-- 6 --> 📦 Dependency updates
+
+- Migrate to napi-rs v3 by @2bndy5 in [#64](https://github.com/nRF24/rf24-rs/pull/64)
+- Bump `rf24-rs` to v0.3.1 by @2bndy5 in [`70bdf19`](https://github.com/nRF24/rf24-rs/commit/70bdf197249712bab51fb59b34397598ba2fa86f)
+- Bump `rf24ble-rs` to v0.1.4 by @2bndy5 in [`0ff3ffa`](https://github.com/nRF24/rf24-rs/commit/0ff3ffa3b96c19cf63537603260a468cc1d8d286)
+
+### <!-- 8 --> 📝 Documentation
+
+- Revise docs about `RF24::tx_delay` property. by @2bndy5 in [`e7b29c1`](https://github.com/nRF24/rf24-rs/commit/e7b29c14ac33cdebd4437ef64f89d2a340f89613)
+- Switch to `nur` by @2bndy5 in [#50](https://github.com/nRF24/rf24-rs/pull/50)
+- Use typedoc default HTML output by @2bndy5 in [#59](https://github.com/nRF24/rf24-rs/pull/59)
+
+[rf24-py/0.3.1]: https://github.com/nRF24/rf24-rs/compare/rf24-py/0.3.0...rf24-py/0.3.1
+
+Full commit diff: [`rf24-py/0.3.0...rf24-py/0.3.1`][rf24-py/0.3.1]
+
 ## [rf24-py/0.3.0] - 2025-05-04
 
 ### <!-- 6 --> 📦 Dependency updates
@@ -15,6 +33,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Bump `rf24ble-rs` to v0.1.2 by @2bndy5 in [`33fe013`](https://github.com/nRF24/rf24-rs/commit/33fe0130101feb42aaa49aa5b88ac928034ec261)
 - Bump `rf24-rs` to v0.3.0 by @2bndy5 in [`abb8fda`](https://github.com/nRF24/rf24-rs/commit/abb8fdab9575ef30fa3445067aca11f21f07dfbb)
 - Bump `rf24ble-rs` to v0.1.3 by @2bndy5 in [`d408ffe`](https://github.com/nRF24/rf24-rs/commit/d408ffeee12c94b6580e7114bc9d6ab3a7eeeb23)
+- Bump `rf24-py` to v0.3.0 by @2bndy5 in [`235dc93`](https://github.com/nRF24/rf24-rs/commit/235dc93bf1bca474b9921e5af1add13f98d6182e)
 
 ### <!-- 7 -->🚦 Tests
 
@@ -78,6 +97,7 @@ Full commit diff: [`rf24-py/0.2.0...rf24-py/0.2.1`][rf24-py/0.2.1]
 ### <!-- 9 --> 🗨️ Changed
 
 - Reassess min supported rust version by @2bndy5 in [`a9ca278`](https://github.com/nRF24/rf24-rs/commit/a9ca278b3ed38a682bba54bbf32de2b874ae9097)
+- Dev workflow improvements by @2bndy5 in [`c493356`](https://github.com/nRF24/rf24-rs/commit/c493356b8044655f5a1930e7ef240243fa990d34)
 - Reorganize bindings' sources by @2bndy5 in [`3383200`](https://github.com/nRF24/rf24-rs/commit/33832000723857bf7b09a94c4ab892adc9cc66bf)
 - Improve readability in `rf24-rs` sources by @2bndy5 in [`f468315`](https://github.com/nRF24/rf24-rs/commit/f4683153d72bd67b0a7707a3a922a0d03b852164)
 
