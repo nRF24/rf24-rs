@@ -6,11 +6,27 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 <!-- markdownlint-disable MD024 -->
 
+## [rf24ble-rs/0.1.4] - 2025-07-22
+
+### <!-- 6 --> 📦 Dependency updates
+
+- Migrate to napi-rs v3 by @2bndy5 in [#64](https://github.com/nRF24/rf24-rs/pull/64)
+- Bump `rf24-rs` to v0.3.1 by @2bndy5 in [`70bdf19`](https://github.com/nRF24/rf24-rs/commit/70bdf197249712bab51fb59b34397598ba2fa86f)
+
+### <!-- 8 --> 📝 Documentation
+
+- Use typedoc default HTML output by @2bndy5 in [#59](https://github.com/nRF24/rf24-rs/pull/59)
+
+[rf24ble-rs/0.1.4]: https://github.com/nRF24/rf24-rs/compare/rf24ble-rs/0.1.3...rf24ble-rs/0.1.4
+
+Full commit diff: [`rf24ble-rs/0.1.3...rf24ble-rs/0.1.4`][rf24ble-rs/0.1.4]
+
 ## [rf24ble-rs/0.1.3] - 2025-05-04
 
 ### <!-- 6 --> 📦 Dependency updates
 
 - Bump `rf24-rs` to v0.3.0 by @2bndy5 in [`abb8fda`](https://github.com/nRF24/rf24-rs/commit/abb8fdab9575ef30fa3445067aca11f21f07dfbb)
+- Bump `rf24ble-rs` to v0.1.3 by @2bndy5 in [`d408ffe`](https://github.com/nRF24/rf24-rs/commit/d408ffeee12c94b6580e7114bc9d6ab3a7eeeb23)
 
 ### <!-- 7 -->🚦 Tests
 
