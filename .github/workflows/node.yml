@@ -228,7 +228,8 @@ jobs:
           name: generated-index
           path: bindings/node
       - name: Create npm dirs
-        run: napi create-npm-dirs --cwd bindings/node
+        working-directory: bindings/node
+        run: yarn napi create-npm-dirs
       - name: Move artifacts
         run: yarn artifacts
       - name: List packages
