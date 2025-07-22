@@ -5,13 +5,13 @@ repos:
   rev: v5.0.0
   hooks:
     - id: trailing-whitespace
-      exclude: .yarn/releases/yarn.js
+      exclude: .yarn/releases/yarn.*js
     - id: end-of-file-fixer
       exclude: '^bindings/node/npm/.*/package.json$'
     - id: check-yaml
       exclude: docs/mkdocs.yml
     - id: check-added-large-files
-      exclude: .yarn/releases/yarn.js
+      exclude: .yarn/releases/yarn.*js
     - id: mixed-line-ending
       args: ['--fix=lf']
     - id: requirements-txt-fixer

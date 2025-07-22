@@ -134,7 +134,7 @@ impl UrlService {
 /// A structure to represent received BLE data.
 #[napi]
 pub struct BlePayload {
-    mac_address: Buffer,
+    mac_address: Vec<u8>,
     short_name: Option<String>,
     tx_power: Option<i8>,
     battery_charge: Option<BatteryService>,
@@ -150,7 +150,7 @@ impl BlePayload {
     pub(crate) fn from_bytes(buf: &mut [u8], channel: u8) -> Option<Self> {
         if let Some(payload) = rf24ble::services::BlePayload::from_bytes(buf, channel) {
             return Some(Self {
-                mac_address: Buffer::from(payload.mac_address.to_vec()),
+                mac_address: payload.mac_address.to_vec(),
                 short_name: payload
                     .short_name
                     .map(|n| String::from_utf8_lossy(&n).to_string()),
@@ -171,7 +171,7 @@ impl BlePayload {
     /// The transmitting device's MAC address.
     #[napi(getter)]
     pub fn mac_address(&self) -> Buffer {
-        self.mac_address.clone()
+        self.mac_address.clone().into()
     }
 
     /// The transmitting device's PA (Power Amplitude) level.

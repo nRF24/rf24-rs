@@ -2,7 +2,6 @@ target
 Cargo.lock
 .cargo
 .github
-npm
 .eslintrc
 .prettierignore
 rustfmt.toml

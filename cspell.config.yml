@@ -49,6 +49,7 @@ words:
   - Kbps
   - libc
   - libgpiod
+  - libnghttp
   - linenums
   - manylinux
   - maturin
@@ -98,10 +99,12 @@ words:
   - staticmethod
   - struct
   - superfences
+  - taiki
   - tasklist
   - timeit
   - twemoji
   - yarnrc
+  - zigbuild
 ignorePaths:
   - .yarn
   - "**/.gitignore"
