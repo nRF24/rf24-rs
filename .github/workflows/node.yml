@@ -58,12 +58,6 @@ jobs:
           - host: windows-latest
             target: aarch64-pc-windows-msvc
             build: yarn build --target aarch64-pc-windows-msvc
-          - host: ubuntu-latest
-            target: riscv64gc-unknown-linux-gnu
-            build: yarn build --target riscv64gc-unknown-linux-gnu --use-napi-cross
-          - host: ubuntu-latest
-            target: armv7-unknown-linux-musleabihf
-            build: yarn build --target armv7-unknown-linux-musleabihf --use-napi-cross
 
     name: build ${{ matrix.settings.target }}
     runs-on: ${{ matrix.settings.host }}
