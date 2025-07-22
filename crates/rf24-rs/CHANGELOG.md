@@ -6,11 +6,27 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 <!-- markdownlint-disable MD024 -->
 
+## [rf24-rs/0.3.1] - 2025-07-22
+
+### <!-- 6 --> 📦 Dependency updates
+
+- Migrate to napi-rs v3 by @2bndy5 in [#64](https://github.com/nRF24/rf24-rs/pull/64)
+
+### <!-- 8 --> 📝 Documentation
+
+- Revise docs about `RF24::tx_delay` property. by @2bndy5 in [`e7b29c1`](https://github.com/nRF24/rf24-rs/commit/e7b29c14ac33cdebd4437ef64f89d2a340f89613)
+- Use typedoc default HTML output by @2bndy5 in [#59](https://github.com/nRF24/rf24-rs/pull/59)
+
+[rf24-rs/0.3.1]: https://github.com/nRF24/rf24-rs/compare/rf24-rs/0.3.0...rf24-rs/0.3.1
+
+Full commit diff: [`rf24-rs/0.3.0...rf24-rs/0.3.1`][rf24-rs/0.3.1]
+
 ## [rf24-rs/0.3.0] - 2025-05-04
 
 ### <!-- 6 --> 📦 Dependency updates
 
 - Update defmt requirement from 0.3.10 to 1.0.1 in the cargo group by @dependabot[bot] in [#31](https://github.com/nRF24/rf24-rs/pull/31)
+- Bump `rf24-rs` to v0.3.0 by @2bndy5 in [`abb8fda`](https://github.com/nRF24/rf24-rs/commit/abb8fdab9575ef30fa3445067aca11f21f07dfbb)
 
 ### <!-- 7 -->🚦 Tests
 
