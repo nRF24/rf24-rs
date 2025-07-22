@@ -49,7 +49,7 @@
     "artifacts": "napi artifacts",
     "build": "napi build --platform --release",
     "build:debug": "napi build --platform",
-    "prepublishOnly": "napi prepublish --skip-gh-release",
+    "prepublishOnly": "napi prepublish --no-gh-release",
     "universal": "napi universalize",
     "version": "napi version"
   },
