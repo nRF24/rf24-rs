@@ -104,7 +104,7 @@ jobs:
       - name: Build
         run: ${{ matrix.settings.build }}
         shell: bash
-      - name: Upload artifact
+      - name: Upload native module as artifact
         uses: actions/upload-artifact@v4
         with:
           name: bindings-${{ matrix.settings.target }}
