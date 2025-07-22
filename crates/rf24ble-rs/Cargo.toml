@@ -16,7 +16,7 @@ name = "rf24ble"
 
 [dependencies]
 rf24-rs = { path = "../rf24-rs", version = "0.3.0" }
-bitfield-struct = "0.9.3"
+bitfield-struct = "0.9.5"
 embedded-hal = "1.0.0"
 
 [dev-dependencies]

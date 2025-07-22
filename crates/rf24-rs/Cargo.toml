@@ -15,7 +15,7 @@ rust-version = "1.65"
 name = "rf24"
 
 [dependencies]
-bitfield-struct = "0.9.3"
+bitfield-struct = "0.9.5"
 defmt = {version = "1.0.1", optional = true}
 embedded-hal = "1.0.0"
 

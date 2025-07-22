@@ -16,7 +16,7 @@ build:
   jobs:
     post_create_environment:
       - corepack enable
-      - corepack prepare --activate yarn@4.8.1
+      - corepack prepare --activate yarn@4.9.2
       - asdf reshim nodejs
     pre_build:
       - yarn install

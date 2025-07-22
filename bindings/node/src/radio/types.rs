@@ -1,11 +1,11 @@
 //! This module defines thin wrappers around rust native types to be exposed in node.js
 
-use napi::{JsNumber, Result};
+use napi::{JsNumber, JsValue, Result};
 
 /// A private helper to implicitly convert JS numbers to boolean values (falling back to a `default` value)
 pub fn coerce_to_bool(napi_instance: Option<JsNumber>, default: bool) -> Result<bool> {
     if let Some(napi_value) = napi_instance {
-        return napi_value.coerce_to_bool()?.get_value();
+        return napi_value.coerce_to_bool();
     }
     Ok(default)
 }
