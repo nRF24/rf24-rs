@@ -45,6 +45,7 @@ words:
   - Grinberg
   - HLINE
   - inlinehilite
+  - isnan
   - istr
   - Kbps
   - libc
@@ -71,9 +72,12 @@ words:
   - nocbreak
   - nodenext
   - noecho
+  - nonconstructor
+  - nonoctal
   - npmjs
   - nurfile
   - opengpio
+  - oxlint
   - pkgid
   - pyclass
   - pyfunction
