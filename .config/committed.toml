@@ -1,3 +1,4 @@
+# https://github.com/crate-ci/committed/blob/master/docs/reference.md
 style = "conventional"
 subject_capitalized = false
 allowed_types = [
@@ -16,3 +17,4 @@ allowed_types = [
     "test",
 ]
 subject_length = 0 # unlimited
+line_length = 0 # unlimited
