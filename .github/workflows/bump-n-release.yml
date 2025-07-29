@@ -38,16 +38,20 @@ jobs:
           token: ${{ secrets.BUMP_N_RELEASE }}
           fetch-depth: 0
           fetch-tags: true
-      - uses: actions/setup-python@v5
-        with:
-          # here we need v3.10+
-          python-version: 3.x
+
       - run: rustup update --no-self-update
+
+      - name: Setup nushell
+        uses: hustcer/setup-nu@v3
+        with:
+          version: "*"
 
       - name: Install cargo-binstall
         uses: cargo-bins/cargo-binstall@main
       - name: Install git-cliff and cargo-edit
         run: cargo binstall -y git-cliff cargo-edit
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - uses: actions/setup-node@v4
         if: inputs.package == 'rf24-node'
@@ -56,26 +60,10 @@ jobs:
       - run: yarn install
         if: inputs.package == 'rf24-node'
 
-      - name: increment version
-        id: inc-ver
-        run: >-
-          python ".github/workflows/bump_version.py"
-          --bump=${{ inputs.bump-component }}
-          ${{ inputs.package }}
-
-      - name: push metadata changes
-        run: |-
-          git config --global user.name "${GITHUB_ACTOR}"
-          git config --global user.email "${GITHUB_ACTOR_ID}+${GITHUB_ACTOR}@users.noreply.github.com"
-          git add --all
-          git commit -m "build: bump ${{ inputs.package }} to v${{ steps.inc-ver.outputs.new-version }}"
-          git push
-
-      - name: publish release
+      - name: Bump ${{ inputs.package }}
         env:
-          GH_TOKEN: ${{ secrets.BUMP_N_RELEASE }}
+          GITHUB_TOKEN: ${{ secrets.BUMP_N_RELEASE }}
         run: >-
-          gh release create
-          "${{ inputs.package }}/${{ steps.inc-ver.outputs.new-version }}"
-          --notes-file ${{ steps.inc-ver.outputs.release-notes }}
-          --title "${{ inputs.package }} v${{ steps.inc-ver.outputs.new-version }}"
+          nu .github/workflows/bump-n-release.nu
+          ${{ inputs.package }}
+          ${{ inputs.bump-component }}

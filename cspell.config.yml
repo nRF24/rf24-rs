@@ -44,6 +44,7 @@ words:
   - gpiod
   - Grinberg
   - HLINE
+  - hustcer
   - inlinehilite
   - isnan
   - istr
@@ -76,6 +77,7 @@ words:
   - nonoctal
   - npmjs
   - nurfile
+  - nushell
   - opengpio
   - oxlint
   - pkgid
