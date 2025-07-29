@@ -28,6 +28,9 @@ updates:
     directory: /
     schedule:
       interval: "weekly"
+    ignore:
+      - dependency-name: opengpio
+        versions: ['>=2.0.0']
     groups:
       npm:
         patterns:
