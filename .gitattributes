@@ -6,9 +6,11 @@
 *.py text eol=lf
 *.pyi text eol=lf
 *.md text eol=lf
+*.css text eol=lf
 *.ts text eol=lf
 *.js text eol=lf
 *.mjs text eol=lf
+*.cjs text eol=lf
 *.hpp text eol=lf
 *.h text eol=lf
 *.cpp text eol=lf
@@ -23,4 +25,5 @@
 .gitattributes text eol=lf
 *.txt text eol=lf
 nurfile text eol=lf
+*.nu text eol=lf
 LICENSE text eol=lf

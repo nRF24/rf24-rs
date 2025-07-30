@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### <!-- 6 --> 📦 Dependency updates
 
 - Migrate to napi-rs v3 by @2bndy5 in [#64](https://github.com/nRF24/rf24-rs/pull/64)
+- Bump `rf24-rs` to v0.3.1 by @2bndy5 in [`70bdf19`](https://github.com/nRF24/rf24-rs/commit/70bdf197249712bab51fb59b34397598ba2fa86f)
 
 ### <!-- 8 --> 📝 Documentation
 
@@ -23,20 +24,20 @@ Full commit diff: [`rf24-rs/0.3.0...rf24-rs/0.3.1`][rf24-rs/0.3.1]
 
 ## [rf24-rs/0.3.0] - 2025-05-04
 
+### <!-- 10 --> 💥 Breaking Changes
+
+- Replace `open_tx_pipe()` with `as_tx(Option<address>)` by @2bndy5 in [#41](https://github.com/nRF24/rf24-rs/pull/41)
+
 ### <!-- 6 --> 📦 Dependency updates
 
 - Update defmt requirement from 0.3.10 to 1.0.1 in the cargo group by @dependabot[bot] in [#31](https://github.com/nRF24/rf24-rs/pull/31)
 - Bump `rf24-rs` to v0.3.0 by @2bndy5 in [`abb8fda`](https://github.com/nRF24/rf24-rs/commit/abb8fdab9575ef30fa3445067aca11f21f07dfbb)
 
-### <!-- 7 -->🚦 Tests
-
-- Use concrete error type by @2bndy5 in [#42](https://github.com/nRF24/rf24-rs/pull/42)
-- Replace `open_tx_pipe()` with `as_tx(Option<address>)` by @2bndy5 in [#41](https://github.com/nRF24/rf24-rs/pull/41)
-
 ### <!-- 9 --> 🗨️ Changed
 
 - Regenerate change logs by @2bndy5 in [`581751a`](https://github.com/nRF24/rf24-rs/commit/581751af27d074797b4749572f05e9f8b3548e21)
 - Remove `_` prefix from private members by @2bndy5 in [`39d8287`](https://github.com/nRF24/rf24-rs/commit/39d8287461777bbf9d8a1c1a92636b46b29669d0)
+- Use concrete error type by @2bndy5 in [#42](https://github.com/nRF24/rf24-rs/pull/42)
 
 [rf24-rs/0.3.0]: https://github.com/nRF24/rf24-rs/compare/rf24-rs/0.2.1...rf24-rs/0.3.0
 
@@ -48,10 +49,6 @@ Full commit diff: [`rf24-rs/0.2.1...rf24-rs/0.3.0`][rf24-rs/0.3.0]
 
 - Bump `rf24-rs` to v0.2.1 by @2bndy5 in [`f266b96`](https://github.com/nRF24/rf24-rs/commit/f266b9695f1c492cce1ea7720a6df4fde298c338)
 
-### <!-- 7 -->🚦 Tests
-
-- Improve ``rf24-rs`` tests by @2bndy5 in [#26](https://github.com/nRF24/rf24-rs/pull/26)
-
 ### <!-- 8 --> 📝 Documentation
 
 - Various doc updates by @2bndy5 in [#22](https://github.com/nRF24/rf24-rs/pull/22)
@@ -59,6 +56,7 @@ Full commit diff: [`rf24-rs/0.2.1...rf24-rs/0.3.0`][rf24-rs/0.3.0]
 ### <!-- 9 --> 🗨️ Changed
 
 - Improve readability in `rf24-rs` sources by @2bndy5 in [`f468315`](https://github.com/nRF24/rf24-rs/commit/f4683153d72bd67b0a7707a3a922a0d03b852164)
+- Improve ``rf24-rs`` tests by @2bndy5 in [#26](https://github.com/nRF24/rf24-rs/pull/26)
 
 [rf24-rs/0.2.1]: https://github.com/nRF24/rf24-rs/compare/rf24-rs/0.2.0...rf24-rs/0.2.1
 
