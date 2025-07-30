@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Migrate to napi-rs v3 by @2bndy5 in [#64](https://github.com/nRF24/rf24-rs/pull/64)
 - Bump `rf24-rs` to v0.3.1 by @2bndy5 in [`70bdf19`](https://github.com/nRF24/rf24-rs/commit/70bdf197249712bab51fb59b34397598ba2fa86f)
+- Bump `rf24ble-rs` to v0.1.4 by @2bndy5 in [`0ff3ffa`](https://github.com/nRF24/rf24-rs/commit/0ff3ffa3b96c19cf63537603260a468cc1d8d286)
 
 ### <!-- 8 --> 📝 Documentation
 

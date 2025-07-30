@@ -25,4 +25,5 @@
 .gitattributes text eol=lf
 *.txt text eol=lf
 nurfile text eol=lf
+*.nu text eol=lf
 LICENSE text eol=lf

@@ -1,11 +1,11 @@
 # This script automates the release process for all of the packages in this repository.
 # In order, this script does the following:
 #
-# 1. Bump version number in Cargo.toml manifest.
+# 1. Bump version number in appropriate Cargo.toml manifest.
 #
 #    This step requires `cargo-edit` installed.
 #
-# 2. Updates the CHANGELOG.md
+# 2. Updates the appropriate CHANGELOG.md
 #
 #    Requires `git-cliff` (see https://git-cliff.org) to be installed
 #    to regenerate the change logs from git history.
@@ -27,86 +27,116 @@
 #
 #    NOTE: In a CI run, the GITHUB_TOKEN env var to authenticate access.
 #    Locally, you can use `gh login` to interactively authenticate the user account.
+#
+# The GITHUB_TOKEN permissions shall include:
+# - read access to Pull Requests (for better CHANGELOG generation).
+# - write (and inherently read) access to the repository "Contents"
+#   for publishing a GitHub release and pushing metadata changes.
 
 const COMMON_EXCLUDES = [
-    ".github/**/*",
-    "docs/**/*",
-    "examples/**/*",
-    ".config/*",
-    "README.md",
-    ".gitattributes",
-    ".gitignore",
-    ".pre-commit-config.yaml",
-    "crates/README.md",
-    "package.json",
-    "codecov.yml",
-    "Cargo.toml",
-    "cspell.config.yml",
-    "CHANGELOG.md",
+    '.github/**/*'
+    'docs/**/*'
+    'examples/**/*'
+    '.config/*'
+    'README.md'
+    '.gitattributes'
+    '.gitignore'
+    '.pre-commit-config.yaml'
+    'crates/README.md'
+    'package.json'
+    'codecov.yml'
+    'Cargo.toml'
+    'cspell.config.yml'
+    'CHANGELOG.md'
 ]
 
 const PkgPaths = {
-    "rf24-rs": {
-        include: ["crates/rf24-rs/**/*"],
+    'rf24-rs': {
+        include: ['crates/rf24-rs/**/*']
         exclude: [
-            "crates/rf24ble-rs/**/*",
-            "bindings/**/*",
-            "yarn.lock",
-            ".yarnrc.yml",
-            ...$COMMON_EXCLUDES,
-        ],
-        path: "crates/rf24-rs",
+            'crates/rf24ble-rs/**/*'
+            'bindings/**/*'
+            'yarn.lock'
+            '.yarnrc.yml'
+            ...$COMMON_EXCLUDES
+        ]
+        path: 'crates/rf24-rs'
     },
-    "rf24ble-rs": {
-        include: ["crates/rf24ble-rs/**"],
+    'rf24ble-rs': {
+        include: ['crates/rf24ble-rs/**']
         exclude: [
-            "crates/rf24-rs/**/*",
-            "bindings/**/*",
-            "yarn.lock",
-            ".yarnrc.yml",
-            ...$COMMON_EXCLUDES,
-        ],
-        path: "crates/rf24ble-rs",
+            'crates/rf24-rs/**/*'
+            'bindings/**/*'
+            'yarn.lock'
+            '.yarnrc.yml'
+            ...$COMMON_EXCLUDES
+        ]
+        path: 'crates/rf24ble-rs'
     },
-    "rf24-py": {
-        include: [],
-        exclude: ["bindings/node/**/*", "yarn.lock", ".yarnrc.yml", ...$COMMON_EXCLUDES],
-        path: "bindings/python",
+    'rf24-py': {
+        include: []
+        exclude: ['bindings/node/**/*', 'yarn.lock', '.yarnrc.yml', ...$COMMON_EXCLUDES]
+        path: 'bindings/python'
     },
-    "rf24-node": {
-        include: [],
-        exclude: ["bindings/python/**", ...$COMMON_EXCLUDES],
-        path: "bindings/node",
-    },
+    'rf24-node': {
+        include: []
+        exclude: ['bindings/python/**', ...$COMMON_EXCLUDES]
+        path: 'bindings/node'
+    }
 }
 
-let IN_CI = $env | get --optional CI | default "false" | ($in == "true") or ($in == true)
+# Is this executed in a CI run?
+#
+# Uses env var CI to determine the resulting boolean
+export def is-in-ci [] {
+    $env | get --optional CI | default 'false' | (($in == 'true') or ($in == true))
+}
+
+# Run an external command and output it's elapsed time.
+#
+# Not useful if you need to capture the command's output.
+export def --wrapped run-cmd [...cmd: string] {
+    let app = if (
+        ($cmd | first) == 'cargo'
+        or ($cmd | first) == 'yarn'
+        or ($cmd | first) == 'git'
+        or ($cmd | first) == 'gh'
+    ) {
+        ($cmd | first 2) | str join ' '
+    } else {
+        ($cmd | first)
+    }
+    print $"(ansi blue)\nRunning(ansi reset) ($cmd | str join ' ')"
+    let elapsed = timeit {|| ^($cmd | first) ...($cmd | skip 1)}
+    print $"(ansi magenta)($app) took ($elapsed)(ansi reset)"
+}
 
 # Bump the version per the given component name (major, minor, patch)
 #
 # This function also updates known occurrences of the old version spec to
 # the new version spec in various places (like README.md and action.yml).
-def bump-version [
+export def bump-version [
     pkg: string, # The crate name to bump in respective Cargo.toml manifests
     component: string, # The version component to bump
 ] {
-    mut args = [-p $pkg --bump $component]
-    if (not $IN_CI) {
-        $args = $args | append "--dry-run"
+    mut args = ['-p', $pkg, '--bump', $component]
+    if (not (is-in-ci)) {
+        $args = $args | append '--dry-run'
     }
     let result = (
-        cargo set-version ...$args e>| lines
+        cargo 'set-version' ...$args e>| lines
         | first
         | str trim
-        | parse "Upgrading {pkg} from {old} to {new}"
+        | parse 'Upgrading {pkg} from {old} to {new}'
         | first
     )
-    print $"bumped ($result | get old) to ($result | get new)"
+    print $"bumped ($result | get 'old') to ($result | get 'new')"
     # update the version in various places
-    if (($pkg == "rf24-node") and $IN_CI)  {
-        cd ($PkgPaths | get $pkg | get path)
-        ^yarn version ($result | get new)
-        print("Updated version in bindings/node/package.json")
+    if (($pkg == 'rf24-node') and (is-in-ci))  {
+        cd ($PkgPaths | get $pkg | get 'path')
+        run-cmd 'yarn' 'version' ($result | get 'new')
+        print 'Updated version in bindings/node/package.json'
+        cd '../..'
     }
     $result | get new
 }
@@ -115,35 +145,49 @@ def bump-version [
 #
 # If `--unreleased` is asserted, then the `git-cliff` output will be saved to .config/ReleaseNotes.md.
 # Otherwise, the generated changes will span the entire git history and be saved to CHANGELOG.md.
-def gen-changes [
+export def gen-changes [
     pkg: string, # The crate name being bumped.
-    tag: string, # The new version tag to use for unreleased changes.
-    --unreleased, # only generate changes from unreleased version.
+    --tag (-t): string, # The new version tag to use for unreleased changes.
+    --unreleased (-u), # only generate changes from unreleased version.
 ] {
     let paths = $PkgPaths | get $pkg
+    let path = $paths | get path | path expand
+    let config_path = '.config' | path expand
 
-    mut args = [--tag $tag --config .config/cliff.toml --tag-pattern $"($pkg)/*"]
+    mut args = [
+        '--config' $"($config_path | path join 'cliff.toml')"
+        '--tag-pattern' $"($pkg)/*"
+        '--workdir' $path
+        '--repository' (pwd)
+    ]
+    if ($tag != null) {
+        $args | append ['--tag', $tag]
+    }
     let prompt = if $unreleased {
-        let out_path = ".config/ReleaseNotes.md"
-        $args = $args | append [--strip, header, --unreleased, --output, $out_path]
-        {out_path: $out_path, log_prefix: "Generated"}
+        let out_path = $config_path | path join 'ReleaseNotes.md'
+        $args = $args | append [
+            '--strip', 'header', '--unreleased', '--output', $out_path
+        ]
+        {out_path: ($out_path | path relative-to (pwd)), log_prefix: 'Generated'}
     } else {
-        let out_path = "CHANGELOG.md"
-        $args = $args | append [--output, $out_path]
-        {out_path: $out_path, log_prefix: "Updated"}
+        let out_path = $path | path expand | path join 'CHANGELOG.md'
+        $args = $args | append [--output $out_path]
+        {out_path: ($out_path | path relative-to (pwd)), log_prefix: 'Updated'}
     }
-    if (($paths | get include | length) > 0) {
-        $args = $args | append [--include-path ...($paths | get include)]
+    if (($paths | get 'include' | length) > 0) {
+        $args = $args | append ['--include-path', ...($paths | get 'include')]
     }
-    if (($paths | get exclude | length) > 0) {
-        $args = $args | append [--exclude-path ...($paths | get exclude)]
+    if (($paths | get 'exclude' | length) > 0) {
+        $args = $args | append ['--exclude-path', ...($paths | get 'exclude')]
     }
-    ^git-cliff ...$args
-    print ($prompt | format pattern "{log_prefix} {out_path}")
+    run-cmd 'git-cliff' ...$args
+    print ($prompt | format pattern '{log_prefix} {out_path}')
 }
 
 # Is the the default branch currently checked out?
-def is-on-main [] {
+#
+# Only accurate if the default branch is named "main".
+export def is-on-main [] {
     let branch = (
         ^git branch
         | lines
@@ -151,25 +195,16 @@ def is-on-main [] {
         | first
         | str trim --left --char '*'
         | str trim
-    ) == "main"
+    ) == 'main'
     $branch
-}
-
-# Publish a GitHub Release for the given tag.
-#
-# This requires a token in $env.GITHUB_TOKEN for authentication.
-def gh-release [
-    tag: string, # The tag corresponding to the published release.
-    pkg: string, # The crate name to bump in respective Cargo.toml manifests
-    ver: string, # The version number of the `$pkg`.
-] {
-    ^gh release create $tag --notes-file ".config/ReleaseNotes.md" --title $"($pkg) v($ver)"
 }
 
 # The main function of this script.
 #
-# The `component` parameter is a required CLI option:
-#     nu .github/workflows/bump-n-release.nu patch
+# The `pkg` and `component` parameters are required CLI options:
+#     nu .github/workflows/bump-n-release.nu rf24-rs patch
+#
+# The acceptable `pkg` value are defined in the Cargo.toml manifests' `[package.name]` field.
 #
 # The acceptable `component` values are what `cargo set-version` accepts:
 #
@@ -182,21 +217,21 @@ def main [
 ] {
     let ver = bump-version $pkg $component
     let tag = $"($pkg)/v($ver)"
-    gen-changes $pkg $tag
-    gen-changes $pkg $tag --unreleased
+    gen-changes $pkg --tag $tag
+    gen-changes $pkg --tag $tag --unreleased
     let is_main = is-on-main
     if not $is_main {
-        print $"(ansi yellow)Not checked out on default branch!(ansi reset)"
+        print $"(ansi yellow)\nNot checked out on default branch!(ansi reset)"
     }
-    if $IN_CI and $is_main {
-        print "Pushing metadata changes"
-        git config --global user.name $"($env.GITHUB_ACTOR)"
-        git config --global user.email $"($env.GITHUB_ACTOR_ID)+($env.GITHUB_ACTOR)@users.noreply.github.com"
-        git add --all
-        git commit -m $"build: bump version to ($tag)"
-        git push
+    if (is-in-ci) and $is_main {
+        print 'Pushing metadata changes'
+        run-cmd 'git' 'config' '--global' 'user.name' $"($env.GITHUB_ACTOR)"
+        run-cmd 'git' 'config' '--global' 'user.email' $"($env.GITHUB_ACTOR_ID)+($env.GITHUB_ACTOR)@users.noreply.github.com"
+        run-cmd 'git' 'add' '--all'
+        run-cmd 'git' 'commit' '-m' $"build: bump version to ($tag)"
+        run-cmd 'git' 'push'
         print $"Deploying ($tag)"
-        gh-release $tag $pkg $ver
+        run-cmd 'gh' 'release' 'create' $tag '--notes-file' '.config/ReleaseNotes.md' '--title' $"($pkg) v($ver)"
     } else if $is_main {
         print $"(ansi yellow)Not deploying from local clone.(ansi reset)"
     }
