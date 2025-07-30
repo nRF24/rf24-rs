@@ -73,7 +73,7 @@ class NativeDocstring(griffe.Extension):
         except AttributeError as exc:
             if platform.system() == "Linux":
                 raise exc
-            domain = self.mod if isinstance(parent, ModuleType) else parent.name
+            domain = self.mod if isinstance(parent, ModuleType) else parent.name  # type: ignore[union-attr]
             sibling = member
             if child_member:
                 domain = member
@@ -106,7 +106,7 @@ class NativeDocstring(griffe.Extension):
         """Prepend a docstring from the native module"""
         if isinstance(node, griffe.ObjectNode):
             return  # any docstring fetched from pure python should be adequate
-        func_parent = node.parent  # type: ignore[attr-defined]
+        func_parent = node.parent  # type: ignore[attr-defined,union-attr]
         if not (
             isinstance(func_parent, ast.ClassDef) or isinstance(func_parent, ast.Module)
         ):

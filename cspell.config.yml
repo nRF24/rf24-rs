@@ -10,6 +10,7 @@ words:
   - attroff
   - attron
   - autorefs
+  - autoupdate
   - bindgen
   - binstall
   - bitfield
@@ -109,6 +110,7 @@ words:
   - tasklist
   - timeit
   - twemoji
+  - typdedoc
   - yarnrc
   - zigbuild
 ignorePaths:
