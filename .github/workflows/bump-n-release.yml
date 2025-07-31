@@ -44,7 +44,7 @@ jobs:
       - name: Setup nushell
         uses: hustcer/setup-nu@v3
         with:
-          version: '0.106.0'
+          version: ${{ vars.NU_SHELL_VERSION || '*' }}
 
       - name: Install cargo-binstall
         uses: cargo-bins/cargo-binstall@main
