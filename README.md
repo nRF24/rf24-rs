@@ -22,6 +22,10 @@ All packages are developed under the MIT license.
 
 ### Rust crates
 
+[![cargo-badge]][cargo-docs]
+
+[cargo-badge]: https://img.shields.io/badge/%20-cargo-rgb(185%2C%20126%2C%2012)?logo=rust&labelColor=grey
+[cargo-docs]: https://doc.rust-lang.org/cargo/index.html
 [rf24-rs-badge]: https://img.shields.io/crates/v/rf24-rs
 [rf24-rs-link]: https://crates.io/crates/rf24-rs
 [rf24-rs-msrv]: https://img.shields.io/crates/msrv/rf24-rs
@@ -50,6 +54,10 @@ However, installing the packages in a non-Linux environment will still provide t
 
 #### Node.js
 
+[![yarn-badge]][yarn-docs]
+
+[yarn-badge]: https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fgithub.com%2FnRF24%2Frf24-rs%2Fraw%2Fmain%2Fpackage.json&query=%24.packageManager&logo=yarn&label=%20&labelColor=grey
+[yarn-docs]: https://yarnpkg.com
 [npm-badge]: https://img.shields.io/npm/v/%40rf24%2Frf24
 [npm-link]: https://www.npmjs.com/package/@rf24/rf24
 [node-version]: https://img.shields.io/node/v/%40rf24%2Frf24?color=blue
@@ -67,17 +75,19 @@ However, installing the packages in a non-Linux environment will still provide t
 
 #### Python
 
+[![uv-badge]][uv-docs]
+
 Distributions support CPython and PyPy.
 
+[uv-badge]: https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/uv/main/assets/badge/v0.json
+[uv-docs]: https://github.com/astral-sh/uv
 [pypi-link]: https://pypi.org/project/rf24-py/
 [pypi-badge]: https://img.shields.io/pypi/v/rf24-py
-[piwheels-badge]: https://img.shields.io/piwheels/v/rf24-py
-[piwheels-link]: https://www.piwheels.org/project/rf24-py/
-[py-min-ver]: https://img.shields.io/badge/python->=3.8-blue
+[py-min-ver]: https://img.shields.io/badge/python->=3.9-blue
 
 | name | version | API docs | Minimum Supported<br>Python Version |
 |:-----|:-------:|:--------:|:-----------------------------------:|
-| `rf24-py` | [![PyPI - Version][pypi-badge]][pypi-link]<br>[![PiWheels Version][piwheels-badge]][piwheels-link] | [![Python API][rtd-badge]][python-api] | ![Minimum Python Version: >=3.8][py-min-ver] |
+| `rf24-py` | [![PyPI - Version][pypi-badge]][pypi-link] | [![Python API][rtd-badge]][python-api] | ![Minimum Python Version: >=3.9][py-min-ver] |
 
 ## Goals
 
