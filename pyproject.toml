@@ -76,6 +76,3 @@ docs = [
     "mkdocstrings-python==1.16.12",
     "pymdown-extensions==10.16.1",
 ]
-examples = [
-    "gpiod>=2.3.0; sys_platform == 'linux'",
-]
