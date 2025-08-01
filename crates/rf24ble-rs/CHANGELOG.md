@@ -24,14 +24,14 @@ Full commit diff: [`rf24ble-rs/0.1.3...rf24ble-rs/0.1.4`][rf24ble-rs/0.1.4]
 
 ## [rf24ble-rs/0.1.3] - 2025-05-04
 
+### <!-- 1 --> 🚀 Added
+
+- Use concrete error type by @2bndy5 in [#42](https://github.com/nRF24/rf24-rs/pull/42)
+
 ### <!-- 6 --> 📦 Dependency updates
 
 - Bump `rf24-rs` to v0.3.0 by @2bndy5 in [`abb8fda`](https://github.com/nRF24/rf24-rs/commit/abb8fdab9575ef30fa3445067aca11f21f07dfbb)
 - Bump `rf24ble-rs` to v0.1.3 by @2bndy5 in [`d408ffe`](https://github.com/nRF24/rf24-rs/commit/d408ffeee12c94b6580e7114bc9d6ab3a7eeeb23)
-
-### <!-- 7 -->🚦 Tests
-
-- Use concrete error type by @2bndy5 in [#42](https://github.com/nRF24/rf24-rs/pull/42)
 
 [rf24ble-rs/0.1.3]: https://github.com/nRF24/rf24-rs/compare/rf24ble-rs/0.1.2...rf24ble-rs/0.1.3
 

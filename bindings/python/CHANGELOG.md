@@ -6,22 +6,29 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 <!-- markdownlint-disable MD024 -->
 
-## [Unreleased] - 2025-08-01 to present
+## [rf24-py/v0.4.1] - 2025-08-01
 
 ### <!-- 4 --> 🛠️ Fixed
 
 - Specify README path in metadata by @2bndy5 in [`09e0ce3`](https://github.com/nRF24/rf24-rs/commit/09e0ce32063aec171ac9304a96fa301de63c28d6)
 
-[Unreleased]: https://github.com/nRF24/rf24-rs/compare/f8863cc36d66708bfa0fb2fb1a219c7b2f97f7d6...HEAD
+### <!-- 6 --> 📦 Dependency updates
 
-Full commit diff: [`f8863cc36d66708bfa0fb2fb1a219c7b2f97f7d6...HEAD`][Unreleased]
+- Bump version to `rf24-py`/v0.4.1 by @2bndy5 in [`64c1af2`](https://github.com/nRF24/rf24-rs/commit/64c1af24c5413bf479766a3c019fe540a130af1e)
+
+[rf24-py/v0.4.1]: https://github.com/nRF24/rf24-rs/compare/rf24-py/v0.4.0...rf24-py/v0.4.1
+
+Full commit diff: [`rf24-py/v0.4.0...rf24-py/v0.4.1`][rf24-py/v0.4.1]
 
 ## [rf24-py/v0.4.0] - 2025-08-01
+
+### <!-- 10 --> 💥 Breaking Changes
+
+- Migrate to uv by @2bndy5 in [#71](https://github.com/nRF24/rf24-rs/pull/71)
 
 ### <!-- 6 --> 📦 Dependency updates
 
 - Edit bump-n-release CI workflow by @2bndy5 in [#69](https://github.com/nRF24/rf24-rs/pull/69)
-- Migrate to uv by @2bndy5 in [#71](https://github.com/nRF24/rf24-rs/pull/71)
 - Bump version to `rf24-py`/v0.4.0 by @2bndy5 in [`bf64d49`](https://github.com/nRF24/rf24-rs/commit/bf64d49d849710b8bba7575884047f249b50153d)
 
 [rf24-py/v0.4.0]: https://github.com/nRF24/rf24-rs/compare/rf24-py/0.3.1...rf24-py/v0.4.0
@@ -49,6 +56,14 @@ Full commit diff: [`rf24-py/0.3.0...rf24-py/0.3.1`][rf24-py/0.3.1]
 
 ## [rf24-py/0.3.0] - 2025-05-04
 
+### <!-- 1 --> 🚀 Added
+
+- Use concrete error type by @2bndy5 in [#42](https://github.com/nRF24/rf24-rs/pull/42)
+
+### <!-- 10 --> 💥 Breaking Changes
+
+- Replace `open_tx_pipe()` with `as_tx(Option<address>)` by @2bndy5 in [#41](https://github.com/nRF24/rf24-rs/pull/41)
+
 ### <!-- 6 --> 📦 Dependency updates
 
 - Upgrade to yarn modern by @2bndy5 in [#33](https://github.com/nRF24/rf24-rs/pull/33)
@@ -57,11 +72,6 @@ Full commit diff: [`rf24-py/0.3.0...rf24-py/0.3.1`][rf24-py/0.3.1]
 - Bump `rf24-rs` to v0.3.0 by @2bndy5 in [`abb8fda`](https://github.com/nRF24/rf24-rs/commit/abb8fdab9575ef30fa3445067aca11f21f07dfbb)
 - Bump `rf24ble-rs` to v0.1.3 by @2bndy5 in [`d408ffe`](https://github.com/nRF24/rf24-rs/commit/d408ffeee12c94b6580e7114bc9d6ab3a7eeeb23)
 - Bump `rf24-py` to v0.3.0 by @2bndy5 in [`235dc93`](https://github.com/nRF24/rf24-rs/commit/235dc93bf1bca474b9921e5af1add13f98d6182e)
-
-### <!-- 7 -->🚦 Tests
-
-- Use concrete error type by @2bndy5 in [#42](https://github.com/nRF24/rf24-rs/pull/42)
-- Replace `open_tx_pipe()` with `as_tx(Option<address>)` by @2bndy5 in [#41](https://github.com/nRF24/rf24-rs/pull/41)
 
 ### <!-- 9 --> 🗨️ Changed
 

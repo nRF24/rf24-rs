@@ -6,21 +6,25 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 <!-- markdownlint-disable MD024 -->
 
-## [Unreleased] - 2025-07-22 to present
+## [rf24-node/v0.3.2] - 2025-08-01
+
+### <!-- 1 --> 🚀 Added
+
+- Migrate from eslint to oxlint by @2bndy5 in [#70](https://github.com/nRF24/rf24-rs/pull/70)
+
+### <!-- 10 --> 💥 Breaking Changes
+
+- Migrate to uv by @2bndy5 in [#71](https://github.com/nRF24/rf24-rs/pull/71)
 
 ### <!-- 6 --> 📦 Dependency updates
 
 - Edit bump-n-release CI workflow by @2bndy5 in [#69](https://github.com/nRF24/rf24-rs/pull/69)
-- Migrate to uv by @2bndy5 in [#71](https://github.com/nRF24/rf24-rs/pull/71)
 - Bump typescript from 5.8.3 to 5.9.2 in the npm group by @dependabot[bot] in [#72](https://github.com/nRF24/rf24-rs/pull/72)
+- Bump version to `rf24-node`/v0.3.2 by @2bndy5 in [`8c399eb`](https://github.com/nRF24/rf24-rs/commit/8c399eb0abdf182e295b89a9c1da600c76124abd)
 
-### <!-- 8 --> 📝 Documentation
+[rf24-node/v0.3.2]: https://github.com/nRF24/rf24-rs/compare/rf24-node/0.3.1...rf24-node/v0.3.2
 
-- Migrate from eslint to oxlint by @2bndy5 in [#70](https://github.com/nRF24/rf24-rs/pull/70)
-
-[Unreleased]: https://github.com/nRF24/rf24-rs/compare/f8863cc36d66708bfa0fb2fb1a219c7b2f97f7d6...HEAD
-
-Full commit diff: [`f8863cc36d66708bfa0fb2fb1a219c7b2f97f7d6...HEAD`][Unreleased]
+Full commit diff: [`rf24-node/0.3.1...rf24-node/v0.3.2`][rf24-node/v0.3.2]
 
 ## [rf24-node/0.3.1] - 2025-07-22
 
@@ -50,17 +54,20 @@ Full commit diff: [`rf24-node/0.3.0...rf24-node/0.3.1`][rf24-node/0.3.1]
 
 ## [rf24-node/0.3.0] - 2025-05-04
 
+### <!-- 1 --> 🚀 Added
+
+- Use concrete error type by @2bndy5 in [#42](https://github.com/nRF24/rf24-rs/pull/42)
+
+### <!-- 10 --> 💥 Breaking Changes
+
+- Replace `open_tx_pipe()` with `as_tx(Option<address>)` by @2bndy5 in [#41](https://github.com/nRF24/rf24-rs/pull/41)
+
 ### <!-- 6 --> 📦 Dependency updates
 
 - Bump the npm group with 2 updates by @dependabot[bot] in [#35](https://github.com/nRF24/rf24-rs/pull/35)
 - Bump the npm group across 1 directory with 6 updates by @dependabot[bot] in [#39](https://github.com/nRF24/rf24-rs/pull/39)
 - Bump `rf24-rs` to v0.3.0 by @2bndy5 in [`abb8fda`](https://github.com/nRF24/rf24-rs/commit/abb8fdab9575ef30fa3445067aca11f21f07dfbb)
 - Bump `rf24-node` to v0.3.0 by @2bndy5 in [`2bff30c`](https://github.com/nRF24/rf24-rs/commit/2bff30cc7500ca556acaa84ed9a239bdcb4b8061)
-
-### <!-- 7 -->🚦 Tests
-
-- Use concrete error type by @2bndy5 in [#42](https://github.com/nRF24/rf24-rs/pull/42)
-- Replace `open_tx_pipe()` with `as_tx(Option<address>)` by @2bndy5 in [#41](https://github.com/nRF24/rf24-rs/pull/41)
 
 ### <!-- 9 --> 🗨️ Changed
 

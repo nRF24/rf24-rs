@@ -147,7 +147,7 @@ export def bump-version [
 # Otherwise, the generated changes will span the entire git history and be saved to CHANGELOG.md.
 export def gen-changes [
     pkg: string, # The crate name being bumped.
-    --tag (-t): string, # The new version tag to use for unreleased changes.
+    --tag (-t): string = '', # The new version tag to use for unreleased changes.
     --unreleased (-u), # only generate changes from unreleased version.
 ] {
     let paths = $PkgPaths | get $pkg
@@ -160,8 +160,8 @@ export def gen-changes [
         '--workdir' $path
         '--repository' (pwd)
     ]
-    if ($tag != null) {
-        $args | append ['--tag', $tag]
+    if (($tag | str length) > 0) {
+        $args = $args | append ['--tag', $tag]
     }
     let prompt = if $unreleased {
         let out_path = $config_path | path join 'ReleaseNotes.md'

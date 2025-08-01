@@ -101,7 +101,9 @@ commit_preprocessors = [
 # regex for parsing and grouping commits
 commit_parsers = [
     # The order of parsers matters.
+    { field = "breaking", pattern = true, group = "<!-- 10 --> 💥 Breaking Changes" },
     { field = "group", pattern = "add", group = "<!-- 1 --> 🚀 Added" },
+    { field = "github.pr_labels", pattern = "enhancement", group = "<!-- 1 --> 🚀 Added"},
     { field = "group", pattern = "feat", group = "<!-- 1 --> 🚀 Added" },
     { field = "group", pattern = "fix", group = "<!-- 4 --> 🛠️ Fixed" },
     { field = "group", pattern = "perf", group = "<!-- 4 --> 🛠️ Fixed" },
@@ -112,7 +114,6 @@ commit_parsers = [
     { field = "group", pattern = "docs", group = "<!-- 8 --> 📝 Documentation" },
     { field = "group", pattern = "chore", group = "<!-- 9 --> 🗨️ Changed" },
     { field = "group", pattern = "style", group = "<!-- 9 --> 🗨️ Changed" },
-    { field = "breaking", pattern = true, group = "<!-- 10 --> 💥 Breaking Changes" },
     { message = "[r|R]emove", group = "<!-- 3 --> 🗑️ Removed" },
     { message = "[d|D]eprecate", group = "<!-- 2 --> 🚫 Deprecated" },
     { message = "[d|D]elete", group = "<!-- 3 --> 🗑️ Removed" },
