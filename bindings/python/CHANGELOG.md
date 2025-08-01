@@ -6,16 +6,27 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 <!-- markdownlint-disable MD024 -->
 
-## [Unreleased] - 2025-07-22 to present
+## [Unreleased] - 2025-08-01 to present
+
+### <!-- 4 --> 🛠️ Fixed
+
+- Specify README path in metadata by @2bndy5 in [`09e0ce3`](https://github.com/nRF24/rf24-rs/commit/09e0ce32063aec171ac9304a96fa301de63c28d6)
+
+[Unreleased]: https://github.com/nRF24/rf24-rs/compare/f8863cc36d66708bfa0fb2fb1a219c7b2f97f7d6...HEAD
+
+Full commit diff: [`f8863cc36d66708bfa0fb2fb1a219c7b2f97f7d6...HEAD`][Unreleased]
+
+## [rf24-py/v0.4.0] - 2025-08-01
 
 ### <!-- 6 --> 📦 Dependency updates
 
 - Edit bump-n-release CI workflow by @2bndy5 in [#69](https://github.com/nRF24/rf24-rs/pull/69)
 - Migrate to uv by @2bndy5 in [#71](https://github.com/nRF24/rf24-rs/pull/71)
+- Bump version to `rf24-py`/v0.4.0 by @2bndy5 in [`bf64d49`](https://github.com/nRF24/rf24-rs/commit/bf64d49d849710b8bba7575884047f249b50153d)
 
-[Unreleased]: https://github.com/nRF24/rf24-rs/compare/f8863cc36d66708bfa0fb2fb1a219c7b2f97f7d6...HEAD
+[rf24-py/v0.4.0]: https://github.com/nRF24/rf24-rs/compare/rf24-py/0.3.1...rf24-py/v0.4.0
 
-Full commit diff: [`f8863cc36d66708bfa0fb2fb1a219c7b2f97f7d6...HEAD`][Unreleased]
+Full commit diff: [`rf24-py/0.3.1...rf24-py/v0.4.0`][rf24-py/v0.4.0]
 
 ## [rf24-py/0.3.1] - 2025-07-22
 
