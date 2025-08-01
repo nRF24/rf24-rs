@@ -5,6 +5,7 @@ build-backend = "maturin"
 [project]
 name = "rf24-py"
 description = "A python package binding the nRF24/rf24-rs rust project."
+readme = "bindings/python/README.md"
 requires-python = ">=3.9"
 keywords = [
     "nrf24l01",
