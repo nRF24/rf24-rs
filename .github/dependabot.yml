@@ -35,11 +35,13 @@ updates:
       npm:
         patterns:
           - "*"
-  - package-ecosystem: uv
-    directory: /
-    schedule:
-      interval: "weekly"
-    groups:
-      uv-pip:
-        patterns:
-          - "*"
+  # Apparently, dependabot fails to build this project's python binding.
+  # It seems to use an env sequestered from the needed rust sources.
+  # - package-ecosystem: uv
+  #   directory: /
+  #   schedule:
+  #     interval: "weekly"
+  #   groups:
+  #     uv-pip:
+  #       patterns:
+  #         - "*"
