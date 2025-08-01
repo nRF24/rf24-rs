@@ -6,6 +6,22 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 <!-- markdownlint-disable MD024 -->
 
+## [Unreleased] - 2025-07-22 to present
+
+### <!-- 6 --> 📦 Dependency updates
+
+- Edit bump-n-release CI workflow by @2bndy5 in [#69](https://github.com/nRF24/rf24-rs/pull/69)
+- Migrate to uv by @2bndy5 in [#71](https://github.com/nRF24/rf24-rs/pull/71)
+- Bump typescript from 5.8.3 to 5.9.2 in the npm group by @dependabot[bot] in [#72](https://github.com/nRF24/rf24-rs/pull/72)
+
+### <!-- 8 --> 📝 Documentation
+
+- Migrate from eslint to oxlint by @2bndy5 in [#70](https://github.com/nRF24/rf24-rs/pull/70)
+
+[Unreleased]: https://github.com/nRF24/rf24-rs/compare/f8863cc36d66708bfa0fb2fb1a219c7b2f97f7d6...HEAD
+
+Full commit diff: [`f8863cc36d66708bfa0fb2fb1a219c7b2f97f7d6...HEAD`][Unreleased]
+
 ## [rf24-node/0.3.1] - 2025-07-22
 
 ### <!-- 6 --> 📦 Dependency updates
