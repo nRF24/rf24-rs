@@ -41,6 +41,10 @@ jobs:
         uses: cargo-bins/cargo-binstall@main
       - name: Install cargo-llvm-cov and cargo-nextest
         run: cargo binstall -y cargo-nextest cargo-llvm-cov
+      - name: Setup nushell
+        uses: hustcer/setup-nu@v3
+        with:
+          version: ${{ vars.NU_SHELL_VERSION || '*' }}
       - name: Cache deps
         uses: actions/cache@v4
         with:
@@ -49,17 +53,11 @@ jobs:
       - run: rustup component add llvm-tools-preview
         # this enables a tool (for default toolchain) needed to measure code coverage.
       - name: Run tests
-        run: >-
-          cargo llvm-cov --no-report nextest
-          -p rf24-rs
-          -p rf24ble-rs
-          --lib
-          --tests
-          --color always
-          --profile ci
+        run: nu -c "use nurfile *; nur test --profile ci"
       - name: Generate coverage reports
-        run: cargo llvm-cov report --lcov --output-path lcov.info
+        run: nu -c "use nurfile *; nur test lcov"
       - uses: codecov/codecov-action@v5
+        if: github.repository == 'nRF24/rf24-rs'
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           files: lcov.info
@@ -68,20 +66,24 @@ jobs:
   publish:
     name: Publish
     runs-on: ubuntu-latest
-    if: startswith(github.ref, 'refs/tags')
+    if: startswith(github.ref, 'refs/tags/')
     permissions:
       contents: write
     steps:
       - uses: actions/checkout@v4
         with:
           persist-credentials: false
+      - name: Setup nushell
+        uses: hustcer/setup-nu@v3
+        with:
+          version: ${{ vars.NU_SHELL_VERSION || '*' }}
       - name: Get pkg from tag
         id: pkg
-        shell: bash
-        run: |
-          tag=${{ github.ref_name }}
-          pkg=$(echo "$tag" | sed -E 's;([^/]+)/.*;\1;')
-          echo "name=$pkg" >> "$GITHUB_OUTPUT"
+        shell: nu {0}
+        run: |-
+          let tag = ${{ github.ref_name }}
+          let pkg = $tag | parse "{name}/{version}" | first
+          $"name=($pkg | get name)\n" | save --append $env.GITHUB_OUTPUT
       - name: Install Rust
         run: rustup update stable --no-self-update
       - run: cargo publish -p ${{ steps.pkg.outputs.name }}

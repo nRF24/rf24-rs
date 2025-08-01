@@ -13,12 +13,13 @@ import time
 from rf24_py import RF24, PaLevel, FifoState, StatusFlags
 
 try:
-    import gpiod  # type: ignore[import-untyped]
-    from gpiod.line import Edge  # type: ignore[import-untyped]
+    import gpiod  # type: ignore[import-untyped,import-not-found]
+    from gpiod.line import Edge  # type: ignore[import-untyped,import-not-found]
 except ImportError as exc:
     raise ImportError(
         "This script requires gpiod installed for observing the IRQ pin. Please run\n"
-        "\n    pip install gpiod\n\nMore details at https://pypi.org/project/gpiod/"
+        "\n    uv run --no-dev --with gpiod examples/python/irq_config.py\n\nMore "
+        "details at https://pypi.org/project/gpiod/"
     ) from exc
 
 

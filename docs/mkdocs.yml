@@ -34,6 +34,7 @@ nav:
     - rf24ble-rs: rf24ble-rs-changelog.md
     - rf24-py: rf24-py-changelog.md
     - rf24-node: rf24-node-changelog.md
+  - contributing.md
 
 theme:
   name: material

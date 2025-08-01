@@ -5,7 +5,7 @@ build-backend = "maturin"
 [project]
 name = "rf24-py"
 description = "A python package binding the nRF24/rf24-rs rust project."
-requires-python = ">=3.8"
+requires-python = ">=3.9"
 keywords = [
     "nrf24l01",
     "nRF24L01+",
@@ -19,7 +19,7 @@ keywords = [
     # "RF24Network",
     # "RF24Mesh",
 ]
-license = {text = "MIT"}
+license = "MIT"
 authors = [
     { name = "Brendan Doherty", email = "2bndy5@gmail.com" },
 ]
@@ -30,7 +30,6 @@ classifiers = [
     "Programming Language :: Python :: Implementation :: PyPy",
     "Development Status :: 3 - Alpha",
     "Intended Audience :: Developers",
-    "License :: OSI Approved :: MIT License",
     "Operating System :: POSIX :: Linux",
     "Programming Language :: C++",
     "Programming Language :: Python :: 3",
@@ -60,4 +59,20 @@ manifest-path = "bindings/python/Cargo.toml"
 include = [
     { path = "rf24_py.pyi", format = "sdist" },
     { path = "LICENSE", format = "sdist" },
+]
+
+[dependency-groups]
+dev = [
+    "maturin>=1.9.2",
+    "mypy>=1.17.0",
+    "pre-commit>=4.2.0",
+    "ruff>=0.12.7",
+]
+docs = [
+    "markdown-gfm-admonition==0.1.1",
+    "mkdocs==1.6.1",
+    "mkdocs-include-markdown-plugin==7.1.6",
+    "mkdocs-material==9.6.16",
+    "mkdocstrings-python==1.16.12",
+    "pymdown-extensions==10.16.1",
 ]
