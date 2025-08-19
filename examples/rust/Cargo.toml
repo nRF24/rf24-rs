@@ -1,12 +1,15 @@
 [package]
-name = "rf24-rs-examples"
+name = "examples"
 version = "0.1.0"
 edition.workspace = true
 default-run = "getting-started"
 
+[lib]
+name = "rf24_rs_examples"
+
 [dependencies]
-rf24-rs = {path = "../../crates/rf24-rs"}
-rf24ble-rs = {path = "../../crates/rf24ble-rs"}
+rf24-rs = {path = "../../crates/rf24-rs", version = "0.3.1"}
+rf24ble-rs = {path = "../../crates/rf24ble-rs", version = "0.1.4"}
 embedded-hal = "1.0.0"
 anyhow = {version = "1.0.98", default-features = false}
 linux-embedded-hal = {version = "0.4.0", optional = true, default-features = false, features = ["gpio_cdev", "spi"]}

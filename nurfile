@@ -36,11 +36,12 @@ export def "nur test" [
     if $clean {
         run-cmd cargo llvm-cov clean
     }
-    let cmd = (
-        [cargo llvm-cov --no-report nextest]
-        | append [-p rf24-rs -p rf24ble-rs]
-        | append [--lib --tests --color always --profile $profile]
-    )
+    let excluded = [rf24-node rf24-py examples]
+    mut cmd = [cargo llvm-cov --no-report --workspace]
+    for ex in $excluded {
+        $cmd = $cmd | append [--exclude $ex]
+    }
+    $cmd = $cmd | append [nextest --lib --tests --color always --profile $profile]
     run-cmd ...$cmd
 }
 
@@ -162,14 +163,8 @@ export def "nur docs rs" [
 export def "nur lint" [
     --js, # A flag to lint/format Javascript (and Typescript) sources.
 ] {
-    let common_args = (
-        [-p rf24-rs -p rf24ble-rs -p rf24-node -p rf24-py]
-    )
-    run-cmd ...(
-        [cargo clippy --fix --allow-dirty --allow-staged]
-        | append [...$common_args]
-    )
-    run-cmd ...[cargo fmt ...$common_args]
+    run-cmd cargo clippy --fix --allow-dirty --allow-staged
+    run-cmd cargo fmt
     if ($js) {
         run-cmd yarn lint
         if ("bindings/node/index.d.ts" | path exists) {
@@ -182,8 +177,8 @@ export def "nur lint" [
 
 # Run clippy and rustfmt (on rust examples only).
 export def "nur lint examples" [] {
-    run-cmd cargo clippy -p rf24-rs-examples --fix --allow-dirty --allow-staged
-    run-cmd cargo fmt -p rf24-rs-examples
+    run-cmd cargo clippy -p examples --fix --allow-dirty --allow-staged
+    run-cmd cargo fmt -p examples
 }
 
 # Run pre-commit hooks

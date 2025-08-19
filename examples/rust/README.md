@@ -17,7 +17,7 @@ The sources for each example are located in examples/rust/src/bin/.
 For Linux boards, this can be done simply by executing the command:
 
 ```shell
-cargo run --bin getting-started
+cargo run -p examples --bin getting-started
 ```
 
 The provided examples names (value passed to the `--bin` option) are
