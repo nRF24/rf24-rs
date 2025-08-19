@@ -49,6 +49,11 @@ jobs:
         uses: hustcer/setup-nu@v3
         with:
           version: ${{ vars.NU_SHELL_VERSION || '*' }}
+      - name: Cache deps
+        uses: actions/cache@v4
+        with:
+          path: ~/.cargo
+          key: cargo-docs-${{ hashFiles('crates/*/src/**', 'crates/**/Cargo.toml') }}
       - run: nu -c "use nurfile *; nur docs rs"
       - name: save docs as artifact
         uses: actions/upload-artifact@v4

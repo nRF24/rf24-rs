@@ -13,6 +13,10 @@ pub fn coerce_to_bool(napi_instance: Option<JsNumber>, default: bool) -> Result<
 /// Optional configuration parameters to fine tune instantiating the {@link RF24} object.
 /// Pass this object as third parameter to {@link RF24} constructor.
 #[napi(object)]
+#[cfg_attr(
+    not(target_os = "linux"),
+    allow(dead_code, reason = "Constructed only on Linux targets")
+)]
 pub struct HardwareConfig {
     /// The GPIO chip number: `/dev/gpiochipN` where `N` is this value.
     ///
@@ -88,6 +92,7 @@ impl StatusFlags {
 
 /// An optional configuration for {@link RF24.write}
 #[napi(object)]
+#[cfg(target_os = "linux")]
 pub struct WriteConfig {
     /// Set to `true` if you want to disable auto-ACK feature for the individual
     /// payload (required `buf` parameter to {@link RF24.write}).
@@ -106,6 +111,7 @@ pub struct WriteConfig {
     pub start_tx: Option<bool>,
 }
 
+#[cfg(target_os = "linux")]
 impl Default for WriteConfig {
     fn default() -> Self {
         Self {
@@ -117,6 +123,7 @@ impl Default for WriteConfig {
 
 /// The return type for {@link RF24.availablePipe}
 #[napi(object)]
+#[cfg(target_os = "linux")]
 pub struct AvailablePipe {
     /// Is RX data available in the RX FIFO?
     pub available: bool,

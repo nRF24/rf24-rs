@@ -33,9 +33,10 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ~/.cargo
-          key: cargo-lib-${{ hashFiles('lib/src/**', 'lib/Cargo.toml') }}
+          key: cargo-lint-${{ hashFiles('**/*.rs') }}
       - run: cargo clippy
-      - run: cargo fmt --check
+      - run: cargo clippy -p examples
+      - run: cargo fmt --check --all
 
   lint-typescript:
     runs-on: ubuntu-latest

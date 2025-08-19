@@ -1,4 +1,3 @@
-#![cfg(target_os = "linux")]
 use std::borrow::Cow;
 use std::time::Duration;
 
@@ -278,7 +277,7 @@ impl RF24 {
     ///     sized payload or [`RF24.payload_length`][rf24_py.RF24.payload_length] for
     ///     statically sized payloads.
     #[pyo3(signature = (len = None))]
-    pub fn read(&mut self, len: Option<u8>) -> PyResult<Cow<[u8]>> {
+    pub fn read(&'_ mut self, len: Option<u8>) -> PyResult<Cow<'_, [u8]>> {
         let len = self
             .inner
             .read(&mut self.read_buf, len)

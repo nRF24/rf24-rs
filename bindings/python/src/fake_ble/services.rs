@@ -36,7 +36,7 @@ impl BatteryService {
 
     /// Transform the service data into a BLE compliant buffer that is ready for broadcasting.
     #[getter]
-    pub fn get_buffer(&mut self) -> Cow<[u8]> {
+    pub fn get_buffer(&'_ mut self) -> Cow<'_, [u8]> {
         Cow::from(self.inner.buffer())
     }
 }
@@ -73,7 +73,7 @@ impl TemperatureService {
 
     /// Transform the service data into a BLE compliant buffer that is ready for broadcasting.
     #[getter]
-    pub fn get_buffer(&self) -> Cow<[u8]> {
+    pub fn get_buffer(&'_ self) -> Cow<'_, [u8]> {
         Cow::from(self.inner.buffer())
     }
 }
@@ -122,7 +122,7 @@ impl UrlService {
 
     /// Transform the service data into a BLE compliant buffer that is ready for broadcasting.
     #[getter]
-    pub fn get_buffer(&self) -> Cow<[u8]> {
+    pub fn get_buffer(&'_ self) -> Cow<'_, [u8]> {
         Cow::from(self.inner.buffer())
     }
 }

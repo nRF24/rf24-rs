@@ -304,7 +304,7 @@ impl RadioConfig {
     }
 
     /// Get the address for a specified `pipe` set by [`RadioConfig.set_rx_address()`][rf24_py.RadioConfig.set_rx_address].
-    pub fn get_rx_address(&mut self, pipe: u8) -> Cow<[u8]> {
+    pub fn get_rx_address(&'_ mut self, pipe: u8) -> Cow<'_, [u8]> {
         self.inner.rx_address(pipe, &mut self.addr_buf);
         Cow::from(&self.addr_buf)
     }
@@ -313,7 +313,7 @@ impl RadioConfig {
     ///
     /// Only pipe 0 can be used for TX operations (including auto-ACK packets during RX operations).
     #[getter]
-    pub fn get_tx_address(&mut self) -> Cow<[u8]> {
+    pub fn get_tx_address(&'_ mut self) -> Cow<'_, [u8]> {
         self.inner.tx_address(&mut self.addr_buf);
         Cow::from(&self.addr_buf)
     }

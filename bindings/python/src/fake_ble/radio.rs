@@ -81,7 +81,7 @@ impl FakeBle {
     }
 
     #[getter]
-    pub fn get_mac_address(&self) -> Cow<[u8]> {
+    pub fn get_mac_address(&'_ self) -> Cow<'_, [u8]> {
         Cow::from(&self.inner.mac_address)
     }
 

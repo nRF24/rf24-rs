@@ -49,7 +49,7 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ~/.cargo
-          key: cargo-lib-${{ hashFiles('crates/*/src/**', 'crates/**/Cargo.toml') }}
+          key: cargo-crates-${{ hashFiles('crates/*/src/**', 'crates/**/Cargo.toml') }}
       - run: rustup component add llvm-tools-preview
         # this enables a tool (for default toolchain) needed to measure code coverage.
       - name: Run tests
