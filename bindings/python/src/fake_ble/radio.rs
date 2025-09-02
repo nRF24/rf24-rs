@@ -121,7 +121,7 @@ impl FakeBle {
     /// This function should not be called in RX mode. To ensure proper radio behavior,
     /// the caller must ensure that the radio is in TX mode.
     pub fn hop_channel(&mut self) -> PyResult<()> {
-        Python::with_gil(|py| {
+        Python::attach(|py| {
             let mut radio = self.radio.bind(py).borrow_mut();
             let channel = radio.get_channel()?;
             if let Some(channel) = BleChannels::increment(channel) {
@@ -151,7 +151,7 @@ impl FakeBle {
     /// | `1` | `0xFF`  |
     /// | `2 ... n - 1` | custom data |
     pub fn send(&mut self, buf: &[u8]) -> PyResult<bool> {
-        Python::with_gil(|py| {
+        Python::attach(|py| {
             let mut radio = self.radio.bind(py).borrow_mut();
             if let Some(tx_queue) = self.inner.make_payload(
                 buf,
@@ -185,7 +185,7 @@ impl FakeBle {
     /// If the payload was somehow malformed or incomplete,
     /// then this function returns an `None` value.
     pub fn read(&mut self) -> PyResult<Option<BlePayload>> {
-        Python::with_gil(|py| {
+        Python::attach(|py| {
             let mut radio = self.radio.bind(py).borrow_mut();
             let mut buf = [0u8; 32];
             buf.copy_from_slice(&radio.read(Some(32))?);
