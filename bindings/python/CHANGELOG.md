@@ -6,6 +6,24 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 <!-- markdownlint-disable MD024 -->
 
+## [rf24-py/v0.5.0] - 2025-09-02
+
+### <!-- 1 --> 🚀 Added
+
+- Distribute future-compatible python wheels by @2bndy5 in [#80](https://github.com/nRF24/rf24-rs/pull/80)
+
+### <!-- 4 --> 🛠️ Fixed
+
+- Adjust linting by @2bndy5 in [#78](https://github.com/nRF24/rf24-rs/pull/78)
+
+### <!-- 8 --> 📝 Documentation
+
+- Regenerate Change Logs by @2bndy5 in [`de989ee`](https://github.com/nRF24/rf24-rs/commit/de989ee97b94943c6050c548822758b3439262a8)
+
+[rf24-py/v0.5.0]: https://github.com/nRF24/rf24-rs/compare/rf24-py/v0.4.1...rf24-py/v0.5.0
+
+Full commit diff: [`rf24-py/v0.4.1...rf24-py/v0.5.0`][rf24-py/v0.5.0]
+
 ## [rf24-py/v0.4.1] - 2025-08-01
 
 ### <!-- 4 --> 🛠️ Fixed
