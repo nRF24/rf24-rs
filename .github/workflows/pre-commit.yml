@@ -34,8 +34,8 @@ jobs:
         with:
           path: ~/.cargo
           key: cargo-lint-${{ hashFiles('**/*.rs') }}
-      - run: cargo clippy
-      - run: cargo clippy -p examples
+      - run: cargo clippy -- -D warnings
+      - run: cargo clippy -p examples -- -D warnings
       - run: cargo fmt --check --all
 
   lint-typescript:
