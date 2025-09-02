@@ -36,7 +36,8 @@ To build from source, the [rf24-rs] project uses [uv] to manage dependencies:
 uv sync
 ```
 
-Append `--no-dev` for environments with limited disk space (eg. Raspberry Pi machine).
+Append `--no-dev` (or set `UV_NO_DEV=1` environment variable) for environments with limited disk space (eg. Raspberry Pi machine).
+As of [uv] v0.8.7, the environment variable
 
 [uv]: https://docs.astral.sh/uv
 
@@ -49,8 +50,9 @@ To run the examples, simply pass the example file's path to the python interpret
 uv run examples/python/getting_started.py
 ```
 
-Again, the `--no-dev` argument can be applied to the `uv run` command for
-environments with limited disk space.
+Again, the `--no-dev` argument can be applied to the `uv run` command
+(or set `UV_NO_DEV=1` environment variable)
+for environments with limited disk space.
 
 The examples/python/irq_config.py script requires the [gpiod] package.
 The `uv run` command needs to be amended to include this dependency:
