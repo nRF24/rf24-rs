@@ -14,7 +14,7 @@ crate-type = ["cdylib"]
 
 [dependencies]
 embedded-hal = "1.0.0"
-pyo3 = {version = "0.25.1", features = ["extension-module"]}
+pyo3 = {version = "0.26.0", features = ["extension-module", "abi3-py39"]}
 rf24-rs = { path = "../../crates/rf24-rs", features = ["std"]}
 rf24ble-rs = { path = "../../crates/rf24ble-rs", features = ["std"] }
 
