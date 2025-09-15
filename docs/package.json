@@ -3,7 +3,7 @@
     "private": true,
     "version": "0.1.0",
     "devDependencies": {
-        "typedoc": "0.28.12",
+        "typedoc": "0.28.13",
         "typescript": "5.9.2"
     },
     "license": "MIT",
