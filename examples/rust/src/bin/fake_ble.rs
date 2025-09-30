@@ -33,7 +33,7 @@ use std::{
 };
 
 fn prompt(remaining: u8) {
-    if remaining > 0 && (remaining % 5 == 0 || remaining < 5) {
+    if remaining > 0 && (remaining.is_multiple_of(5) || remaining < 5) {
         println!("{remaining} advertisements left to go!");
     }
 }
