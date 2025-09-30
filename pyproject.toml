@@ -67,7 +67,7 @@ dev = [
     "maturin==1.9.4",
     "mypy==1.17.1",
     "pre-commit==4.3.0",
-    "ruff==0.12.11",
+    "ruff==0.13.2",
 ]
 docs = [
     "markdown-gfm-admonition==0.1.1",
