@@ -16,5 +16,5 @@
         "format:index": "cd bindings/node && yarn run prettier --write index.*",
         "format:examples": "cd examples/node && yarn run prettier --write */*.{ts,js}"
     },
-    "packageManager": "yarn@4.9.2"
+    "packageManager": "yarn@4.10.3"
 }
