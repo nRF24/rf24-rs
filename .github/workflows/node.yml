@@ -105,14 +105,14 @@ jobs:
         run: ${{ matrix.settings.build }}
         shell: bash
       - name: Upload native module as artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: bindings-${{ matrix.settings.target }}
           path: ${{ env.ARTIFACT_PATH }}
           if-no-files-found: error
       - name: Upload generated index.* as artifact
         if: matrix.settings.target == 'armv7-unknown-linux-gnueabihf'
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: generated-index
           path: bindings/node/index.*
@@ -159,7 +159,7 @@ jobs:
             rm -rf target
             rm -rf .yarn/cache
       - name: Upload artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: bindings-freebsd
           path: ${{ env.ARTIFACT_PATH }}
@@ -180,19 +180,19 @@ jobs:
       - name: Install dependencies
         run: yarn install
       - name: Download macOS x64 artifact
-        uses: actions/download-artifact@v5
+        uses: actions/download-artifact@v6
         with:
           name: bindings-x86_64-apple-darwin
           path: bindings/node
       - name: Download macOS arm64 artifact
-        uses: actions/download-artifact@v5
+        uses: actions/download-artifact@v6
         with:
           name: bindings-aarch64-apple-darwin
           path: bindings/node
       - name: Combine binaries
         run: yarn universal
       - name: Upload artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: bindings-universal-apple-darwin
           path: ${{ env.ARTIFACT_PATH }}
@@ -217,12 +217,12 @@ jobs:
       - name: Install dependencies
         run: yarn install
       - name: Download native artifacts
-        uses: actions/download-artifact@v5
+        uses: actions/download-artifact@v6
         with:
           pattern: bindings-*
           path: bindings/node/artifacts
       - name: Download generated index artifact
-        uses: actions/download-artifact@v5
+        uses: actions/download-artifact@v6
         with:
           name: generated-index
           path: bindings/node
