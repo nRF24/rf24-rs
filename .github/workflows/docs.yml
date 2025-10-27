@@ -34,7 +34,7 @@ jobs:
           version: ${{ vars.NU_SHELL_VERSION || '*' }}
       - run: nu -c "use nurfile *; nur docs build"
       - name: Save docs build as artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           path: docs/site
           name: supplemental-docs
@@ -56,7 +56,7 @@ jobs:
           key: cargo-docs-${{ hashFiles('crates/*/src/**', 'crates/**/Cargo.toml') }}
       - run: nu -c "use nurfile *; nur docs rs"
       - name: save docs as artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: api-docs
           path: target/doc
