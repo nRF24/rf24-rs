@@ -12,13 +12,13 @@ crate-type = ["cdylib"]
 [dependencies]
 embedded-hal = "1.0.0"
 # Default `napi` features: see https://nodejs.org/api/n-api.html#node-api-version-matrix
-napi = "3.3.0"
-napi-derive = "3.2.5"
+napi = "3.5.2"
+napi-derive = "3.3.3"
 rf24-rs = { path = "../../crates/rf24-rs", features = ["std"] }
 rf24ble-rs = { path = "../../crates/rf24ble-rs", features = ["std"] }
 
 [build-dependencies]
-napi-build = "2.2.3"
+napi-build = "2.3.1"
 
 [target.'cfg(target_os = "linux")'.dependencies]
 linux-embedded-hal = {version = "0.4.1", default-features = false, features = ["gpio_cdev", "spi"]}
