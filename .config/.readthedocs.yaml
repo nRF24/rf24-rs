@@ -26,7 +26,7 @@ build:
       - PATH="${HOME}/.cargo/bin:${PATH}" && ${HOME}/.local/bin/uv sync --group docs
     post_create_environment:
       - corepack enable
-      - corepack prepare --activate yarn@4.9.2
+      - corepack prepare --activate yarn@4.11.0
       - asdf reshim nodejs
     pre_build:
       - yarn install
