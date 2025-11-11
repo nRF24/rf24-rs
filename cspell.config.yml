@@ -81,6 +81,7 @@ words:
   - nushell
   - opengpio
   - oxlint
+  - pipx
   - pkgid
   - pyclass
   - pyfunction
@@ -114,6 +115,7 @@ words:
   - typdedoc
   - yarnrc
   - zigbuild
+  - zizmor
 ignorePaths:
   - .yarn
   - "**/.gitignore"

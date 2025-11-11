@@ -162,9 +162,19 @@ export def "nur docs rs" [
 # Uses clippy and rustfmt on rust packages (crates/ and bindings/).
 export def "nur lint" [
     --js, # A flag to lint/format Javascript (and Typescript) sources.
+    --check (-c), # only check for issues (do not fix them) and raise warnings as errors.
 ] {
-    run-cmd cargo clippy --fix --allow-dirty --allow-staged
-    run-cmd cargo fmt
+    mut clippy_args = if $check {
+        [-- -D warnings]
+    } else {
+        [--fix --allow-dirty --allow-staged]
+    }
+    run-cmd cargo clippy ...$clippy_args
+    if $check {
+        run-cmd cargo fmt --check
+    } else {
+        run-cmd cargo fmt
+    }
     if ($js) {
         run-cmd yarn lint
         if ("bindings/node/index.d.ts" | path exists) {
@@ -176,9 +186,21 @@ export def "nur lint" [
 
 
 # Run clippy and rustfmt (on rust examples only).
-export def "nur lint examples" [] {
-    run-cmd cargo clippy -p examples --fix --allow-dirty --allow-staged
-    run-cmd cargo fmt -p examples
+export def "nur lint examples" [
+    --check (-c), # only check for issues (do not fix them) and raise warnings as errors.
+] {
+    mut clippy_args = [-p examples]
+    if $check {
+        $clippy_args = $clippy_args | append [-- -D warnings]
+    } else {
+        $clippy_args = $clippy_args | append [--fix --allow-dirty --allow-staged]
+    }
+    run-cmd cargo clippy ...$clippy_args
+    mut fmt_args = [-p examples]
+    if $check {
+        [-p examples --check]
+    }
+    run-cmd cargo fmt ...$fmt_args
 }
 
 # Run pre-commit hooks
