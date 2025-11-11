@@ -68,7 +68,8 @@ jobs:
     runs-on: ubuntu-latest
     if: startswith(github.ref, 'refs/tags/')
     permissions:
-      contents: write
+      # needed for trusted publishing
+      id-token: write
     steps:
       - uses: actions/checkout@v5
         with:
@@ -86,6 +87,9 @@ jobs:
           $"name=($pkg | get name)\n" | save --append $env.GITHUB_OUTPUT
       - name: Install Rust
         run: rustup update stable --no-self-update
+      - name: Establish provenance
+        uses: rust-lang/crates-io-auth-action@b7e9a28eded4986ec6b1fa40eeee8f8f165559ec # v1.0.3
+        id: auth
       - run: cargo publish -p ${{ steps.pkg.outputs.name }}
         env:
-          CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
+          CARGO_REGISTRY_TOKEN: ${{ steps.auth.outputs.token }}
