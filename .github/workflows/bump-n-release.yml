@@ -29,6 +29,11 @@ on:
 
 run-name: Deploying ${{ inputs.package }}
 
+permissions: {}
+# BUMP_N_RELEASE token needs the following permissions:
+#   contents: write
+#   pull-requests: read
+
 jobs:
   release-version-bump:
     runs-on: ubuntu-latest
@@ -38,25 +43,28 @@ jobs:
           token: ${{ secrets.BUMP_N_RELEASE }}
           fetch-depth: 0
           fetch-tags: true
+          persist-credentials: true # needed for `git push`
 
       - run: rustup update --no-self-update
 
-      - name: Setup nushell
-        uses: hustcer/setup-nu@v3
-        with:
-          version: ${{ vars.NU_SHELL_VERSION || '*' }}
-
       - name: Install cargo-binstall
-        uses: cargo-bins/cargo-binstall@main
-      - name: Install git-cliff and cargo-edit
-        run: cargo binstall -y git-cliff cargo-edit
+        uses: cargo-bins/cargo-binstall@ae04fb5e853ae6cd3ad7de4a1d554a8b646d12aa # v1.15.11
+      - name: Install git-cliff and nushell
+        run: cargo binstall -y git-cliff nu@${NU_SHELL_VERSION}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NU_SHELL_VERSION: ${{ vars.NU_SHELL_VERSION || '*' }}
+      - name: Install cargo-edit
+        run: >-
+          cargo install --locked
+          --no-default-features
+          --features set-version
+          cargo-edit
 
       - uses: actions/setup-node@v6
         if: inputs.package == 'rf24-node'
         with:
-          node-version: 20.x
+          node-version: 24.x
       - run: yarn install
         if: inputs.package == 'rf24-node'
 

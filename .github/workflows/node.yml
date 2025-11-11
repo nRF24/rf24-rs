@@ -65,18 +65,21 @@ jobs:
     runs-on: ${{ matrix.settings.host }}
     steps:
       - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
       - name: Setup node
         uses: actions/setup-node@v6
         with:
           node-version: 22
-          cache: yarn
-      - name: Install
-        uses: dtolnay/rust-toolchain@stable
-        with:
-          toolchain: stable
-          targets: ${{ matrix.settings.target }}
+          cache: ${{ !startsWith(github.ref, 'refs/tags/') && 'yarn' || '' }} # zizmor: ignore[cache-poisoning]
+          package-manager-cache: ${{ !startsWith(github.ref, 'refs/tags/') }} # zizmor: ignore[cache-poisoning]
+      - name: Setup Rust
+        run: |-
+          rustup update stable --no-self-update
+          rustup target add ${{ matrix.settings.target }}
       - name: Cache cargo
-        uses: actions/cache@v4
+        if: ${{ !startsWith(github.ref, 'refs/tags') }}
+        uses: actions/cache@v4 # zizmor: ignore[cache-poisoning]
         with:
           path: |
             ~/.cargo/registry/index/
@@ -86,17 +89,18 @@ jobs:
             .cargo-cache
             target/
           key: ${{ matrix.settings.target }}-cargo-${{ matrix.settings.host }}
-      - uses: goto-bus-stop/setup-zig@v2
+      - uses: goto-bus-stop/setup-zig@abea47f85e598557f500fa1fd2ab7464fcb39406 # v2.2.1
         if: ${{ contains(matrix.settings.target, 'musl') }}
         with:
           version: 0.14.1
+      - name: Install cargo-binstall
+        uses: cargo-bins/cargo-binstall@ae04fb5e853ae6cd3ad7de4a1d554a8b646d12aa # v1.15.11
+        if: ${{ contains(matrix.settings.target, 'musl') }}
       - name: Install cargo-zigbuild
-        uses: taiki-e/install-action@v2
+        run: cargo binstall -y cargo-zigbuild
         if: ${{ contains(matrix.settings.target, 'musl') }}
         env:
           GITHUB_TOKEN: ${{ github.token }}
-        with:
-          tool: cargo-zigbuild
       - name: Setup toolchain
         run: ${{ matrix.settings.setup }}
         if: ${{ matrix.settings.setup }}
@@ -125,6 +129,8 @@ jobs:
     name: build FreeBSD
     steps:
       - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
       - name: Build
         id: build
         uses: cross-platform-actions/action@46e8d7fb25520a8d6c64fd2b7a1192611da98eda # v0.30.0
@@ -174,11 +180,14 @@ jobs:
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
       - name: Setup node
         uses: actions/setup-node@v6
         with:
           node-version: 20
-          cache: yarn
+          cache: ${{ !startsWith(github.ref, 'refs/tags/') && 'yarn' || '' }} # zizmor: ignore[cache-poisoning]
+          package-manager-cache: ${{ !startsWith(github.ref, 'refs/tags/') }} # zizmor: ignore[cache-poisoning]
       - name: Install dependencies
         run: yarn install
       - name: Download macOS x64 artifact
@@ -211,11 +220,14 @@ jobs:
       - universal-macOS
     steps:
       - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
       - name: Setup node
         uses: actions/setup-node@v6
         with:
-          node-version: 20
-          cache: yarn
+          node-version: 24
+          cache: ${{ !startsWith(github.ref, 'refs/tags/') && 'yarn' || '' }} # zizmor: ignore[cache-poisoning]
+          package-manager-cache: ${{ !startsWith(github.ref, 'refs/tags/') }} # zizmor: ignore[cache-poisoning]
       - name: Install dependencies
         run: yarn install
       - name: Download native artifacts

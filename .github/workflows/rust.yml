@@ -1,8 +1,5 @@
 name: Rust
 
-permissions:
-  contents: read
-
 on:
   push:
     branches: [main]
@@ -26,37 +23,38 @@ env:
   CARGO_TERM_COLOR: always
   RUST_BACKTRACE: 1
 
-defaults:
-  run:
-    shell: bash
+permissions: {}
 
 jobs:
   test:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
       - name: Setup Rust
         run: rustup update --no-self-update
       - name: Install cargo-binstall
-        uses: cargo-bins/cargo-binstall@main
-      - name: Install cargo-llvm-cov and cargo-nextest
-        run: cargo binstall -y cargo-nextest cargo-llvm-cov
-      - name: Setup nushell
-        uses: hustcer/setup-nu@v3
-        with:
-          version: ${{ vars.NU_SHELL_VERSION || '*' }}
+        uses: cargo-bins/cargo-binstall@ae04fb5e853ae6cd3ad7de4a1d554a8b646d12aa # v1.15.11
+      - name: Install cargo-llvm-cov, cargo-nextest, and nur
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: cargo binstall -y cargo-nextest cargo-llvm-cov nur
       - name: Cache deps
-        uses: actions/cache@v4
+        uses: actions/cache@v4 # zizmor: ignore[cache-poisoning]
         with:
-          path: ~/.cargo
+          path: |
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
           key: cargo-crates-${{ hashFiles('crates/*/src/**', 'crates/**/Cargo.toml') }}
       - run: rustup component add llvm-tools-preview
         # this enables a tool (for default toolchain) needed to measure code coverage.
       - name: Run tests
-        run: nu -c "use nurfile *; nur test --profile ci"
+        run: nur test --profile ci
       - name: Generate coverage reports
-        run: nu -c "use nurfile *; nur test lcov"
-      - uses: codecov/codecov-action@v5
+        run: nur test lcov
+      - uses: codecov/codecov-action@5a1091511ad55cbe89839c7260b706298ca349f7 # v5.5.1
         if: github.repository == 'nRF24/rf24-rs'
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
@@ -75,14 +73,14 @@ jobs:
         with:
           persist-credentials: false
       - name: Setup nushell
-        uses: hustcer/setup-nu@v3
+        uses: hustcer/setup-nu@3a97c8160c2bb5af321a03336e7addc28f94444e # v3.21
         with:
           version: ${{ vars.NU_SHELL_VERSION || '*' }}
       - name: Get pkg from tag
         id: pkg
         shell: nu {0}
         run: |-
-          let tag = ${{ github.ref_name }}
+          let tag = $env.GITHUB_REF_NAME
           let pkg = $tag | parse "{name}/{version}" | first
           $"name=($pkg | get name)\n" | save --append $env.GITHUB_OUTPUT
       - name: Install Rust
@@ -90,6 +88,7 @@ jobs:
       - name: Establish provenance
         uses: rust-lang/crates-io-auth-action@b7e9a28eded4986ec6b1fa40eeee8f8f165559ec # v1.0.3
         id: auth
-      - run: cargo publish -p ${{ steps.pkg.outputs.name }}
+      - run: cargo publish -p ${PKG_NAME}
         env:
+          PKG_NAME: ${{ steps.pkg.outputs.name }}
           CARGO_REGISTRY_TOKEN: ${{ steps.auth.outputs.token }}

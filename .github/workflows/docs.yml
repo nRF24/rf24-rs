@@ -16,23 +16,28 @@ on:
       - '**/*.md'
       - .github/workflows/docs.yml
 
+permissions: {}
+
 jobs:
   supplemental:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
-      - uses: astral-sh/setup-uv@v7
+        with:
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@5a7eac68fb9809dea845d802897dc5c723910fa3 # v7.1.3
         with:
           enable-cache: true
       - uses: actions/setup-node@v6
         with:
-          node-version: 20.x
+          node-version: 24.x
+          cache: yarn
       - run: yarn install
-      - name: Setup nushell
-        uses: hustcer/setup-nu@v3
-        with:
-          version: ${{ vars.NU_SHELL_VERSION || '*' }}
-      - run: nu -c "use nurfile *; nur docs build"
+      - name: Install cargo-binstall
+        uses: cargo-bins/cargo-binstall@ae04fb5e853ae6cd3ad7de4a1d554a8b646d12aa # v1.15.11
+      - name: Install nur
+        run: cargo binstall -y nur
+      - run: nur docs build
       - name: Save docs build as artifact
         uses: actions/upload-artifact@v5
         with:
@@ -43,18 +48,23 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
       - name: Setup Rust
         run: rustup update --no-self-update
-      - name: Setup nushell
-        uses: hustcer/setup-nu@v3
-        with:
-          version: ${{ vars.NU_SHELL_VERSION || '*' }}
+      - name: Install cargo-binstall
+        uses: cargo-bins/cargo-binstall@ae04fb5e853ae6cd3ad7de4a1d554a8b646d12aa # v1.15.11
+      - name: Install nur
+        run: cargo binstall -y nur
       - name: Cache deps
         uses: actions/cache@v4
         with:
-          path: ~/.cargo
+          path: |
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
           key: cargo-docs-${{ hashFiles('crates/*/src/**', 'crates/**/Cargo.toml') }}
-      - run: nu -c "use nurfile *; nur docs rs"
+      - run: nur docs rs
       - name: save docs as artifact
         uses: actions/upload-artifact@v5
         with:
