@@ -9,7 +9,7 @@ license.workspace = true
 exclude = [".github/", "codecov.yml", "docs", "examples"]
 keywords = ["nrf24l01", "wireless", "transceiver", "embedded", "BLE"]
 categories = ["embedded", "no-std"]
-rust-version = "1.65"
+rust-version = "1.68"
 
 [lib]
 name = "rf24ble"
