@@ -11,21 +11,26 @@ build:
   #   - libgpiod-dev
   tools:
     nodejs: latest
-    rust: latest
+    # see acceptable inputs at https://docs.readthedocs.com/platform/stable/config-file/v2.html#build-tools-rust
+    # rust: latest
     python: latest
   jobs:
     pre_create_environment:
+      # Workaround until Read the Docs env upgrades to rust v1.88 or later.
+      # Install Rust using rustup with minimal profile.
+      # This also mandates that the PATH be prepended with ${HOME}/.cargo/bin in subsequent commands.
+      - curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- --profile minimal -y
       - >-
         UV_INSTALL_DIR="${HOME}/.local/bin" &&
         curl -LsSf https://astral.sh/uv/install.sh | sh
-      - ${HOME}/.local/bin/uv sync --group docs
+      - PATH="${HOME}/.cargo/bin:${PATH}" && ${HOME}/.local/bin/uv sync --group docs
     post_create_environment:
       - corepack enable
       - corepack prepare --activate yarn@4.9.2
       - asdf reshim nodejs
     pre_build:
       - yarn install
-      - yarn build:debug
+      - PATH="${HOME}/.cargo/bin:${PATH}" && yarn build:debug
       - yarn docs
     build:
       html:
