@@ -6,6 +6,44 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 <!-- markdownlint-disable MD024 -->
 
+## [rf24-node/v0.3.3] - 2025-11-13
+
+### <!-- 1 --> 🚀 Added
+
+- Distribute future-compatible python wheels by @2bndy5 in [#80](https://github.com/nRF24/rf24-rs/pull/80)
+
+### <!-- 4 --> 🛠️ Fixed
+
+- Specify README path in metadata by @2bndy5 in [`09e0ce3`](https://github.com/nRF24/rf24-rs/commit/09e0ce32063aec171ac9304a96fa301de63c28d6)
+- Adjust linting by @2bndy5 in [#78](https://github.com/nRF24/rf24-rs/pull/78)
+
+### <!-- 6 --> 📦 Dependency updates
+
+- Bump the npm group across 1 directory with 4 updates by @dependabot[bot] in [#75](https://github.com/nRF24/rf24-rs/pull/75)
+- Bump the npm group with 3 updates by @dependabot[bot] in [#76](https://github.com/nRF24/rf24-rs/pull/76)
+- Bump typedoc from 0.28.10 to 0.28.11 in the npm group by @dependabot[bot] in [#79](https://github.com/nRF24/rf24-rs/pull/79)
+- Bump the npm group with 3 updates by @dependabot[bot] in [#82](https://github.com/nRF24/rf24-rs/pull/82)
+- Bump the npm group with 4 updates by @dependabot[bot] in [#83](https://github.com/nRF24/rf24-rs/pull/83)
+- Bump tarn to v4.10.3 by @2bndy5 in [#86](https://github.com/nRF24/rf24-rs/pull/86)
+- Upgrade python dependencies by @2bndy5 in [#87](https://github.com/nRF24/rf24-rs/pull/87)
+- Bump the npm group with 2 updates by @dependabot[bot] in [#84](https://github.com/nRF24/rf24-rs/pull/84)
+- Bump the npm group across 1 directory with 5 updates by @dependabot[bot] in [#89](https://github.com/nRF24/rf24-rs/pull/89)
+- Bump the npm group across 1 directory with 3 updates by @dependabot[bot] in [#93](https://github.com/nRF24/rf24-rs/pull/93)
+- Bump yarn to v4.11.0 by @2bndy5 in [#102](https://github.com/nRF24/rf24-rs/pull/102)
+- Bump the npm group with 2 updates by @dependabot[bot] in [#95](https://github.com/nRF24/rf24-rs/pull/95)
+
+### <!-- 8 --> 📝 Documentation
+
+- Regenerate Change Logs by @2bndy5 in [`de989ee`](https://github.com/nRF24/rf24-rs/commit/de989ee97b94943c6050c548822758b3439262a8)
+
+### <!-- 9 --> 🗨️ Changed
+
+- Secure CI workflows by @2bndy5 in [#101](https://github.com/nRF24/rf24-rs/pull/101)
+
+[rf24-node/v0.3.3]: https://github.com/nRF24/rf24-rs/compare/rf24-node/v0.3.2...rf24-node/v0.3.3
+
+Full commit diff: [`rf24-node/v0.3.2...rf24-node/v0.3.3`][rf24-node/v0.3.3]
+
 ## [rf24-node/v0.3.2] - 2025-08-01
 
 ### <!-- 1 --> 🚀 Added
