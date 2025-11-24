@@ -64,7 +64,7 @@ jobs:
     name: build ${{ matrix.settings.target }}
     runs-on: ${{ matrix.settings.host }}
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
         with:
           persist-credentials: false
       - name: Setup node
@@ -94,7 +94,7 @@ jobs:
         with:
           version: 0.14.1
       - name: Install cargo-binstall
-        uses: cargo-bins/cargo-binstall@ac8496113671719ef3f12282bc9f41d86322e0d7 # v1.16.0
+        uses: cargo-bins/cargo-binstall@3fc81674af4165a753833a94cae9f91d8849049f # v1.16.2
         if: ${{ contains(matrix.settings.target, 'musl') }}
       - name: Install cargo-zigbuild
         run: cargo binstall -y cargo-zigbuild
@@ -128,7 +128,7 @@ jobs:
     runs-on: ubuntu-latest
     name: build FreeBSD
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
         with:
           persist-credentials: false
       - name: Build
@@ -179,7 +179,7 @@ jobs:
       - build
     runs-on: macos-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
         with:
           persist-credentials: false
       - name: Setup node
@@ -219,7 +219,7 @@ jobs:
       - build-freebsd
       - universal-macOS
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
         with:
           persist-credentials: false
       - name: Setup node

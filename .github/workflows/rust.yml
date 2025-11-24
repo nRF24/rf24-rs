@@ -29,13 +29,13 @@ jobs:
   test:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
         with:
           persist-credentials: false
       - name: Setup Rust
         run: rustup update --no-self-update
       - name: Install cargo-binstall
-        uses: cargo-bins/cargo-binstall@ac8496113671719ef3f12282bc9f41d86322e0d7 # v1.16.0
+        uses: cargo-bins/cargo-binstall@3fc81674af4165a753833a94cae9f91d8849049f # v1.16.2
       - name: Install cargo-llvm-cov, cargo-nextest, and nur
         env:
           GITHUB_TOKEN: ${{ github.token }}
@@ -69,7 +69,7 @@ jobs:
       # needed for trusted publishing
       id-token: write
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
         with:
           persist-credentials: false
       - name: Setup nushell

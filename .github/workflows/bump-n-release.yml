@@ -38,7 +38,7 @@ jobs:
   release-version-bump:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
         with:
           token: ${{ secrets.BUMP_N_RELEASE }}
           fetch-depth: 0
@@ -48,7 +48,7 @@ jobs:
       - run: rustup update --no-self-update
 
       - name: Install cargo-binstall
-        uses: cargo-bins/cargo-binstall@ac8496113671719ef3f12282bc9f41d86322e0d7 # v1.16.0
+        uses: cargo-bins/cargo-binstall@3fc81674af4165a753833a94cae9f91d8849049f # v1.16.2
       - name: Install git-cliff and nushell
         run: cargo binstall -y git-cliff nu@${NU_SHELL_VERSION}
         env:
