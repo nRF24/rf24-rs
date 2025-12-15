@@ -25,7 +25,7 @@ jobs:
       - uses: actions/checkout@v6
         with:
           persist-credentials: false
-      - uses: astral-sh/setup-uv@1e862dfacbd1d6d858c55d9b792c756523627244 # v7.1.4
+      - uses: astral-sh/setup-uv@681c641aba71e4a1c380be3ab5e12ad51f415867 # v7.1.6
         with:
           enable-cache: true
       - uses: actions/setup-node@v6
@@ -34,12 +34,12 @@ jobs:
           cache: yarn
       - run: yarn install
       - name: Install cargo-binstall
-        uses: cargo-bins/cargo-binstall@3fc81674af4165a753833a94cae9f91d8849049f # v1.16.2
+        uses: cargo-bins/cargo-binstall@ea60fcf749c6a52a729e0eaabb5eb33391d44823 # v1.16.4
       - name: Install nur
         run: cargo binstall -y nur
       - run: nur docs build
       - name: Save docs build as artifact
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         with:
           path: docs/site
           name: supplemental-docs
@@ -53,11 +53,11 @@ jobs:
       - name: Setup Rust
         run: rustup update --no-self-update
       - name: Install cargo-binstall
-        uses: cargo-bins/cargo-binstall@3fc81674af4165a753833a94cae9f91d8849049f # v1.16.2
+        uses: cargo-bins/cargo-binstall@ea60fcf749c6a52a729e0eaabb5eb33391d44823 # v1.16.4
       - name: Install nur
         run: cargo binstall -y nur
       - name: Cache deps
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: |
             ~/.cargo/registry/index/
@@ -66,7 +66,7 @@ jobs:
           key: cargo-docs-${{ hashFiles('crates/*/src/**', 'crates/**/Cargo.toml') }}
       - run: nur docs rs
       - name: save docs as artifact
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         with:
           name: api-docs
           path: target/doc

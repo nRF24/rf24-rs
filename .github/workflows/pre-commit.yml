@@ -20,11 +20,11 @@ jobs:
         id: python-setup
         with:
           python-version: 3.x
-      - uses: astral-sh/setup-uv@1e862dfacbd1d6d858c55d9b792c756523627244 # v7.1.4
+      - uses: astral-sh/setup-uv@681c641aba71e4a1c380be3ab5e12ad51f415867 # v7.1.6
         with:
           enable-cache: true
       - name: Cache pre-commit environments
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: '~/.cache/pre-commit'
           key: pre-commit-${{ steps.python-setup.outputs.python-version }}-${{ hashFiles('.pre-commit-config.yaml') }}
@@ -39,7 +39,7 @@ jobs:
       - name: Setup Rust
         run: rustup update --no-self-update
       - name: Cache deps
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: |-
             ~/.cargo/registry/index/
@@ -47,7 +47,7 @@ jobs:
             ~/.cargo/git/db/
           key: cargo-lint-${{ hashFiles('**/*.rs') }}
       - name: Install cargo-binstall
-        uses: cargo-bins/cargo-binstall@3fc81674af4165a753833a94cae9f91d8849049f # v1.16.2
+        uses: cargo-bins/cargo-binstall@ea60fcf749c6a52a729e0eaabb5eb33391d44823 # v1.16.4
       - name: Install nur
         run: cargo binstall -y nur
         env:
@@ -102,7 +102,7 @@ jobs:
           echo "title=${pr_title}" >> "${GITHUB_OUTPUT}"
       - run: rustup update --no-self-update
       - name: Install cargo-binstall
-        uses: cargo-bins/cargo-binstall@3fc81674af4165a753833a94cae9f91d8849049f # v1.16.2
+        uses: cargo-bins/cargo-binstall@ea60fcf749c6a52a729e0eaabb5eb33391d44823 # v1.16.4
       - name: Install committed
         run: cargo binstall -y committed
         env:
