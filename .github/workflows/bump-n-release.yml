@@ -48,7 +48,7 @@ jobs:
       - run: rustup update --no-self-update
 
       - name: Install cargo-binstall
-        uses: cargo-bins/cargo-binstall@3fc81674af4165a753833a94cae9f91d8849049f # v1.16.2
+        uses: cargo-bins/cargo-binstall@ea60fcf749c6a52a729e0eaabb5eb33391d44823 # v1.16.4
       - name: Install git-cliff and nushell
         run: cargo binstall -y git-cliff nu@${NU_SHELL_VERSION}
         env:

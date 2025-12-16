@@ -35,13 +35,13 @@ jobs:
       - name: Setup Rust
         run: rustup update --no-self-update
       - name: Install cargo-binstall
-        uses: cargo-bins/cargo-binstall@3fc81674af4165a753833a94cae9f91d8849049f # v1.16.2
+        uses: cargo-bins/cargo-binstall@ea60fcf749c6a52a729e0eaabb5eb33391d44823 # v1.16.4
       - name: Install cargo-llvm-cov, cargo-nextest, and nur
         env:
           GITHUB_TOKEN: ${{ github.token }}
         run: cargo binstall -y cargo-nextest cargo-llvm-cov nur
       - name: Cache deps
-        uses: actions/cache@v4 # zizmor: ignore[cache-poisoning]
+        uses: actions/cache@v5 # zizmor: ignore[cache-poisoning]
         with:
           path: |
             ~/.cargo/registry/index/
@@ -54,7 +54,7 @@ jobs:
         run: nur test --profile ci
       - name: Generate coverage reports
         run: nur test lcov
-      - uses: codecov/codecov-action@5a1091511ad55cbe89839c7260b706298ca349f7 # v5.5.1
+      - uses: codecov/codecov-action@671740ac38dd9b0130fbe1cec585b89eea48d3de # v5.5.2
         if: github.repository == 'nRF24/rf24-rs'
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
@@ -73,7 +73,7 @@ jobs:
         with:
           persist-credentials: false
       - name: Setup nushell
-        uses: hustcer/setup-nu@3a97c8160c2bb5af321a03336e7addc28f94444e # v3.21
+        uses: hustcer/setup-nu@920172d92eb04671776f3ba69d605d3b09351c30 # v3.22
         with:
           version: ${{ vars.NU_SHELL_VERSION || '*' }}
       - name: Get pkg from tag
