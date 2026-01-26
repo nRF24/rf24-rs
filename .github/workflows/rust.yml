@@ -35,7 +35,7 @@ jobs:
       - name: Setup Rust
         run: rustup update --no-self-update
       - name: Install cargo-binstall
-        uses: cargo-bins/cargo-binstall@ea60fcf749c6a52a729e0eaabb5eb33391d44823 # v1.16.4
+        uses: cargo-bins/cargo-binstall@11f258db84cec40fc56c7b10bfc37c31dd9a3c98 # v1.17.3
       - name: Install cargo-llvm-cov, cargo-nextest, and nur
         env:
           GITHUB_TOKEN: ${{ github.token }}
