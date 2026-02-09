@@ -52,7 +52,7 @@ jobs:
         with:
           python-version: 3.x
       - name: Build wheels
-        uses: PyO3/maturin-action@86b9d133d34bc1b40018696f782949dac11bd380 # v1.49.4
+        uses: PyO3/maturin-action@b1bd829e37fef14c63f19162034228a2f3dc1021 # v1.50.0
         with:
           target: ${{ matrix.platform.target }}
           args: --release --out dist --find-interpreter
@@ -85,7 +85,7 @@ jobs:
         with:
           python-version: 3.x
       - name: Build wheels
-        uses: PyO3/maturin-action@86b9d133d34bc1b40018696f782949dac11bd380 # v1.49.4
+        uses: PyO3/maturin-action@b1bd829e37fef14c63f19162034228a2f3dc1021 # v1.50.0
         with:
           target: ${{ matrix.platform.target }}
           args: --release --out dist --find-interpreter
@@ -115,7 +115,7 @@ jobs:
           python-version: 3.x
           architecture: ${{ matrix.platform.target }}
       - name: Build wheels
-        uses: PyO3/maturin-action@86b9d133d34bc1b40018696f782949dac11bd380 # v1.49.4
+        uses: PyO3/maturin-action@b1bd829e37fef14c63f19162034228a2f3dc1021 # v1.50.0
         with:
           target: ${{ matrix.platform.target }}
           args: --release --out dist --find-interpreter
@@ -143,7 +143,7 @@ jobs:
         with:
           python-version: 3.x
       - name: Build wheels
-        uses: PyO3/maturin-action@86b9d133d34bc1b40018696f782949dac11bd380 # v1.49.4
+        uses: PyO3/maturin-action@b1bd829e37fef14c63f19162034228a2f3dc1021 # v1.50.0
         with:
           target: ${{ matrix.platform.target }}
           args: --release --out dist --find-interpreter
@@ -164,7 +164,7 @@ jobs:
         with:
           python-version: 3.x
       - name: Build sdist
-        uses: PyO3/maturin-action@86b9d133d34bc1b40018696f782949dac11bd380 # v1.49.4
+        uses: PyO3/maturin-action@b1bd829e37fef14c63f19162034228a2f3dc1021 # v1.50.0
         with:
           command: sdist
           args: --out dist
