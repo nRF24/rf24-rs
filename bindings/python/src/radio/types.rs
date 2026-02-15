@@ -187,6 +187,7 @@ pub enum FifoState {
     Occupied,
 }
 
+#[cfg(target_os = "linux")]
 impl FifoState {
     pub fn into_inner(self) -> rf24::FifoState {
         match self {

@@ -37,7 +37,6 @@ uv sync
 ```
 
 Append `--no-dev` (or set `UV_NO_DEV=1` environment variable) for environments with limited disk space (eg. Raspberry Pi machine).
-As of [uv] v0.8.7, the environment variable
 
 [uv]: https://docs.astral.sh/uv
 
