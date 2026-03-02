@@ -94,7 +94,7 @@ jobs:
         with:
           version: 0.14.1
       - name: Install cargo-binstall
-        uses: cargo-bins/cargo-binstall@ec80feb9e330418e014932e5982599255eff6dbb # v1.17.4
+        uses: cargo-bins/cargo-binstall@bc432b49369a3f25c8c8b19578a82060c18a5dd6 # v1.17.6
         if: ${{ contains(matrix.settings.target, 'musl') }}
       - name: Install cargo-zigbuild
         run: cargo binstall -y cargo-zigbuild
@@ -111,14 +111,14 @@ jobs:
         run: ${{ matrix.settings.build }}
         shell: bash
       - name: Upload native module as artifact
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: bindings-${{ matrix.settings.target }}
           path: ${{ env.ARTIFACT_PATH }}
           if-no-files-found: error
       - name: Upload generated index.* as artifact
         if: matrix.settings.target == 'armv7-unknown-linux-gnueabihf'
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: generated-index
           path: bindings/node/index.*
@@ -167,7 +167,7 @@ jobs:
             rm -rf target
             rm -rf .yarn/cache
       - name: Upload artifact
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: bindings-freebsd
           path: ${{ env.ARTIFACT_PATH }}
@@ -191,19 +191,19 @@ jobs:
       - name: Install dependencies
         run: yarn install
       - name: Download macOS x64 artifact
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v8
         with:
           name: bindings-x86_64-apple-darwin
           path: bindings/node
       - name: Download macOS arm64 artifact
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v8
         with:
           name: bindings-aarch64-apple-darwin
           path: bindings/node
       - name: Combine binaries
         run: yarn universal
       - name: Upload artifact
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: bindings-universal-apple-darwin
           path: ${{ env.ARTIFACT_PATH }}
@@ -231,12 +231,12 @@ jobs:
       - name: Install dependencies
         run: yarn install
       - name: Download native artifacts
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v8
         with:
           pattern: bindings-*
           path: bindings/node/artifacts
       - name: Download generated index artifact
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v8
         with:
           name: generated-index
           path: bindings/node
