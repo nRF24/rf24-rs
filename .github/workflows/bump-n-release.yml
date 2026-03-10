@@ -36,6 +36,8 @@ permissions: {}
 
 jobs:
   release-version-bump:
+    environment:
+      name: deployment-staging
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
