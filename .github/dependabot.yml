@@ -9,6 +9,8 @@ updates:
     directory: /
     schedule:
       interval: "weekly"
+    cooldown:
+      default-days: 7
     groups:
       actions:
         patterns:
@@ -17,6 +19,8 @@ updates:
     directory: /
     schedule:
       interval: "weekly"
+    cooldown:
+      default-days: 7
     ignore:
       - dependency-name: bitfield-struct
         versions: ['>=0.10.0']
@@ -28,6 +32,8 @@ updates:
     directory: /
     schedule:
       interval: "weekly"
+    cooldown:
+      default-days: 7
     ignore:
       - dependency-name: opengpio
         versions: ['>=2.0.0']

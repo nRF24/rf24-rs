@@ -54,8 +54,26 @@ jobs:
         run: nur test --profile ci
       - name: Generate coverage reports
         run: nur test lcov
+      - name: Upload coverage as artifact
+        uses: actions/upload-artifact@v7
+        with:
+          path: lcov.info
+          name: lcov.info
+
+  coverage:
+    needs: test
+    runs-on: ubuntu-latest
+    environment:
+      name: test-coverage
+      url: https://app.codecov.io/gh/nRF24/rf24-rs
+    steps:
+      - name: Download coverage artifact
+        uses: actions/download-artifact@v8
+        with:
+          name: lcov.info
       - uses: codecov/codecov-action@671740ac38dd9b0130fbe1cec585b89eea48d3de # v5.5.2
         if: github.repository == 'nRF24/rf24-rs'
+        id: codecov
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           files: lcov.info
