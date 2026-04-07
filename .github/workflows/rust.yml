@@ -35,7 +35,7 @@ jobs:
       - name: Setup Rust
         run: rustup update --no-self-update
       - name: Install cargo-binstall
-        uses: cargo-bins/cargo-binstall@bc432b49369a3f25c8c8b19578a82060c18a5dd6 # v1.17.6
+        uses: cargo-bins/cargo-binstall@0b24824336e2b3800b0f89d9e08b2c08bfa3dcdd # v1.17.9
       - name: Install cargo-llvm-cov, cargo-nextest, and nur
         env:
           GITHUB_TOKEN: ${{ github.token }}
@@ -67,11 +67,14 @@ jobs:
       name: test-coverage
       url: https://app.codecov.io/gh/nRF24/rf24-rs
     steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
       - name: Download coverage artifact
         uses: actions/download-artifact@v8
         with:
           name: lcov.info
-      - uses: codecov/codecov-action@671740ac38dd9b0130fbe1cec585b89eea48d3de # v5.5.2
+      - uses: codecov/codecov-action@57e3a136b779b570ffcdbf80b3bdc90e7fab3de2 # v6.0.0
         if: github.repository == 'nRF24/rf24-rs'
         id: codecov
         with:
@@ -91,7 +94,7 @@ jobs:
         with:
           persist-credentials: false
       - name: Setup nushell
-        uses: hustcer/setup-nu@920172d92eb04671776f3ba69d605d3b09351c30 # v3.22
+        uses: hustcer/setup-nu@92c296ba1ba2ba04cc948ab64ddefe192dc13f0c # v3.23
         with:
           version: ${{ vars.NU_SHELL_VERSION || '*' }}
       - name: Get pkg from tag
@@ -104,7 +107,7 @@ jobs:
       - name: Install Rust
         run: rustup update stable --no-self-update
       - name: Establish provenance
-        uses: rust-lang/crates-io-auth-action@b7e9a28eded4986ec6b1fa40eeee8f8f165559ec # v1.0.3
+        uses: rust-lang/crates-io-auth-action@bbd81622f20ce9e2dd9622e3218b975523e45bbe # v1.0.4
         id: auth
       - run: cargo publish -p ${PKG_NAME}
         env:

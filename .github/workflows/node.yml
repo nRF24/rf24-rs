@@ -94,7 +94,7 @@ jobs:
         with:
           version: 0.14.1
       - name: Install cargo-binstall
-        uses: cargo-bins/cargo-binstall@bc432b49369a3f25c8c8b19578a82060c18a5dd6 # v1.17.6
+        uses: cargo-bins/cargo-binstall@0b24824336e2b3800b0f89d9e08b2c08bfa3dcdd # v1.17.9
         if: ${{ contains(matrix.settings.target, 'musl') }}
       - name: Install cargo-zigbuild
         run: cargo binstall -y cargo-zigbuild
