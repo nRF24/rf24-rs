@@ -67,6 +67,9 @@ jobs:
       name: test-coverage
       url: https://app.codecov.io/gh/nRF24/rf24-rs
     steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
       - name: Download coverage artifact
         uses: actions/download-artifact@v8
         with:
