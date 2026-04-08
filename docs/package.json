@@ -3,8 +3,9 @@
     "private": true,
     "version": "0.1.0",
     "devDependencies": {
-        "typedoc": "0.28.17",
-        "typescript": "5.9.3"
+        "@types/node": "25.5.0",
+        "typedoc": "0.28.18",
+        "typescript": "6.0.2"
     },
     "license": "MIT",
     "scripts": {
