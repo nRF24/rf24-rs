@@ -29,7 +29,7 @@ jobs:
   test:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v6.0.2
         with:
           persist-credentials: false
       - name: Setup Rust
@@ -67,7 +67,7 @@ jobs:
       name: test-coverage
       url: https://app.codecov.io/gh/nRF24/rf24-rs
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v6.0.2
         with:
           persist-credentials: false
       - name: Download coverage artifact
@@ -90,7 +90,7 @@ jobs:
       # needed for trusted publishing
       id-token: write
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v6.0.2
         with:
           persist-credentials: false
       - name: Setup nushell

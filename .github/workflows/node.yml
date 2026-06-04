@@ -64,7 +64,7 @@ jobs:
     name: build ${{ matrix.settings.target }}
     runs-on: ${{ matrix.settings.host }}
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v6.0.2
         with:
           persist-credentials: false
       - name: Setup node
@@ -128,7 +128,7 @@ jobs:
     runs-on: ubuntu-latest
     name: build FreeBSD
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v6.0.2
         with:
           persist-credentials: false
       - name: Build
@@ -179,7 +179,7 @@ jobs:
       - build
     runs-on: macos-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v6.0.2
         with:
           persist-credentials: false
       - name: Setup node
@@ -219,7 +219,7 @@ jobs:
       - build-freebsd
       - universal-macOS
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v6.0.2
         with:
           persist-credentials: false
       - name: Setup node
