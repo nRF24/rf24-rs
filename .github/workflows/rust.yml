@@ -29,13 +29,13 @@ jobs:
   test:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v6.0.3
         with:
           persist-credentials: false
       - name: Setup Rust
         run: rustup update --no-self-update
       - name: Install cargo-binstall
-        uses: cargo-bins/cargo-binstall@aaa84a43aec4955a42c5ffc65d258961e39f276e # v1.19.1
+        uses: cargo-bins/cargo-binstall@30b5ca8b54e1dcffd9548bc87ede1531310fdc67 # v1.20.0
       - name: Install cargo-llvm-cov, cargo-nextest, and nur
         env:
           GITHUB_TOKEN: ${{ github.token }}
@@ -67,14 +67,14 @@ jobs:
       name: test-coverage
       url: https://app.codecov.io/gh/nRF24/rf24-rs
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v6.0.3
         with:
           persist-credentials: false
       - name: Download coverage artifact
         uses: actions/download-artifact@v8
         with:
           name: lcov.info
-      - uses: codecov/codecov-action@e79a6962e0d4c0c17b229090214935d2e33f8354 # v6.0.1
+      - uses: codecov/codecov-action@fb8b3582c8e4def4969c97caa2f19720cb33a72f # v7.0.0
         if: github.repository == 'nRF24/rf24-rs'
         id: codecov
         with:
@@ -90,11 +90,11 @@ jobs:
       # needed for trusted publishing
       id-token: write
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v6.0.3
         with:
           persist-credentials: false
       - name: Setup nushell
-        uses: hustcer/setup-nu@92c296ba1ba2ba04cc948ab64ddefe192dc13f0c # v3.23
+        uses: hustcer/setup-nu@ccd5bb5426b05a32009c2ba967946231f3919c97 # v3.25
         with:
           version: ${{ vars.NU_SHELL_VERSION || '*' }}
       - name: Get pkg from tag
@@ -107,7 +107,7 @@ jobs:
       - name: Install Rust
         run: rustup update stable --no-self-update
       - name: Establish provenance
-        uses: rust-lang/crates-io-auth-action@bbd81622f20ce9e2dd9622e3218b975523e45bbe # v1.0.4
+        uses: rust-lang/crates-io-auth-action@c6f97d42243bad5fab37ca0427f495c86d5b1a18 # v1.0.5
         id: auth
       - run: cargo publish -p ${PKG_NAME}
         env:
