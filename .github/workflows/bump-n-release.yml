@@ -40,7 +40,7 @@ jobs:
       name: deployment-staging
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           token: ${{ secrets.BUMP_N_RELEASE }}
           fetch-depth: 0
@@ -50,7 +50,7 @@ jobs:
       - run: rustup update --no-self-update
 
       - name: Install cargo-binstall
-        uses: cargo-bins/cargo-binstall@aaa84a43aec4955a42c5ffc65d258961e39f276e # v1.19.1
+        uses: cargo-bins/cargo-binstall@732870f031d2fb36309d0deaf36abcc704a7be65 # v1.20.1
       - name: Install git-cliff and nushell
         run: cargo binstall -y git-cliff nu@${NU_SHELL_VERSION}
         env:
