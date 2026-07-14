@@ -68,7 +68,7 @@ jobs:
         with:
           persist-credentials: false
       - name: Setup node
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@v6.4.0
         with:
           node-version: 22
           cache: ${{ !startsWith(github.ref, 'refs/tags/') && 'yarn' || '' }} # zizmor: ignore[cache-poisoning]
@@ -183,7 +183,7 @@ jobs:
         with:
           persist-credentials: false
       - name: Setup node
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@v6.4.0
         with:
           node-version: 20
           cache: ${{ !startsWith(github.ref, 'refs/tags/') && 'yarn' || '' }} # zizmor: ignore[cache-poisoning]
@@ -223,7 +223,7 @@ jobs:
         with:
           persist-credentials: false
       - name: Setup node
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@v6.4.0
         with:
           node-version: 24
           cache: ${{ !startsWith(github.ref, 'refs/tags/') && 'yarn' || '' }} # zizmor: ignore[cache-poisoning]

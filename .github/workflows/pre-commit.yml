@@ -20,7 +20,7 @@ jobs:
         id: python-setup
         with:
           python-version: 3.x
-      - uses: astral-sh/setup-uv@fac544c07dec837d0ccb6301d7b5580bf5edae39 # v8.2.0
+      - uses: astral-sh/setup-uv@f98e06938123ccabd21905ea5d0069192241f9f1 # v8.3.1
         with:
           enable-cache: true
       - name: Cache pre-commit environments
@@ -62,7 +62,7 @@ jobs:
         with:
           persist-credentials: false
       - name: Setup node
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@v6.4.0
         with:
           node-version: 24
           cache: yarn
@@ -111,7 +111,7 @@ jobs:
         env:
           PR_TITLE: "${{ steps.get-title.outputs.title }}"
         run: echo "${PR_TITLE}" | committed --config .config/committed.toml --commit-file -
-      - uses: actions/setup-node@v6
+      - uses: actions/setup-node@v6.4.0
         with:
           node-version: latest
       - name: spell check
