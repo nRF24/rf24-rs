@@ -68,7 +68,7 @@ jobs:
         with:
           persist-credentials: false
       - name: Setup node
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@v7
         with:
           node-version: 22
           cache: ${{ !startsWith(github.ref, 'refs/tags/') && 'yarn' || '' }} # zizmor: ignore[cache-poisoning]
@@ -94,7 +94,7 @@ jobs:
         with:
           version: 0.14.1
       - name: Install cargo-binstall
-        uses: cargo-bins/cargo-binstall@732870f031d2fb36309d0deaf36abcc704a7be65 # v1.20.1
+        uses: cargo-bins/cargo-binstall@ead08b90bd7b2e6d81963fb9cf0b7239f66d5db4 # v1.21.0
         if: ${{ contains(matrix.settings.target, 'musl') }}
       - name: Install cargo-zigbuild
         run: cargo binstall -y cargo-zigbuild
@@ -183,7 +183,7 @@ jobs:
         with:
           persist-credentials: false
       - name: Setup node
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@v7
         with:
           node-version: 20
           cache: ${{ !startsWith(github.ref, 'refs/tags/') && 'yarn' || '' }} # zizmor: ignore[cache-poisoning]
@@ -223,7 +223,7 @@ jobs:
         with:
           persist-credentials: false
       - name: Setup node
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@v7
         with:
           node-version: 24
           cache: ${{ !startsWith(github.ref, 'refs/tags/') && 'yarn' || '' }} # zizmor: ignore[cache-poisoning]
