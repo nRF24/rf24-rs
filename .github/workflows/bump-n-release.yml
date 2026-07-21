@@ -50,7 +50,7 @@ jobs:
       - run: rustup update --no-self-update
 
       - name: Install cargo-binstall
-        uses: cargo-bins/cargo-binstall@732870f031d2fb36309d0deaf36abcc704a7be65 # v1.20.1
+        uses: cargo-bins/cargo-binstall@ead08b90bd7b2e6d81963fb9cf0b7239f66d5db4 # v1.21.0
       - name: Install git-cliff and nushell
         run: cargo binstall -y git-cliff nu@${NU_SHELL_VERSION}
         env:
@@ -63,7 +63,7 @@ jobs:
           --features set-version
           cargo-edit
 
-      - uses: actions/setup-node@v6
+      - uses: actions/setup-node@v7
         if: inputs.package == 'rf24-node'
         with:
           node-version: 24.x
