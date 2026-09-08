@@ -94,7 +94,7 @@ jobs:
         with:
           version: 0.14.1
       - name: Install cargo-binstall
-        uses: cargo-bins/cargo-binstall@e00d2c94cc0067b77737821097a62d91c0301baa # v1.21.1
+        uses: cargo-bins/cargo-binstall@75b4bfae1b2c753a6806bbce6e6cb89b602de33c # v1.22.0
         if: ${{ contains(matrix.settings.target, 'musl') }}
       - name: Install cargo-zigbuild
         run: cargo binstall -y cargo-zigbuild
@@ -133,7 +133,7 @@ jobs:
           persist-credentials: false
       - name: Build
         id: build
-        uses: cross-platform-actions/action@24ef01df165c76df1ed2b9f9e9212e78dc2fc963 # v1.4.0
+        uses: cross-platform-actions/action@faa0c6197e94aacf1c5956460152c8380d3560a5 # v1.5.0
         env:
           DEBUG: napi:*
           RUSTUP_IO_THREADS: 1
