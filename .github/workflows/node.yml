@@ -131,7 +131,7 @@ jobs:
       - uses: actions/checkout@v7
         with:
           persist-credentials: false
-      - name: Build
+      - name: Init build env
         id: build
         uses: cross-platform-actions/action@24ef01df165c76df1ed2b9f9e9212e78dc2fc963 # v1.4.0
         env:
@@ -144,28 +144,30 @@ jobs:
           cpu_count: 3
           environment_variables: DEBUG RUSTUP_IO_THREADS
           shell: bash
-          run: |
-            sudo pkg install -y -f curl node libnghttp2 npm cmake
-            sudo npm install -g yarn --ignore-scripts
-            curl https://sh.rustup.rs -sSf --output rustup.sh
-            sh rustup.sh -y --profile minimal --default-toolchain stable
-            source "$HOME/.cargo/env"
-            echo "~~~~ rustc --version ~~~~"
-            rustc --version
-            echo "~~~~ node -v ~~~~"
-            node -v
-            echo "~~~~ yarn --version ~~~~"
-            yarn --version
-            pwd
-            ls -lah
-            whoami
-            env
-            freebsd-version
-            yarn install
-            yarn build
-            rm -rf node_modules
-            rm -rf target
-            rm -rf .yarn/cache
+      - name: Build
+        shell: cpa.sh {0}
+        run: |
+          sudo pkg install -y -f curl node libnghttp2 npm cmake
+          sudo npm install -g yarn --ignore-scripts
+          curl https://sh.rustup.rs -sSf --output rustup.sh
+          sh rustup.sh -y --profile minimal --default-toolchain stable
+          source "$HOME/.cargo/env"
+          echo "~~~~ rustc --version ~~~~"
+          rustc --version
+          echo "~~~~ node -v ~~~~"
+          node -v
+          echo "~~~~ yarn --version ~~~~"
+          yarn --version
+          pwd
+          ls -lah
+          whoami
+          env
+          freebsd-version
+          yarn install
+          yarn build
+          rm -rf node_modules
+          rm -rf target
+          rm -rf .yarn/cache
       - name: Upload artifact
         uses: actions/upload-artifact@v7
         with:
@@ -173,41 +175,42 @@ jobs:
           path: ${{ env.ARTIFACT_PATH }}
           if-no-files-found: error
 
-  universal-macOS:
-    name: Build universal macOS binary
-    needs:
-      - build
-    runs-on: macos-latest
-    steps:
-      - uses: actions/checkout@v7
-        with:
-          persist-credentials: false
-      - name: Setup node
-        uses: actions/setup-node@v7
-        with:
-          node-version: 20
-          cache: ${{ !startsWith(github.ref, 'refs/tags/') && 'yarn' || '' }} # zizmor: ignore[cache-poisoning]
-          package-manager-cache: ${{ !startsWith(github.ref, 'refs/tags/') }} # zizmor: ignore[cache-poisoning]
-      - name: Install dependencies
-        run: yarn install
-      - name: Download macOS x64 artifact
-        uses: actions/download-artifact@v8
-        with:
-          name: bindings-x86_64-apple-darwin
-          path: bindings/node
-      - name: Download macOS arm64 artifact
-        uses: actions/download-artifact@v8
-        with:
-          name: bindings-aarch64-apple-darwin
-          path: bindings/node
-      - name: Combine binaries
-        run: yarn universal
-      - name: Upload artifact
-        uses: actions/upload-artifact@v7
-        with:
-          name: bindings-universal-apple-darwin
-          path: ${{ env.ARTIFACT_PATH }}
-          if-no-files-found: error
+  # universal-macOS:
+  #   name: Build universal macOS binary
+  #   needs:
+  #     - build
+  #   runs-on: macos-latest
+  #   steps:
+  #     - uses: actions/checkout@v7
+  #       with:
+  #         persist-credentials: false
+  #     - name: Setup node
+  #       uses: actions/setup-node@v7
+  #       with:
+  #         node-version: 20
+  #         cache: ${{ !startsWith(github.ref, 'refs/tags/') && 'yarn' || '' }} # zizmor: ignore[cache-poisoning]
+  #         package-manager-cache: ${{ !startsWith(github.ref, 'refs/tags/') }} # zizmor: ignore[cache-poisoning]
+  #     - name: Install dependencies
+  #       run: yarn install
+  #     - name: Download macOS x64 artifact
+  #       uses: actions/download-artifact@v8
+  #       with:
+  #         name: bindings-x86_64-apple-darwin
+  #         path: bindings/node
+  #     - name: Download macOS arm64 artifact
+  #       uses: actions/download-artifact@v8
+  #       with:
+  #         name: bindings-aarch64-apple-darwin
+  #         path: bindings/node
+  #     - name: Combine binaries
+  #       run: yarn universal
+  #     - name: Upload artifact
+  #       uses: actions/upload-artifact@v7
+  #       with:
+  #         name: bindings-universal-apple-darwin
+  #         path: ${{ env.ARTIFACT_PATH }}
+  #         if-no-files-found: error
+
   publish:
     name: Publish
     runs-on: ubuntu-latest
@@ -217,7 +220,7 @@ jobs:
     needs:
       - build
       - build-freebsd
-      - universal-macOS
+      # - universal-macOS
     steps:
       - uses: actions/checkout@v7
         with:
