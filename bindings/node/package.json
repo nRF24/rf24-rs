@@ -32,8 +32,7 @@
       "armv7-unknown-linux-gnueabihf",
       "aarch64-unknown-linux-musl",
       "aarch64-pc-windows-msvc",
-      "x86_64-unknown-freebsd",
-      "universal-apple-darwin"
+      "x86_64-unknown-freebsd"
     ]
   },
   "license": "MIT",
