@@ -7,7 +7,7 @@ use pyo3::prelude::*;
 ///     - [`RF24.set_status_flags()`][rf24_py.RF24.set_status_flags]
 ///     - [`RF24.clear_status_flags()`][rf24_py.RF24.clear_status_flags]
 ///     - [`RF24.update()`][rf24_py.RF24.update]
-#[pyclass(frozen, get_all, module = "rf24_py")]
+#[pyclass(frozen, get_all, module = "rf24_py", from_py_object)]
 #[derive(Default, Clone)]
 pub struct StatusFlags {
     /// A flag to describe if RX Data Ready to read.
@@ -78,7 +78,7 @@ impl StatusFlags {
 ///         | nRF24L01 | Si24R1 with<br>LNA Enabled | Si24R1 with<br>LNA Disabled |
 ///         | :-------:|:--------------------------:|:---------------------------:|
 ///         | 0 dBm | 7 dBm | 4 dBm |
-#[pyclass(eq, eq_int, module = "rf24_py")]
+#[pyclass(eq, eq_int, module = "rf24_py", from_py_object)]
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub enum PaLevel {
     Min,
@@ -112,7 +112,7 @@ impl PaLevel {
 ///     Mbps1: Represents 1 Mbps
 ///     Mbps2: Represents 2 Mbps
 ///     Kbps250: Represents 250 Kbps
-#[pyclass(eq, eq_int, module = "rf24_py")]
+#[pyclass(eq, eq_int, module = "rf24_py", from_py_object)]
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub enum DataRate {
     Mbps1,
@@ -145,7 +145,7 @@ impl DataRate {
 ///     Disabled: Represents no CRC checksum is used.
 ///     Bit8: Represents CRC 8 bit checksum is used.
 ///     Bit16: Represents CRC 16 bit checksum is used.
-#[pyclass(name = "CrcLength", eq, eq_int, module = "rf24_py")]
+#[pyclass(name = "CrcLength", eq, eq_int, module = "rf24_py", from_py_object)]
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub enum CrcLength {
     Disabled,
@@ -179,7 +179,7 @@ impl CrcLength {
 ///     Full: Represent the state of a FIFO when it is full.
 ///     Empty: Represent the state of a FIFO when it is empty.
 ///     Occupied: Represent the state of a FIFO when it is not full but not empty either.
-#[pyclass(eq, eq_int, module = "rf24_py")]
+#[pyclass(eq, eq_int, module = "rf24_py", from_py_object)]
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub enum FifoState {
     Full,
@@ -187,6 +187,7 @@ pub enum FifoState {
     Occupied,
 }
 
+#[cfg(target_os = "linux")]
 impl FifoState {
     pub fn into_inner(self) -> rf24::FifoState {
         match self {
