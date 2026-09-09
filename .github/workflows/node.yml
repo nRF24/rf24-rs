@@ -175,42 +175,6 @@ jobs:
           path: ${{ env.ARTIFACT_PATH }}
           if-no-files-found: error
 
-  # universal-macOS:
-  #   name: Build universal macOS binary
-  #   needs:
-  #     - build
-  #   runs-on: macos-latest
-  #   steps:
-  #     - uses: actions/checkout@v7
-  #       with:
-  #         persist-credentials: false
-  #     - name: Setup node
-  #       uses: actions/setup-node@v7
-  #       with:
-  #         node-version: 20
-  #         cache: ${{ !startsWith(github.ref, 'refs/tags/') && 'yarn' || '' }} # zizmor: ignore[cache-poisoning]
-  #         package-manager-cache: ${{ !startsWith(github.ref, 'refs/tags/') }} # zizmor: ignore[cache-poisoning]
-  #     - name: Install dependencies
-  #       run: yarn install
-  #     - name: Download macOS x64 artifact
-  #       uses: actions/download-artifact@v8
-  #       with:
-  #         name: bindings-x86_64-apple-darwin
-  #         path: bindings/node
-  #     - name: Download macOS arm64 artifact
-  #       uses: actions/download-artifact@v8
-  #       with:
-  #         name: bindings-aarch64-apple-darwin
-  #         path: bindings/node
-  #     - name: Combine binaries
-  #       run: yarn universal
-  #     - name: Upload artifact
-  #       uses: actions/upload-artifact@v7
-  #       with:
-  #         name: bindings-universal-apple-darwin
-  #         path: ${{ env.ARTIFACT_PATH }}
-  #         if-no-files-found: error
-
   publish:
     name: Publish
     runs-on: ubuntu-latest
@@ -220,7 +184,6 @@ jobs:
     needs:
       - build
       - build-freebsd
-      # - universal-macOS
     steps:
       - uses: actions/checkout@v7
         with:
