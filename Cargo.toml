@@ -9,6 +9,11 @@ homepage = "https://nRF24.github.io/rf24-rs"
 edition = "2021"
 license = "MIT"
 
+[workspace.dependencies]
+linux-embedded-hal = { version = "0.5.0", default-features = false, features = ["gpio_cdev", "spi"] }
+nix = "0.31.3"
+bitfield-struct = "0.9.5"
+
 [profile.release]
 lto = true
 strip = "symbols"

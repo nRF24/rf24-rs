@@ -12,7 +12,7 @@ rf24-rs = {path = "../../crates/rf24-rs", version = "0.3.1"}
 rf24ble-rs = {path = "../../crates/rf24ble-rs", version = "0.1.4"}
 embedded-hal = "1.0.0"
 anyhow = {version = "1.0.100", default-features = false}
-linux-embedded-hal = {version = "0.4.1", optional = true, default-features = false, features = ["gpio_cdev", "spi"]}
+linux-embedded-hal = {workspace = true, optional = true, default-features = false, features = ["gpio_cdev", "spi"]}
 
 [features]
 default = ["linux"]

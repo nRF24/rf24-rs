@@ -19,5 +19,5 @@ rf24-rs = { path = "../../crates/rf24-rs", features = ["std"]}
 rf24ble-rs = { path = "../../crates/rf24ble-rs", features = ["std"] }
 
 [target.'cfg(target_os = "linux")'.dependencies]
-linux-embedded-hal = {version = "0.4.1", default-features = false, features = ["gpio_cdev", "spi"]}
-nix = { version = "0.30.1", features = ["time"]}
+linux-embedded-hal.workspace = true
+nix = { workspace = true, features = ["time"] }
