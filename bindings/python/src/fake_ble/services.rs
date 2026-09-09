@@ -8,7 +8,7 @@ use pyo3::prelude::*;
 ///
 /// Conforms to Battery Level format as defined in
 /// [GATT Specifications Supplement](https://www.bluetooth.org/DocMan/handlers/DownloadDoc.ashx?doc_id=502132&vId=542989).
-#[pyclass(module = "rf24_py")]
+#[pyclass(module = "rf24_py", from_py_object)]
 #[derive(Debug, Clone, Copy)]
 pub struct BatteryService {
     inner: rf24ble::services::BatteryService,
@@ -45,7 +45,7 @@ impl BatteryService {
 ///
 /// Conforms to the Health Thermometer Measurement format as defined in
 /// [GATT Specifications Supplement](https://www.bluetooth.org/DocMan/handlers/DownloadDoc.ashx?doc_id=502132&vId=542989).
-#[pyclass(module = "rf24_py")]
+#[pyclass(module = "rf24_py", from_py_object)]
 #[derive(Debug, Clone, Copy)]
 pub struct TemperatureService {
     inner: rf24ble::services::TemperatureService,
@@ -83,7 +83,7 @@ impl TemperatureService {
 /// Conforms to specifications defined by [Google's EddyStone][eddystone] data format.
 ///
 /// [eddystone]: https://github.com/google/eddystone
-#[pyclass(module = "rf24_py")]
+#[pyclass(module = "rf24_py", from_py_object)]
 #[derive(Debug, Clone, Copy)]
 pub struct UrlService {
     inner: rf24ble::services::UrlService,
