@@ -32,14 +32,13 @@
       "armv7-unknown-linux-gnueabihf",
       "aarch64-unknown-linux-musl",
       "aarch64-pc-windows-msvc",
-      "x86_64-unknown-freebsd",
-      "universal-apple-darwin"
+      "x86_64-unknown-freebsd"
     ]
   },
   "license": "MIT",
   "devDependencies": {
-    "@napi-rs/cli": "3.7.4",
-    "@types/node": "26.1.1",
+    "@napi-rs/cli": "3.8.6",
+    "@types/node": "26.2.0",
     "prettier": "3.9.6"
   },
   "engines": {
@@ -53,7 +52,7 @@
     "universal": "napi universalize",
     "version": "napi version"
   },
-  "packageManager": "yarn@4.11.0",
+  "packageManager": "yarn@4.18.0",
   "keywords": [
     "nrf24l01",
     "nRF24L01+",
