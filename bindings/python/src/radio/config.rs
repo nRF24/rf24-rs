@@ -40,7 +40,7 @@ use std::borrow::Cow;
 ///
 /// [^1]: The RX address default value is the same as pipe 0 default TX address.
 /// [^2]: Remember, pipes 2 - 5 share the same 4 LSBytes as the address on pipe 1.
-#[pyclass(module = "rf24_py")]
+#[pyclass(module = "rf24_py", from_py_object)]
 #[derive(Debug, Clone, Copy)]
 pub struct RadioConfig {
     inner: rf24::radio::RadioConfig,
