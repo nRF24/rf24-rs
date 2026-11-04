@@ -217,6 +217,8 @@ impl Display for FifoState {
 ///
 /// To instantiate an object with flags that have different values:
 /// ```
+/// use rf24::StatusFlags;
+///
 /// let flags = StatusFlags::default() // all flags are false
 ///     .with_rx_dr(true); // assert only `rx_dr` flags
 /// ```
