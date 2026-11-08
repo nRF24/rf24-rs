@@ -1,25 +1,25 @@
 from enum import Enum
 
 class PaLevel(Enum):
-    Min: "PaLevel" = ...  # type: ignore[misc]
-    Low: "PaLevel" = ...  # type: ignore[misc]
-    High: "PaLevel" = ...  # type: ignore[misc]
-    Max: "PaLevel" = ...  # type: ignore[misc]
+    Min: PaLevel = ...  # type: ignore[misc]
+    Low: PaLevel = ...  # type: ignore[misc]
+    High: PaLevel = ...  # type: ignore[misc]
+    Max: PaLevel = ...  # type: ignore[misc]
 
 class CrcLength(Enum):
-    Disabled: "CrcLength" = ...  # type: ignore[misc]
-    Bit8: "CrcLength" = ...  # type: ignore[misc]
-    Bit16: "CrcLength" = ...  # type: ignore[misc]
+    Disabled: CrcLength = ...  # type: ignore[misc]
+    Bit8: CrcLength = ...  # type: ignore[misc]
+    Bit16: CrcLength = ...  # type: ignore[misc]
 
 class FifoState(Enum):
-    Full: "FifoState" = ...  # type: ignore[misc]
-    Empty: "FifoState" = ...  # type: ignore[misc]
-    Occupied: "FifoState" = ...  # type: ignore[misc]
+    Full: FifoState = ...  # type: ignore[misc]
+    Empty: FifoState = ...  # type: ignore[misc]
+    Occupied: FifoState = ...  # type: ignore[misc]
 
 class DataRate(Enum):
-    Mbps1: "DataRate" = ...  # type: ignore[misc]
-    Mbps2: "DataRate" = ...  # type: ignore[misc]
-    Kbps250: "DataRate" = ...  # type: ignore[misc]
+    Mbps1: DataRate = ...  # type: ignore[misc]
+    Mbps2: DataRate = ...  # type: ignore[misc]
+    Kbps250: DataRate = ...  # type: ignore[misc]
 
 class StatusFlags:
     def __init__(
@@ -215,7 +215,7 @@ class TemperatureService:
     @property
     def data(self) -> float: ...
     @data.setter
-    def data(self, value: float | int) -> None: ...
+    def data(self, value: float) -> None: ...
     @property
     def buffer(self) -> bytes: ...
 

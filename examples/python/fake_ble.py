@@ -3,15 +3,16 @@ This example uses the nRF24L01 as a 'fake' BLE Beacon
 """
 
 import time
+
 from rf24_py import (
     RF24,
-    FakeBle,
-    ble_config,
-    UrlService,
     BatteryService,
-    TemperatureService,
-    PaLevel,
+    FakeBle,
     FifoState,
+    PaLevel,
+    TemperatureService,
+    UrlService,
+    ble_config,
 )
 
 
@@ -142,7 +143,7 @@ class App:
                 # fetch 1 payload from RX FIFO
                 received = self.ble.read()
                 if received is not None:
-                    mac = ":".join(["%02X" % x for x in received.mac_address])
+                    mac = ":".join([f"{x:02X}" for x in received.mac_address])
                     print("Received payload from MAC address", mac)
                     if received.short_name:
                         print("\tDevice name:", received.short_name)

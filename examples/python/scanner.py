@@ -27,8 +27,8 @@ See documentation at https://nRF24.github.io/rf24-rs
 """
 
 import time
-from typing import Optional
-from rf24_py import RF24, CrcLength, FifoState, DataRate
+
+from rf24_py import RF24, CrcLength, DataRate, FifoState
 
 print(__file__)  # print example name
 
@@ -82,10 +82,10 @@ class App:
         # print the vertical header of channel numbers
         print("0" * 100 + "1" * 26)
         for i in range(13):
-            print(str(i % 10) * (10 if i < 12 else 6), sep="", end="")
-        print("")  # endl
+            print(str(i % 10) * (10 if i < 12 else 6), end="")
+        print()  # endl
         for i in range(126):
-            print(str(i % 10), sep="", end="")
+            print(str(i % 10), end="")
         print("\n" + "~" * 126)
 
         signals = [0] * 126  # store the signal count for each channel
@@ -110,7 +110,7 @@ class App:
             # output the signal counts per channel
             sig_cnt = signals[curr_channel]
             print(
-                ("%X" % sig_cnt) if sig_cnt else "-",
+                (f"{sig_cnt:X}") if sig_cnt else "-",
                 end="",
                 flush=curr_channel < (MAX_CHANNELS - 1),
             )
@@ -131,10 +131,10 @@ class App:
         # finish printing results and end with a new line
         for channel in range(curr_channel, MAX_CHANNELS):
             sig_cnt = signals[channel]
-            print(("%X" % sig_cnt) if sig_cnt else "-", end="")
-        print("")
+            print((f"{sig_cnt:X}") if sig_cnt else "-", end="")
+        print()
 
-    def noise(self, timeout: float = 1, channel: Optional[int] = None):
+    def noise(self, timeout: float = 1, channel: int | None = None):
         """print a stream of detected noise for duration of time.
 
         :param float timeout: The number of seconds to scan for ambient noise.
@@ -143,7 +143,7 @@ class App:
         """
 
         def hex_data_str(data: bytes) -> str:
-            return " ".join(["%02x" % b for b in data])
+            return " ".join([f"{b:02x}" for b in data])
 
         if channel is not None:
             self.radio.channel = channel

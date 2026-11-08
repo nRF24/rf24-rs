@@ -13,12 +13,13 @@ which requires a Linux to compile.
 """
 
 import ast
-import platform
-from typing import cast
-from types import ModuleType
-import griffe
 import importlib
 import logging
+import platform
+from types import ModuleType
+from typing import cast
+
+import griffe
 from mkdocs.utils import log
 
 LOGGER = logging.getLogger("pyo3_merge_native_docs")
@@ -70,9 +71,9 @@ class NativeDocstring(griffe.Extension):
     ):
         try:
             return getattr(parent, member)
-        except AttributeError as exc:
+        except AttributeError:
             if platform.system() == "Linux":
-                raise exc
+                raise
             domain = self.mod if isinstance(parent, ModuleType) else parent.name  # type: ignore[union-attr]
             sibling = member
             if child_member:
@@ -107,9 +108,7 @@ class NativeDocstring(griffe.Extension):
         if isinstance(node, griffe.ObjectNode):
             return  # any docstring fetched from pure python should be adequate
         func_parent = node.parent  # type: ignore[attr-defined,union-attr]
-        if not (
-            isinstance(func_parent, ast.ClassDef) or isinstance(func_parent, ast.Module)
-        ):
+        if not isinstance(func_parent, (ast.ClassDef, ast.Module)):
             return  # we're only concerned with class methods or module-scoped functions
         native_obj = None
         if isinstance(func_parent, ast.ClassDef):

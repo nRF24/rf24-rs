@@ -10,6 +10,7 @@ See documentation at https://nRF24.github.io/rf24-rs
 
 import struct
 import time
+
 from rf24_py import RF24, PaLevel
 
 

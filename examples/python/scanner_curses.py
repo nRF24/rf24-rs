@@ -9,8 +9,8 @@ See documentation at https://nRF24.github.io/rf24-rs
 
 import curses
 import time
-from typing import List, Tuple
-from rf24_py import RF24, DataRate, CrcLength
+
+from rf24_py import RF24, CrcLength, DataRate
 
 print(__file__)  # print example name
 
@@ -53,7 +53,7 @@ noise_address = [
 class ChannelHistory:
     def __init__(self) -> None:
         #: FIFO for tracking peak decays
-        self._history: List[bool] = [False] * CACHE_MAX
+        self._history: list[bool] = [False] * CACHE_MAX
         #: for the total signal counts
         self.total: int = 0
 
@@ -95,7 +95,7 @@ class ProgressBar:
         """Update the progress bar."""
         count = " - "
         if signal_count:
-            count = " %X " % min(0xF, signal_count)
+            count = f" {min(0xF, signal_count):X} "
         filled = (self.width - 8) * completed / CACHE_MAX
         offset_x = 5
         self.win.move(self.y, self.x + offset_x)
@@ -110,9 +110,9 @@ class ProgressBar:
         self.win.attroff(curses.color_pair(self.color))
 
 
-def init_display(window) -> List[ProgressBar]:
+def init_display(window) -> list[ProgressBar]:
     """Creates a table of progress bars (1 for each channel)."""
-    progress_bars: List[ProgressBar] = [
+    progress_bars: list[ProgressBar] = [
         ProgressBar(0, 0, 0, window, "", 0)
     ] * TOTAL_CHANNELS
     bar_w = int(curses.COLS / 6)
@@ -177,7 +177,7 @@ def de_init_curses(spectrum_passes: int):
     )
 
 
-def get_user_input() -> Tuple[int, int]:
+def get_user_input() -> tuple[int, int]:
     """Get input parameters for the scan from the user."""
     for i, d_rate in enumerate(OFFERED_DATA_RATES):
         print(f"{i + 1}. {d_rate}")

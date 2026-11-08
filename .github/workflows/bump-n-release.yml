@@ -29,6 +29,10 @@ on:
 
 run-name: Deploying ${{ inputs.package }}
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' && !startsWith(github.ref, 'refs/tags/') }}
+
 permissions: {}
 # BUMP_N_RELEASE token needs the following permissions:
 #   contents: write
