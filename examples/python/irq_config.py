@@ -10,7 +10,8 @@ See documentation at https://nRF24.github.io/rf24-rs
 """
 
 import time
-from rf24_py import RF24, PaLevel, FifoState, StatusFlags
+
+from rf24_py import RF24, FifoState, PaLevel, StatusFlags
 
 try:
     import gpiod  # type: ignore[import-untyped,import-not-found]
@@ -97,7 +98,7 @@ class App:
         print("\tIRQ pin went active LOW.")
         self.radio.update()
         flags: StatusFlags = self.radio.get_status_flags()  # update IRQ status flags
-        print(f"\t{repr(flags)}")
+        print(f"\t{flags!r}")
         if self.pl_iterator == 0:
             print("'data ready' event test", ("passed" if flags.rx_dr else "failed"))
         elif self.pl_iterator == 1:

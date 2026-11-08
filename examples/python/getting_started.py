@@ -6,8 +6,9 @@ This example is meant to be run on 2 separate nRF24L01 transceivers.
 See documentation at https://nRF24.github.io/rf24-rs
 """
 
-import time
 import struct
+import time
+
 from rf24_py import RF24, PaLevel
 
 

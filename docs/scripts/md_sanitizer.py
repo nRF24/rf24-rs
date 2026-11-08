@@ -8,9 +8,10 @@ This script is a locally maintained MkDocs plugin that
 """
 
 import re
-from mkdocs.structure.pages import Page
-from mkdocs.structure.files import Files
+
 from mkdocs.config.defaults import MkDocsConfig
+from mkdocs.structure.files import Files
+from mkdocs.structure.pages import Page
 
 DEFINED_IN_PATTERN = re.compile(r"^Defined in: index\.d\.ts\:\d+\n\n", re.MULTILINE)
 SECTIONS_PATTERN = re.compile(

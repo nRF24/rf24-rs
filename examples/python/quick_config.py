@@ -8,7 +8,7 @@ it does not actually transmit nor receive anything.
 See documentation at https://nRF24.github.io/rf24-rs
 """
 
-from rf24_py import RF24, RadioConfig, CrcLength
+from rf24_py import RF24, CrcLength, RadioConfig
 
 
 class App:

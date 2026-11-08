@@ -12,7 +12,8 @@ See documentation at https://nRF24.github.io/rf24-rs
 """
 
 import time
-from rf24_py import RF24, PaLevel, StatusFlags, FifoState
+
+from rf24_py import RF24, FifoState, PaLevel, StatusFlags
 
 
 def make_payloads(size: int = 32) -> list[bytes]:
@@ -142,7 +143,7 @@ class App:
                 count += 1
                 # retrieve the received packet's payload
                 receive_payload = self.radio.read(size)
-                print(f"Received: {repr(receive_payload)} - {count}")
+                print(f"Received: {receive_payload!r} - {count}")
                 end_time = time.monotonic() + timeout  # reset timer on every RX payload
 
         # recommended behavior is to keep in TX mode while idle
