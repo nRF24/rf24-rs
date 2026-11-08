@@ -1,0 +1,31 @@
+[package]
+name = "rf24network-rs"
+description = "A static network layer for the rf24-rs crate"
+version = "0.1.0"
+repository.workspace = true
+homepage.workspace = true
+edition.workspace = true
+license.workspace = true
+keywords = ["nrf24l01", "wireless", "transceiver", "embedded", "RF24Network"]
+categories = ["embedded", "no-std"]
+rust-version = "1.65"
+
+[lib]
+name = "rf24network"
+
+[dependencies]
+rf24-rs = { path = "../rf24-rs", version = "0.3.0" }
+defmt = {version = "1.0.1", optional = true}
+embedded-hal = "1.0.0"
+cfg-if = "1.0.0"
+
+[dev-dependencies]
+embedded-hal-mock = "0.11.1"
+
+[features]
+defmt = ["dep:defmt"]
+std = []
+multicast = []
+"7-pipes" = []
+"8-pipes" = ["7-pipes"]
+default = ["multicast"]
