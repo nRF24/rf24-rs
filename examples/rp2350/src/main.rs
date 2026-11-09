@@ -115,8 +115,10 @@ fn main() -> ! {
 
     let mut serial = SerialPort::new(&usb_bus);
 
-    // Development-only VID/PID. Review before publishing upstream.
+    // Shared USB VID/PID for CDC-ACM devices (Objective Development).
+    // See: https://github.com/obdev/v-usb/blob/master/usbdrv/USB-IDs-for-free.txt
     let mut usb_dev = UsbDeviceBuilder::new(&usb_bus, UsbVidPid(0x16c0, 0x27dd))
+        .product("rf24-rs RP2350 Ping-Pong")
         .device_class(USB_CLASS_CDC)
         .build();
 
@@ -162,7 +164,7 @@ fn main() -> ! {
     // Initiator state.
     let mut waiting_for_pong = false;
     let mut wait_ms = 0u32;
-    let mut interval_ms = 1000u32; // Send first PING immediately.
+    let mut interval_ms = 1000u32;
 
     loop {
         // USB CDC needs regular polling, independently of RF24.
@@ -178,7 +180,7 @@ fn main() -> ! {
                     let len = radio.read(&mut buf, None).unwrap();
 
                     if &buf[..len as usize] == PONG {
-                        rx_count += 1;
+                        rx_count = rx_count.wrapping_add(1);
                         let _ = write!(message, "[RF24] RX PONG #{}\r\n", rx_count);
                     } else {
                         let _ = write!(message, "[RF24] Unexpected payload\r\n");
@@ -206,7 +208,7 @@ fn main() -> ! {
 
                     radio.as_rx().unwrap();
 
-                    tx_count += 1;
+                    tx_count = tx_count.wrapping_add(1);
 
                     if sent {
                         let _ = write!(message, "[RF24] TX PING #{}: OK\r\n", tx_count);
@@ -229,7 +231,7 @@ fn main() -> ! {
                 let len = radio.read(&mut buf, None).unwrap();
 
                 if &buf[..len as usize] == PING {
-                    rx_count += 1;
+                    rx_count = rx_count.wrapping_add(1);
 
                     // Let the initiator return to RX mode.
                     pacing.delay_ms(5);
@@ -244,7 +246,7 @@ fn main() -> ! {
 
                     radio.as_rx().unwrap();
 
-                    tx_count += 1;
+                    tx_count = tx_count.wrapping_add(1);
 
                     let _ = write!(
                         message,

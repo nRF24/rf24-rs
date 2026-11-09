@@ -1,6 +1,6 @@
 [workspace]
 members = ["crates/*", "examples/rust", "bindings/*"]
-exclude = ["examples/rp2350"]
+exclude = ["examples/rp2350", "examples/esp32c3"]
 default-members = ["crates/*", "bindings/*"]
 resolver = "2"
 
