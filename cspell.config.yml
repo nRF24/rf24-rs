@@ -1,5 +1,26 @@
 version: "0.2"
 words:
+  - ALIGNOF
+  - BOOTSEL
+  - Cdev
+  - DPRAM
+  - DYNPD
+  - Dmitry
+  - Doherty
+  - EDDYSTONE
+  - Grinberg
+  - HLINE
+  - Kbps
+  - MSRV
+  - Mbps
+  - Pico
+  - RETR
+  - RXADDR
+  - SCLK
+  - Seeed
+  - Spidev
+  - Tlinkall
+  - XIAO
   - aarch
   - addch
   - addnab
@@ -18,7 +39,6 @@ words:
   - bytearray
   - calcsize
   - cbreak
-  - Cdev
   - cdylib
   - clippy
   - codecov
@@ -27,12 +47,9 @@ words:
   - crossrefs
   - datasheet
   - defmt
-  - Dmitry
-  - Doherty
   - dtolnay
-  - DYNPD
   - eabi
-  - EDDYSTONE
+  - eabihf
   - endfor
   - endl
   - endlineno
@@ -44,25 +61,22 @@ words:
   - gpiocdev
   - gpiochip
   - gpiod
-  - Grinberg
-  - HLINE
+  - heapless
   - hustcer
   - inlinehilite
   - isnan
   - istr
-  - Kbps
+  - jtag
   - libc
   - libgpiod
   - libnghttp
   - linenums
   - manylinux
   - maturin
-  - Mbps
   - milliwatts
   - mkdocs
   - mkdocstrings
   - mosi
-  - MSRV
   - msvc
   - multiceiver
   - musleabihf
@@ -82,8 +96,11 @@ words:
   - nushell
   - opengpio
   - oxlint
+  - picotool
   - pipx
   - pkgid
+  - plls
+  - println
   - pyclass
   - pyfunction
   - pymdown
@@ -95,25 +112,26 @@ words:
   - pyproject
   - repr
   - reshim
-  - RETR
   - riscv
   - rustc
   - rustup
-  - RXADDR
   - sccache
-  - SCLK
   - sdist
-  - Spidev
   - startswith
   - staticmethod
+  - stext
   - struct
   - superfences
   - taiki
   - tasklist
+  - thumbv
   - timeit
   - tlsv
   - twemoji
   - typdedoc
+  - uninit
+  - usbd
+  - usbmodem
   - yarnrc
   - zigbuild
   - zizmor
