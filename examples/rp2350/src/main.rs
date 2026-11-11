@@ -22,6 +22,9 @@ use usbd_serial::{SerialPort, USB_CLASS_CDC};
 // Set to true on one board, false on the other.
 const INITIATOR: bool = true;
 
+// Each node has its own RX address.
+const ADDRESSES: [[u8; 5]; 2] = [*b"Node1", *b"Node2"];
+
 const PING: &[u8] = b"PING";
 const PONG: &[u8] = b"PONG";
 
@@ -132,19 +135,23 @@ fn main() -> ! {
 
     let mut pacing = timer;
 
+    /// Enable hardware auto-ACK on RX pipes 0 and 1.
+    ///
+    /// Pipe 0 is used internally to receive ACKs during transmission.
+    /// Pipe 1 receives application payloads (PING/PONG).
+    /// Bits 0 and 1 correspond to RX pipes 0 and 1, respectively.
+    const AUTO_ACK_PIPES: u8 = (1 << 0) | (1 << 1);
     const RADIO_CHANNEL: u8 = 50;
-    const RADIO_ADDRESS: [u8; 5] = [0xE7; 5];
 
     let config = RadioConfig::default()
         .with_channel(RADIO_CHANNEL)
         .with_data_rate(DataRate::Mbps1)
         .with_crc_length(CrcLength::Bit8)
         .with_pa_level(PaLevel::Min)
-        .with_tx_address(&RADIO_ADDRESS)
-        .with_rx_address(0, &RADIO_ADDRESS)
-        .close_rx_pipe(1)
+        .with_tx_address(&ADDRESSES[INITIATOR as usize])
+        .with_rx_address(1, &ADDRESSES[!INITIATOR as usize])
         .with_dynamic_payloads(true)
-        .with_auto_ack(1);
+        .with_auto_ack(AUTO_ACK_PIPES);
 
     radio.init().unwrap();
     radio.with_config(&config).unwrap();
