@@ -24,7 +24,7 @@ jobs:
         id: python-setup
         with:
           python-version: 3.x
-      - uses: astral-sh/setup-uv@07a047e608db84b3d8c06cd9a7c7dcc9c355c18e # v10.3.2
+      - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
         with:
           enable-cache: true
       - name: Cache pre-commit environments
@@ -51,7 +51,7 @@ jobs:
             ~/.cargo/git/db/
           key: cargo-lint-${{ hashFiles('**/*.rs') }}
       - name: Install cargo-binstall
-        uses: cargo-bins/cargo-binstall@81df5c23b0dc775b009efdfc9895c5965b7a4e40 # v1.26.1
+        uses: cargo-bins/cargo-binstall@851112458b5f28a29e5bc14a690c3f283d9dcc6f # v1.26.2
       - name: Install nur
         run: cargo binstall -y nur
         env:
@@ -106,7 +106,7 @@ jobs:
           echo "title=${pr_title}" >> "${GITHUB_OUTPUT}"
       - run: rustup update --no-self-update
       - name: Install cargo-binstall
-        uses: cargo-bins/cargo-binstall@81df5c23b0dc775b009efdfc9895c5965b7a4e40 # v1.26.1
+        uses: cargo-bins/cargo-binstall@851112458b5f28a29e5bc14a690c3f283d9dcc6f # v1.26.2
       - name: Install committed
         run: cargo binstall -y committed
         env:
