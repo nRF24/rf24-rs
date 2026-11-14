@@ -1,0 +1,32 @@
+[package]
+name = "esp32c3-rf24"
+version = "0.1.0"
+edition = "2021"
+license = "MIT"
+publish = false
+
+[dependencies]
+esp-hal = { version = "1.2.2", default-features = false, features = [
+    "esp32c3",
+    "rt",
+    "unstable",
+] }
+
+esp-backtrace = { version = "0.20", default-features = false, features = [
+    "esp32c3",
+    "panic-handler",
+    "println",
+] }
+
+esp-println = { version = "0.18", default-features = false, features = [
+    "esp32c3",
+    "jtag-serial",
+] }
+
+esp-bootloader-esp-idf = { version = "0.5", features = ["esp32c3"] }
+
+embedded-hal-bus = "0.3"
+
+rf24 = { package = "rf24-rs", path = "../../crates/rf24-rs", default-features = false }
+
+[workspace]
